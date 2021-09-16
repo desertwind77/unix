@@ -1,0 +1,291 @@
+" .vimrc (2021/02/24)
+" Athichart Tangpong
+
+"-------------------- General setting -------------------------
+if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
+   set fileencodings=utf-8,latin1
+endif
+" Set the current dir to that of the current file
+"set autochdir
+" Use Vim defaults (much better!)
+set nocompatible
+" Allow backspacing over everything in insert mode
+set bs=2
+" Keep a backup file
+set backup
+" Read/write a .viminfo file, don't store more than 50 lines of registers
+set viminfo='20,\"50
+" Keep 50 lines of command line history
+set history=50
+" Show the cursor position all the time
+set ruler
+" Turn on line number
+set number
+" Show what what the current cmd is doing
+set showcmd
+" The cursor will briefly jump to the matching brace when you insert one.
+set showmatch
+" Show mode
+set showmode
+" Always display the status line, even if only one window is displayed
+set laststatus=2
+" Instead of failing a command because of unsaved changes, instead raise a
+" dialogue asking if you wish to save changed files
+set confirm
+" Set the command window height to 2 lines to avoid many cases of having
+" to press <Enter> to continue
+set cmdheight=2
+" Better command-line completion
+set wildmenu
+" Allow backspacing over autoindent, line breaks and start of insert action
+set backspace=indent,eol,start
+" Stop certain movements from always going to the first character of a line.
+" While this behaviour deviates from that of Vi, it does what most users
+" coming from other editors would expect.
+set nostartofline
+" Not show @ when a line is too long to fit in one line
+set display+=lastline
+" Enable autocompletion e.g. :color
+set wildmenu
+set wildmode=longest:full,full
+" stop 'existing swap file' warnings
+set shortmess+=A
+" Diable beep
+set visualbell
+"set clipboard=unnamed
+syntax on
+" Set mouse behavior to xwindows
+behave xterm
+" Map Y to act like D and C, i.e. to yank until EOL, rather than act as yy, which is the default
+map Y y$
+
+"------------ Spelling -----------
+" Setup the dictionary to the system dictionary file
+" ]s    move to the next misspelled word
+" [s    move to the previous misspelled word
+" z=    show suggestion
+" zg    add the word to the dictionary
+" zw    mark the word as incorrect
+set dictionary+=/usr/share/dict/words
+" Turn auto spelling off
+set nospell
+" Turn spelling on globally. to replace a text, move cursor over the text, and z=
+"set spell spelllang=en_us
+" Turn spelling on only in local buffer
+"setlocal spell spelllang=en_us
+
+"------------ Search setting ----------
+" Show the next match while entering a searchEdit
+set incsearch
+" Highlight all search
+set hlsearch
+" Use case insensitve search
+set ignorecase
+" /copyright      Case insensitive
+" /Copyright      Case sensitive
+" /copyright\C    Case sensitive
+" /Copyright\c    Case insensitive
+set smartcase
+
+"------------ Indentation setting --------
+" Always set autoindenting on
+set autoindent
+" Pressing TAB indents 4 spaces
+set softtabstop=3
+" But a tab character '\t' is 8 spaces
+set tabstop=3
+" Indenting or shifting with << and >> uses 4 space incr
+set shiftwidth=3
+" Replace tabs with spaces
+set expandtab
+" Set c indentation style (I like the default style)
+"set cinoptions+=:0
+
+"------------- Plugins settings --------------
+colorscheme molokai 
+if has( "gui_running" )
+   colorscheme navajo
+endif
+
+let base16colorspace=256
+let g:rainbow_active = 1
+" Jump to the tagbar window immediately after it opens
+let g:tagbar_autofocus = 1
+let g:indentLine_enabled = 1
+let g:indentLine_leadingSpaceChar = '.'
+let g:indentLine_leadingSpaceEnabled = 1
+let g:indentLine_char_list = ['|', '¦', '┆', '┊']
+" Create default mappings
+let g:NERDCreateDefaultMappings = 1
+" Add spaces after comment delimiters by default
+let g:NERDSpaceDelims = 0
+" Use compact syntax for prettified multi-line comments
+let g:NERDCompactSexyComs = 1
+" Align line-wise comment delimiters flush left instead of following code indentation
+let g:NERDDefaultAlign = 'left'
+" Set a language to use its alternate delimiters by default
+let g:NERDAltDelims_java = 1
+" Add your own custom formats or override the defaults
+let g:NERDCustomDelimiters = { 'c': { 'left': '/**','right': '*/' } }
+" Allow commenting and inverting empty lines (useful when commenting a region)
+let g:NERDCommentEmptyLines = 1
+" Enable trimming of trailing whitespace when uncommenting
+let g:NERDTrimTrailingWhitespace = 1
+" Enable NERDCommenterToggle to check all selected lines is commented or not
+let g:NERDToggleCheckAllLines = 1
+" Close the preview windows automatically
+"let g:ycm_autoclose_preview_window_after_insertion = 1
+let g:ycm_autoclose_preview_window_after_completion = 1
+
+if has( "autocmd" )
+   " detect filetype and set indentation accordingly
+   filetype plugin indent on
+endif
+
+if !exists("autocommands_loaded")       " do not define autocmd twice
+   let autocommands_loaded = 1
+   autocmd BufRead *.txt set tw=85     " set text width to 85 col
+   autocmd BufRead *.cxx set tw=85     " set text width to 85 col
+   autocmd BufRead *.c set tw=85       " set text width to 85 col
+   autocmd BufRead *.h set tw=85       " set text width to 85 col
+
+   " Set proper options for C, mail and other files
+   " Don't switch the order of the following two autocmds
+   autocmd BufEnter * setlocal formatoptions=tcqro2n
+   autocmd FileType c,cpp setlocal formatoptions=croq textwidth=0
+   "autocmd FileType mail setlocal complete+=k
+   "
+   " To change automatically to the directory
+   " the file in the current buffer is. (Vim TIP# 101)
+   "autocmd BufEnter * :cd %:p:h
+   "autocmd FileType c,cpp :cd %:p:h
+
+   " Commenting blocks of code.
+   autocmd FileType c,cpp,java,scala let b:comment_leader = '// '
+   autocmd FileType sh,ruby,python   let b:comment_leader = '# '
+   autocmd FileType conf,fstab       let b:comment_leader = '# '
+   autocmd FileType tex              let b:comment_leader = '% '
+   autocmd FileType mail             let b:comment_leader = '> '
+   autocmd FileType vim              let b:comment_leader = '" '
+endif
+
+if has('cscope')
+   set cscopetag           " vim will include the cscope database whenever we
+                           " search for a tag e.g. by hitting CTRL-] in a C program
+   set cscopeverbose       " notify if adding a cscope database success or fail
+   if has('quickfix')
+      set cscopequickfix=s-,c-,d-,i-,t-,e-
+   endif
+
+   " set up command-line-mode abbreviations to make cscope commands easier to type
+   cnoreabbrev csa cs add
+   cnoreabbrev csf cs find
+   cnoreabbrev csk cs kill
+   cnoreabbrev csr cs reset
+   cnoreabbrev css cs show
+   cnoreabbrev csh cs help
+
+   if filereadable( "cscope.out" )
+      command -nargs=0 Cscope cs add cscope.out
+   endif
+endif
+
+"------------- Shortcuts and Aliases ---------------
+" To map the F2 key, <silent> <F2>
+" To map Ctrl-s key, <C-s>
+
+" tab navigation
+nnoremap <C-S-Left>  :tabprevious<CR>
+nnoremap <C-S-Right> :tabnext<CR>
+nnoremap <C-t>j :execute 'silent! tabmove ' . (tabpagenr()-2)<CR>
+nnoremap <C-t>k :execute 'silent! tabmove ' . (tabpagenr()+1)<CR>
+" turn wrap text off
+nnoremap <leader>a :set wrap!<CR>
+nnoremap <leader>b :TagbarOpen j<CR>
+" show the list of opened buffers to choose from
+nnoremap <leader>c :buffers<CR>:buffer<Space>
+" stop search highlight
+nnoremap <leader>h :nohlsearch<CR>
+nnoremap <leader>i :IndentLinesToggle<CR>
+" list all the buffer
+nnoremap <leader>l :ls!<CR>
+nnoremap <leader>n :NERDTreeFocus<CR>
+nnoremap <leader>s :set spell<CR>
+nnoremap <leader>t :NERDTreeToggle<CR>
+nnoremap <leader>w :StripWhitespace<CR>
+" Comment out the current line or text selected in visual mode.
+nnoremap <leader>cc :NERDCommenterComment<CR>
+" Same as cc but forces nesting.
+nnoremap <leader>cn :NERDCommenterNested<CR>
+" Toggles the comment state of the selected line(s). If the topmost selected line
+" is commented, all selected lines are uncommented and vice versa.
+nnoremap <leader>c<space> :NERDCommenterToggle<CR>
+" Comments the given lines using only one set of multipart delimiters.
+nnoremap <leader>cm :NERDCommenterMinimal<CR>
+" Toggles the comment state of the selected line(s) individually.
+nnoremap <leader>ci :NERDCommenterInvert<CR>
+" Comments out the selected lines with a pretty block formatted layout.
+nnoremap <leader>cs :NERDCommenterSexy<CR>
+" Same as cc except that the commented line(s) are yanked first.
+nnoremap <leader>cy :NERDCommenterYank<CR>
+" Comments the current line from the cursor to the end of line.
+nnoremap <leader>c$ :NERDCommenterToEOL<CR>
+" Adds comment delimiters to the end of line and goes into insert mode between them.
+nnoremap <leader>cA :NERDCommenterAppend<CR>
+" Adds comment delimiters at the current cursor position and inserts between.
+" Disabled by default.
+" |NERDCommenterInsert|
+" Switches to the alternative set of delimiters.
+nnoremap <leader>ca :NERDCommenterAltDelims<CR>
+" Same as |NERDCommenterComment| except that the delimiters are aligned down
+" the left side (<leader>cl) or both sides (<leader>cb).
+nnoremap <leader>cl :NERDCommenterAlignLeft<CR>
+nnoremap <leader>cb :NERDCommenterAlignBoth<CR>
+" Uncomments the selected line(s).
+nnoremap <leader>cu :NERDCommenterUncomment<CR>
+" In normal mode, toogle paste with F2
+nnoremap <F2> :set invpaste paste?<CR>
+" In insert mdoe, toogle paste with F2
+set pastetoggle=<F2>
+
+" quick edit
+"nnoremap <silent> <F5> :copen<CR>
+" quick edit
+"nnoremap <silent> <F6> :cclose<CR>
+
+"------------------------------ Tips -----------------------------
+" To comment a block of text is almost the same:
+" - First, go to the first line you want to comment, press Ctrl+V.
+"   This will put the editor in the VISUAL BLOCK mode.
+" - Then using the arrow key and select until the last line.
+" - Now press Shift+I, which will put the editor in INSERT mode and then press #
+" - This will add a hash to the first line.
+" - Then press Esc (give it a second), and it will insert a # character on all
+"   other selected lines.
+
+"------------------------------ Reference ---------------------------
+" http://vim.wikia.com/wiki/Set_working_directory_to_the_current_file
+" http://vim.wikia.com/wiki/Searching
+" http://vim.wikia.com/wiki/Indenting_source_code
+" http://vimdoc.sourceforge.net/htmldoc/indent.html (cinoptions)
+" http://vimdoc.sourceforge.net/htmldoc/filetype.html
+" http://vimdoc.sourceforge.net/htmldoc/intro.html
+" http://vimdoc.sourceforge.net/htmldoc/autocmd.html
+" (For set shortmess=a)
+" http://vim.wikia.com/wiki/Avoiding_the_%22Hit_ENTER_to_continue%22_prompts
+" (set mouse behavior)
+" http://vimdoc.sourceforge.net/htmldoc/usr_09.html
+" http://vim.wikia.com/wiki/Vim_buffer_FAQ
+" http://vim.wikia.com/wiki/Cscope
+
+" We reset the vimrc augroup. Autocommands are added to this throughout the file.
+augroup vimrc
+   autocmd!
+augroup END
+autocmd vimrc FileType python
+         \ setlocal expandtab |
+         \ setlocal tabstop=3 |
+         \ setlocal shiftwidth=3 |
+         \ setlocal softtabstop=3 |
+         \ setlocal shiftwidth=3 |
+         \ setlocal tw=85 |

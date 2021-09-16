@@ -1,0 +1,97 @@
+> Software install
+   - apt : ack cmus elinks exa exuberant-ctags cscope fish flac git-lfs jq mc mosh mpg321
+           ncdu neofetch pimixer ranger ripgrep sd software-properties-common telnet tig
+           tmux vim-nox wget xfce4-terminal
+   - pip3 : evdev powerline-status pyttsx3 selectors
+   - manual
+      + bashtop : https://github.com/aristocratos/bashtop
+      + bat : https://github.com/sharkdp/bat
+	   sudo dpkg -i bat.deb
+   - install omf
+      curl -L https://get.oh-my.fish | fish
+      #omf install powerline
+
+> Customization
+   - Enable ssh
+   - Change the hostname in /etc/hostname to new_name.local
+   - Config ssh w/o password to VictoryBattleship
+
+> Increase swap space
+   - Temporarily stop swap
+      sudo dphys-swapfile swapoff
+   - Modify the size of the swap
+      Add CONF_SWAPSIZE=1024 to /etc/dphys-swapfile
+   - Initialize swap file
+      sudo dphys-swapfile setup
+   - Start swap
+      sudo dphys-swapfile swapon
+
+> Install Dexter software
+   curl -kL dexterindustries.com/update_gopigo3 | bash
+   curl -kL dexterindustries.com/update_sensors | bash
+   curl -kL dexterindustries.com/update_brickpi3 | bash
+   curl -kL dexterindustries.com/update_grovepi | bash
+
+> Install OpenCV
+   # Note we need to increase the swap size on RP3B+ to 2048 and not to use make -j 4
+   # otherwise, RP3B+ wil run out of memory.
+   sudo apt-get install cmake
+   sudo apt-get install libjpeg-dev libpng-dev libtiff-dev
+   sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+   sudo apt-get install libxvidcore-dev libx264-dev
+   sudo apt-get install libgtk-3-dev libcanberra-gtk*
+   sudo apt-get install libatlas-base-dev gfortran
+   mkdir opencv
+   cd opencv
+   git clone https://github.com/opencv/opencv.git
+   git clone https://github.com/opencv/opencv_contrib.git
+   cd opencv
+   mkdir build
+   cd build
+   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=/home/pi/workspace/opencv/opencv_contrib/modules ..
+   make
+   sudo make install
+
+> Install software
+   - rpm
+      flac jack mc moc moc-ffmpeg-plugin pimixer rec sox vim-nox
+   - ROS
+      http://wiki.ros.org/melodic/Installation/Ubuntu
+   - Raspberry Pi Camera Web Interface
+      https://elinux.org/RPi-Cam-Web-Interface
+   - IOTstack
+      https://github.com/SensorsIot/IOTstack
+   - PiKiss
+      https://github.com/jmcerrejon/PiKISS
+
+> Configure VNC resolution by editting /boot/config.txt
+   hdmi_force_hotplug=1
+   hdmi_force_mode=1
+   hdmi_drive=2
+   hdmi_group=1
+   hdmi_mode=16
+
+> Trick
+   - Detect I2C devices
+      sudo i2cdetect -y 1
+
+   - Backup Raspberry Pi
+   1) Mac OS X
+      1.1) Backup
+      diskutil list
+      sudo dd bs=4M if=/dev/disk4 of=pi.img
+      1.2) Restore
+      diskutil unmountDisk /dev/disk4
+      sudo ds bs=4m if=pi.img of=/dev/disk4
+      diskutil eject /dev/disk4
+
+   2) Linux
+      2.1) Backup
+      sudo dd bs=4M if=/dev/sdb1 of=pi.img
+      sudo umount /dev/sdb1
+      2.2) Restore
+      sudo umount /dev/sdb1
+      sudo dd bs=4M if=pi.img of=/dev/disk4
+      sudo sync
+
+

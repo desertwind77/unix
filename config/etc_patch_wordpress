@@ -1,0 +1,109 @@
+commit 09f25e38d70fad261f7ae44ca44831e0931a0186
+Author: Athichart Tangpong <athichart@localhost>
+Date:   Fri Apr 13 03:20:18 2018 -0700
+
+    httpd, mariadb, phpMyAdmin, wordpress config
+
+diff --git a/php.ini b/php.ini
+index fc457f2..86e2340 100644
+--- a/php.ini
++++ b/php.ini
+@@ -821,7 +821,7 @@ file_uploads = On
+ 
+ ; Maximum allowed size for uploaded files.
+ ; http://php.net/upload-max-filesize
+-upload_max_filesize = 2M
++upload_max_filesize = 8M
+ 
+ ; Maximum number of files that can be uploaded via a single request
+ max_file_uploads = 20
+diff --git a/httpd/conf.d/phpMyAdmin.conf b/httpd/conf.d/phpMyAdmin.conf
+index e7d4aa2..d65964e 100644
+--- a/httpd/conf.d/phpMyAdmin.conf
++++ b/httpd/conf.d/phpMyAdmin.conf
+@@ -14,6 +14,7 @@ Alias /phpmyadmin /usr/share/phpMyAdmin
+    <IfModule mod_authz_core.c>
+      # Apache 2.4
+      <RequireAny>
++       Require ip 10.0.1.0/24
+        Require ip 127.0.0.1
+        Require ip ::1
+      </RequireAny>
+@@ -31,6 +32,7 @@ Alias /phpmyadmin /usr/share/phpMyAdmin
+    <IfModule mod_authz_core.c>
+      # Apache 2.4
+      <RequireAny>
++       Require ip 10.0.1.0/24
+        Require ip 127.0.0.1
+        Require ip ::1
+      </RequireAny>
+diff --git a/httpd/conf.d/wordpress.conf b/httpd/conf.d/wordpress.conf
+index 3692823..b6c2028 100644
+--- a/httpd/conf.d/wordpress.conf
++++ b/httpd/conf.d/wordpress.conf
+@@ -7,7 +7,7 @@ Alias /wordpress /usr/share/wordpress
+   AllowOverride Options
+   <IfModule mod_authz_core.c>
+     # Apache 2.4
+-    Require local
++    Require all granted
+   </IfModule>
+   <IfModule !mod_authz_core.c>
+     # Apache 2.2
+diff --git a/sudoers b/sudoers
+index bc4d793..7040992 100644
+--- a/sudoers
++++ b/sudoers
+@@ -80,10 +80,10 @@ root	ALL=(ALL) 	ALL
+ # %sys ALL = NETWORKING, SOFTWARE, SERVICES, STORAGE, DELEGATING, PROCESSES, LOCATE, DRIVERS
+ 
+ ## Allows people in group wheel to run all commands
+-%wheel	ALL=(ALL)	ALL
++#%wheel	ALL=(ALL)	ALL
+ 
+ ## Same thing without a password
+-# %wheel	ALL=(ALL)	NOPASSWD: ALL
++%wheel	ALL=(ALL)	NOPASSWD: ALL
+ 
+ ## Allows members of the users group to mount and unmount the 
+ ## cdrom as root
+diff --git a/wordpress/wp-config.php b/wordpress/wp-config.php
+index 7e0c3c5..5f10f02 100644
+--- a/wordpress/wp-config.php
++++ b/wordpress/wp-config.php
+@@ -20,13 +20,13 @@
+ 
+ // ** MySQL settings - You can get this info from your web host ** //
+ /** The name of the database for WordPress */
+-define('DB_NAME', 'database_name_here');
++define('DB_NAME', 'wannawalkwithmedb');
+ 
+ /** MySQL database username */
+-define('DB_USER', 'username_here');
++define('DB_USER', 'wannawalkwithme');
+ 
+ /** MySQL database password */
+-define('DB_PASSWORD', 'password_here');
++define('DB_PASSWORD', '2520MagellaN');
+ 
+ /** MySQL hostname */
+ define('DB_HOST', 'localhost');
+@@ -37,6 +37,9 @@ define('DB_CHARSET', 'utf8');
+ /** The Database Collate type. Don't change this if in doubt. */
+ define('DB_COLLATE', '');
+ 
++/** To allow plugins and wordpress update **/
++define('FS_METHOD', 'direct');
++
+ /**#@+
+  * Authentication Unique Keys and Salts.
+  *
+@@ -70,7 +73,7 @@ $table_prefix  = 'wp_';
+  */
+ 
+ /* Disable all file change, as RPM base installation are read-only */
+-define('DISALLOW_FILE_MODS', true);
++define('DISALLOW_FILE_MODS', false);
+ 
+ /* Disable automatic updater, in case you want to allow
+    above FILE_MODS for plugins, themes, ... */

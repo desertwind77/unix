@@ -1,0 +1,354 @@
+> install
+   # Enable RPM Fusion repository
+   sudo dnf install
+   https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+   sudo dnf install
+   https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+   # For Linux
+   #  ack         : grep
+   #  bat         : more
+   #  cmus        : console music player
+   #  elinks      : lynx
+   #  exa         : ls
+   #  hyperfine   : time
+   #  jq          : commandline JSON processor
+   #  ncdu        : NCurses Disk Usage
+   #  procs       : ps
+   #  ripgrep     : rp = grep
+   #  sd          : find and replace
+   #  tldr        : man
+   #  tig         : git status
+   #  timeshift   : backup
+   #  tokei       : wc
+   bat cmus cscope ctags elinks exa ffmpeg fish flac git-lfs htop hyperfine
+   jq ncdu mc mosh neofetch octave sd tealdeer telnet tig timeshift tokei tmux
+   vlc wget youtube-dl
+
+   # For admin and devel:
+   gcc-g++ go httpd kernel-devel ncurses-compat-libs vim-enhanced vim-X11
+   mariadb-server php-mysqlnd phyMyAdmin setroubleshoot
+
+   # For MacOS using brew
+   #  dos2unix    : to translate dos files to unix files
+   #  duf         : du
+   #  fd          : find
+   #  fluid-synth : to play midi e.g. from Frescobaldi
+   #  grex        :
+   #  imageMagick : to convert image from one format to another
+   #  mas         : to query software update in Mac App Store
+   #  ranger      : file manager
+   #  xrdp        : remote desktop
+   #  zoxide
+   ack bat cscope dos2unix duf dust fd fluid-synth grex gs imageMagick lynx mas mc mosh ranger sshfs tmux trash-cli wget youtube-dl zoxide
+   # For YouCompleteMe on Mac
+   cmake go java mono nodejs python vim
+
+   # Python using pip3 install --user
+   #  iptcinfo and Pillow  : for my portMgr
+   #  enum34               : to enable enum support in python
+   #  eyeD3                : for reading/writing mp3 tag
+   #  mutagen              : for viewing and editing audio files tag
+   #  unidecode            : for translating unicdoe into ascii
+   iptcinfo Pillow Django enum34 eyeD3 mutagen unidecode pylint
+
+> Inital config after installation
+   - Set hostname
+      hostnamectl set-hostname <new name>
+
+   - Configure firewall
+echo '<?xml version="1.0" encoding="utf-8"?>
+<service>
+short>MOSH</short>
+description>Mosh (mosh.mit.edu) is a free replacement for SSH that allows roaming and supports intermittent connectivity.</description>
+port protocol="udp" port="60001-60100"/>
+</service>' > /etc/firewalld/services/mosh.xml
+      systemctl enable sshd
+      systemctl start sshd
+      systemctl enable mariadb
+      systemctl start mariadb
+      systemctl enable httpd
+      systemctl start httpd
+      firewall-cmd --permanent --add-service=http
+      firewall-cmd --permanent --add-service=https
+      firewall-cmd --permanent --add-service=mosh
+      # For Roon Server
+      firewall-cmd --permanent --zone=public --add-port=9003/udp
+      firewall-cmd --permanent --zone=public --add-port=9100-9200/tcp
+      # For Grafana
+      firewall-cmd --permanent --zone=public --add-port=3000/tcp
+      firewall-cmd --reload
+
+   - Configure permission for wordpress
+      setsebool -P httpd_can_network_connect=1
+      setsebool -P httpd_can_network_connect_db=1
+      setsebool -P httpd_can_sendmail=1
+      chown -R apache.apache /usr/share/wordpress/
+      chcon -Rv --type=httpd_sys_rw_content_t /usr/share/wordpress
+
+   - Create Wordpress database
+      sudo mysqladmin -u root password
+      sudo mysqladmin create wannawalkwithmedb -u root -p
+      sudo mysql -D mysql -u root -p
+      GRANT ALL PRIVILEGES ON wannawalkwithmedb.* To 'wannawalkwithme'@'localhost' IDENTIFIED BY '2520MagellaN';
+      FLUSH PRIVILEGES;
+      QUIT;
+
+   - Disable SELINUX
+
+> Install omf (Oh My Fish!) : https://ostechnix.com/oh-fish-make-shell-beautiful/
+   curl -L https://get.oh-my.fish | fish
+   omf install powerline
+   pip3 install powerline-status
+   
+   omf list
+   omf theme
+   omf theme agnoster
+
+> ssh without password
+  1) Generate public and private keys on the client
+   $ ssh-keygen -t rsa
+  2) Copy the public key to the git server
+   $ ssh-copy-id athichart@victorybattleship.local
+
+> How to Configure Network Services to Auto Start on Boot
+  1) See if it is systemd or sysvinit
+      ps --pid 1
+      if it shows systemd, then it is a systemd-based system. if it shows init, it is a sysvinit-based system.
+  2) To enable or disable service
+      [systemd] systemctl enable/disable [service]
+      [sysvinit] chkconfig --level AB [service] on/off
+  3) To list services
+      [systemd] systemctl list-unit-files --state=disabled/enabled
+      [sysvinit] chkconfig --list
+
+> bash for loop
+   1) bash
+      for i in 1, 2, 3, 4, 5
+      do
+          echo $i
+      done
+
+      for i in {1..5}
+      for i in {0..10..2}
+      for i in $(unix-command-here)
+   2) fish
+      for i in foo bar baz; echo $i; end
+
+> Determine what services are running on what ports
+  1) netstat -ltnp | grep ':8081'
+    (Not all processes could be identified, non-owned process info
+     will not be shown, you would have to be root to see it all.)
+     tcp        0      0 0.0.0.0:8081            0.0.0.0:*               LISTEN
+
+    option: l – tells netstat to only show listening sockets.
+            t – tells it to display tcp connections.
+            n – instructs it show numerical addresses.
+            p – enables showing of the process ID and the process name.
+
+  2) sudo lsof -i :8081
+
+    COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+    motion  10669 root    5u  IPv4  94740      0t0  TCP *:tproxy (LISTEN)
+
+  3) sudo fuser 8081/tcp
+    8081/tcp:            10669
+     ps -p 10669 -o comm=
+    motion
+
+> diff and patch two directories
+  1) diff -ruN orig/ new/ > file.patch
+     -r     recursive, so do subdirectories
+     -u     unified style, if your system lacks it or if recipient may not have it, use "-c"
+     -N     treat absent files as empty
+  2) To recreate the new folder from old folder and patch file
+     2.1 Move the patch file to a directory where the orig/ folder exists. This folder will
+         get clobbered, so keep a backup of it somewhere, or use a copy.
+     2.2 patch -s -p0 < file.patch
+         -s   silent except errors
+         -p0  needed to find the proper folder
+         At this point, the orig/ folder contains the new/ content, but still
+         has its old name.
+     2.3 mv orig/ new/    # if the folder names are different
+
+> ctags
+  1) Generate the tags file
+    ctags -R *
+  2) Using vim to search for a tag called title
+    vim -t title
+  3) Inside vim
+    :tag ClassName      # Search for a tag
+    :tn (:tnext)        # Go to the next definition
+    :tp (:tprevious)    # Go to the previous definition
+    :tf (:tfirst)       # Go to the first definition
+    :tl (:tlast)        # Go to the last definition
+    :ts (:tselect)      # List all definitions
+    Placing the cursor on some text and then
+    ^]                  # Jump to definition
+    ^t                  # Jump back from definition
+    ^w}                 # Preview definition
+    g]                  # See all definitions
+
+> cscope
+  1) Generate the cscope.files
+	1.1 ) Linux kernel
+        LNX=/home/jru/linux-2.4.18
+        cd /
+        find  $LNX                                                            \
+        -path "$LNX/arch/*" ! -path "$LNX/arch/i386*" -prune -o               \
+        -path "$LNX/include/asm-*" ! -path "$LNX/include/asm-i386*" -prune -o \
+        -path "$LNX/tmp*" -prune -o                                           \
+        -path "$LNX/Documentation*" -prune -o                                 \
+        -path "$LNX/scripts*" -prune -o                                       \
+        -path "$LNX/drivers*" -prune -o                                       \
+        -name "*.[chxsS]" -print > /path/to/cscope.files
+	1.2) Java
+        find /my/project/dir -name '*.java' > /path/to/cscope.files
+  2) Generate the cscope database
+    cd /path/to
+	cscope -b -q -k
+  3) Use cscope
+    cd /path/to
+    cscope -d
+
+> Benchmark HDD or SSD performance
+   - To show sequential latency
+     $ ioping - R /dev/sda
+   - To determine the latency of the entire drive
+     $ ioping -c 10 /
+
+> Convert a nero image to an iso image
+   # Skip the first 300 bytes which are is nero header
+   $ dd bs=1k if=image.nrg of=image.iso skip=300
+
+> Convert img to VirtualBox hard drive
+   $ VBoxManage convertfromraw --format VDI PlexMediaPlayer-1.3.5.723-a36fa532.Generic-x86_64.img plex.vdi
+
+> Extract a .rpm file without installing it
+   $ rpm2cpio file.rpm | cpio -idmv
+
+> ls
+   $ ls -lt       # sort by time
+   $ ls -ltr      # sort by time in reverse order
+   $ ls -S        # sort by size
+   $ ls -h        # human-readable
+   $ ls -R        # recursive
+
+> Removing Windows linebreak (^M)
+   tr -d '\15\32'  <input> <output>
+   vi: 1,$s/^M//g    # Press Ctrl-v + Enter or Ctrl-v + Ctrl-M
+   vi: set ff=unix or ff=dos
+
+> Modify grub parameters to rotate screen
+   grubby --args="fbcon:rotate=3" --update-kernel=ALL 
+   https://docs.fedoraproject.org/en-US/fedora/rawhide/system-administrators-guide/kernel-module-driver-configuration/Working_with_the_GRUB_2_Boot_Loader/
+   https://wiki.gentoo.org/wiki/Tallscreen_Monitor
+
+> Midnight Commander
+   Ctrl-T            select a file
+   Shift-8,=,-       for *, +, -, respectively
+   Shift-<up/down>
+
+
+> Set time limit for a command
+   $ timelimit <limit> <cmd>     # m for mins, h for hours, d for days
+
+> Rapidly invoke an editor to write a long, complex, or tricky command
+   1) bash
+      $ fc
+      $ Ctrl-x e
+      If prefer to use ESC-v instead of Ctrl-x e, set -o vi
+   2) fish
+      $ ESC e and v
+      In iterm2
+      - go to Preferences > Profiles > Keys
+      - chaneg left and right alt key behavior to Esc+
+      $ ALT e or v
+
+> Copy file across machines
+   1) scp -r <host@machine_name:from_remote_directory_path> <to_local_directory_path>
+   1) sftp : to get a whole directory, use get -r <dir>
+   2) ssh
+      tar cf - -S -C <dir1> --exclude=<dir> <file list> | pigz | ssh <remotehost> "pigz -d | tar xvf - -S -C <dir2>"
+      ssh <remotehost> "tar cf - -S -C <dir1> --one-file-system --numeric-owner <file list> | pigz" > root.tgz
+      ssh <remotehost> "tar cf - -S -C <dir1> <file list> | pigz" | pigz -d | tar xf - -S -C <dir2>
+         <dir1>               change to dir1 before performing tar
+         <dir2>               change to dir2 before performing untar
+         -S                   handle sparse files efficiently (not supported on Mac)
+         --numeric-owner      always use numbers for user/group names
+         --one-file-system    stay in local file system when creating archive
+         pigz                 compress/uncompress with gzip
+   3) rsync
+      https://www.cyberciti.biz/tips/linux-use-rsync-transfer-mirror-files-directories.html
+   4) sshfs
+      - After install sshfs, mount a remote dir
+         sshfs user@server.com:/remote/dir /home/user/testdir
+      - Unmount
+         fusermount -u /home/user/testdir
+         umount mountpoint
+         diskutil unmount mountpoint      # Mac only
+
+> python virtual environment
+   1) For bash:
+      pip3 install virtualenv
+      virtualenv test
+      source test/bin/activate
+      pip3 install selenium
+   2) For fish:
+      https://github.com/justinmayer/virtualfish
+
+> Docker
+   1) command-line completion for fish
+      Ref: https://docs.docker.com/docker-for-mac/#install-shell-completion
+
+      mkdir -p ~/.config/fish/completions
+      ln -shi /Applications/Docker.app/Contents/Resources/etc/docker.fish-completion ~/.config/fish/completions/docker.fish
+      ln -shi /Applications/Docker.app/Contents/Resources/etc/docker-compose.fish-completion ~/.config/fish/completions/docker-compose.fish
+
+   2) Misc command
+      docker version
+      docker info
+      docker container run --publish 8080:80 --name webhost --detach nginx
+      docker container ls [-a]
+      docker container stop <id>
+      docker container logs webhost
+      docker container top webhost
+      docker container rm <list of id>
+   3) tutorial
+      docker run --name repo alpine/git clone https://github.com/docker/getting-started.git
+      docker cp repo:/git/getting-started/ .
+      cd getting-started
+      docker build -t docker101tutorial .
+      docker run -d -p 80:80 --name docker-tutorial docker101tutorial
+      docker tag docker101tutorial athichart/docker101tutorial
+      docker push athichart/docker101tutorial
+
+> VS Code
+   shortcuts
+      Cmd + b              toggle sidebar
+      Cmd + Shift + d      go to debug sidebar
+      Cmd + Shift + e      go to file explorer sidebar
+      Cmd + Shift + f      go to search sidebar
+      Ctrl + Shift + g     go to source control sidebar
+      Cmd + ,              go to setting e.g. font-ligatures, zoom, word wrap, exclude
+
+      Ctrl + `             toggle the terminal window
+      Ctrl + Cmd + up/down increase/decrease the size of the terminal window
+
+      Cmd + Shift + p      command palette (search for commands that can be run in VScode e.g. zen mode)
+      Cmd + z              undo
+      Cmd + d              select the word under cursor
+      Cmd + f              search
+      Cmd + w              close the file
+      Cmd + p              search and open the file
+      Ctrl + [shif] + tab  toggle through tabs
+      Opt + < or >         go to next or prev word
+      Cmd + < or >         go to the beginning or end of the line
+      Cmd + up or down     go to the beginning or end of the file
+
+   features
+      emmet                generate html/css snipplet using short codes
+
+> Cheat sheet
+  curl chea.sh
+  https://github.com/chubin/cheat.sh

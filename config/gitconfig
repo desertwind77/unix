@@ -1,0 +1,25 @@
+[user]
+   name = Athichart Tangpong
+   email = victorybattleship@gmail.com
+[core]
+   autocrlf = false
+   editor = vim
+   safecrlf = true
+   excludesfile = ~/.gitignore
+[alias]
+   co = checkout
+   ci = commit
+   st = status
+   br = branch
+   hist = log --pretty=format:\"%C(auto)%h %ad | %s%d [%an]\" --graph --date=short
+   type = cat-file -t
+   dump = cat-file -p
+[filter "lfs"]
+   required = true
+   clean = git-lfs clean -- %f
+   smudge = git-lfs smudge -- %f
+   process = git-lfs filter-process
+[format]
+   pretty = format:%C(auto)%h %d%Creset %s
+[color]
+   ui = true

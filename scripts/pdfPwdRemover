@@ -1,0 +1,47 @@
+#!/usr/bin/python
+# This is a python front-end script to remove the password from a pdf file.
+# Note that gs is required.
+
+import getopt
+import subprocess
+import sys
+
+broadcomPasswd = 'F16F309D7FE4663388AD2B0E71012BA0'
+
+def usage( argv ):
+   print "Usage : %s -i <input file> -o <output file> -p <password>" % argv[ 0 ]
+
+def main( argv ):
+   inputfile = None
+   outputfile = None
+   password = broadcomPasswd
+
+   try:
+      opts, args = \
+            getopt.getopt( argv[ 1: ], "hi:o:p:", [ "input=", "output=", "password=" ] )
+   except getopt.GetoptError:
+      usage( agrv )
+      sys.exit( 1 )
+
+   for opt, arg in opts:
+      if opt == '-h':
+         usage( argv )
+         sys.exit( 0 )
+      elif opt in ( "-i", "--input" ):
+         inputfile = arg
+      elif opt in ( "-o", "--output" ):
+         outputfile = arg
+      elif opt in ( "-p", "--password" ):
+         password = arg
+
+   if not inputfile or not outputfile or not password:
+      usage( argv )
+      sys.exit( 1 )
+
+   cmd = 'gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=%s -sPDFPassword=%s -c .setpdfwrite -f %s' % \
+         ( outputfile, password, inputfile )
+   print cmd
+   subprocess.call( cmd, shell=True )
+
+if __name__ == "__main__":
+    main( sys.argv )

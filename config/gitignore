@@ -1,0 +1,8 @@
+# This is git ignore file
+.gitignore
+.*.swp
+.*.swo
+*~
+tags
+__pycache__
+cscope*

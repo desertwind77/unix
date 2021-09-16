@@ -1,0 +1,52 @@
+.SUFFIXES: .cpp .obj .exe
+.PHONY: all part1 part2 part3
+.PHONY: ch02 ch04 ch05 ch06 ch07 ch08 ch09 ch10 ch11
+.PHONY: ch12 ch13 ch14 ch15 ch16 ch17 ch18 ch19
+.PHONY: ch24
+
+###
+# CONFIGURATION:
+#
+# Edit the settings below.  These values work for a typical g++ installation.
+CXX=g++
+CPPFLAGS=
+CXXFLAGS=-O -fno-gnu-keywords -o $@
+LDFLAGS=
+LOADLIBES=
+#
+###
+
+all: part1 part2 part3
+
+part1: ch02 ch04 ch05 ch06 ch07 ch08 ch09 ch10 ch11
+part2: ch12 ch13 ch14 ch15 ch16 ch17 ch18 ch19
+part3: ch24
+
+.cpp.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $<
+.cpp:
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $< $(LOADLIBES)
+
+clean:
+	-$(RM) ex*.o ex*
+
+ch02: ex02-01 ex02-02 ex02-03 ex02-04 ex02-05 ex02-06 ex02-07 ex02-08 ex02-09 ex02-10 ex02-11 ex02-12 ex02-13 ex02-14 ex02-15
+ch04: ex04-01
+ch05: ex05-01 ex05-02 ex05-03 ex05-04 ex05-05 ex05-06 ex05-07 ex05-08 ex05-08a ex05-09 ex05-10 ex05-11 ex05-12 ex05-13 ex05-14 ex05-15 ex05-16 ex05-17 ex05-18 ex05-19 ex05-20 ex05-21 ex05-22 ex05-23 ex05-24 ex05-25 ex05-26 ex05-27 ex05-28 ex05-29 ex05-30 ex05-31 ex05-32 ex05-33 ex05-34
+ch06: ex06-01 ex06-02 ex06-03 ex06-04 ex06-05 ex06-06 ex06-07 ex06-07a ex06-08 ex06-09 ex06-10 ex06-11 ex06-12 ex06-13
+ch07: ex07-01 ex07-02 ex07-03 ex07-03a ex07-04 ex07-04a ex07-05 ex07-06
+ch08: ex08-01 ex08-02 ex08-03 ex08-04 
+ch09: ex09-01 ex09-02 ex09-03
+ch10: ex10-01 ex10-02
+ch11: ex11-01 ex11-02
+ch12: ex12-01
+ch13: ex13-01
+ch14: ex14-01
+ch15: ex15-01
+ch16: ex16-01
+ch17: ex17-01
+ex17-01: ex17-01.o shape.o screen.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) ex17-01.o shape.o screen.o $(LOADLIBES)
+ch18: ex18-01
+ch19: ex19-01 ex19-01a ex19-02 ex19-02a ex19-02b
+ch24: ex24-01

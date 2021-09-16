@@ -1,0 +1,89 @@
+#!/bin/sh
+
+OS=`uname`
+
+case "${OS}" in
+    Darwin)
+        # Mac OS X specific setup
+
+        # Note for ls
+        # -G    show color
+        # -p    add / after each directory
+        # -F    add * after excutables, | after pipes, @ after symlinks, etc
+        # -h    use human readable units 
+        alias ls="ls -GpFh"
+        alias ll="ls -l"
+        alias la="ls -a"
+        ;;
+    Linux)
+        # Linux specific setup
+        alias ls="ls --color"
+        PS1="\h:\w $ "
+	if [ -f /etc/bashrc ]; then
+		. /etc/bashrc
+	fi
+        ;;
+esac
+
+# cscope
+alias cfile="find . -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.cc' > cscope.files"
+alias cbuild="cscope -b -q -k"
+alias cgen="cfile; cbuild"
+
+# tmux
+alias tl='tmux ls'
+alias ta='tmux attach -t '
+
+# git
+function gitclone() {
+    project="$1"
+    if [ -z "$project" ]; then
+        echo "Usage: gitclone <project>"
+        return
+    fi
+
+    git clone git@10.0.1.2:/home/git/repo/${project}.git
+}
+
+function gitremote() {
+    project="$1"
+    if [ -z "$project" ]; then
+        echo "Usage: gitadd <project>"
+        return
+    fi
+
+    git remote add origin git@10.0.1.2:/home/git/repo/${project}.git
+}
+
+function mkcd() {
+    dir="$1"
+    if [ -z "$dir" ]; then 
+        echo "Usage: mkcd <dir>"
+        return
+    fi
+
+    mkdir $dir
+    cd $dir
+}
+
+alias gitpush='git push origin master'
+alias gs='git status '
+alias ga='git add '
+alias gb='git branch '
+alias gc='git commit'
+alias gd='git diff'
+alias gh='git hist'
+alias gha='git hist --all'
+alias gco='git checkout '
+alias gk='gitk --all&'
+alias gx='gitx --all'
+
+alias working="cd /Volumes/Public/My\ Photo/Working"
+alias clean="rm -f .*~ *~ a.out core *.pyc"
+alias reload='source $HOME/Dropbox/Unix/startup/bashrc'
+alias vi='vim'
+alias scrap='scraper -gdb_apikey 83cafde7c61f6f57f523241ca6abe58165cdc42c704ae0cd953a6846a9a463b6  -add_not_found -image_dir boxart -image_path boxart'
+
+export PYTHONPATH=$HOME/Dropbox/Scripts/python
+export GOPATH=$HOME/Dropbox/Unix/go
+export PATH=$PATH:$HOME/Dropbox/Scripts:$GOPATH/bin

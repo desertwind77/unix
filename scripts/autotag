@@ -1,0 +1,372 @@
+#!/usr/bin/env python
+#
+# TODO 
+# - Adding file format support
+#   > MP3
+#
+# Discussion
+# 1) file
+#    - TODO : If regex is provided, use all parsed tags. Use arguments to fill in
+#      missing information.
+#    - If no regex, use all tags from arguments. 
+#    - To tag cover art, follow these logic 
+#      > If cover is provided, use the file pointed to by cover
+#      > if album, artist, and downloadType are provided, download the album photo.
+#      > if artist and downloadType are provided, download the artist photo.
+#      Note that cover and downloadType are mutually exclusive
+# 2) dir
+#    - First, try to match the directory structure with pre-defined lookup regex
+#      to parse tags from the folder and the filename. At least, we should get
+#      artist, album, track and title. Disc is optional.
+#           <artist> - <album>/CD <disc>/<track> <title>.ext
+#           <artist> - <album>/Disc <disc>/<track> <title>.ext
+#           <artist> - <album>/<track> <title>.ext
+#           <artist> - <album>/<ignore> <track> <ignore>.ext
+#      # Note the following re are only when artist and album are provided
+#      # via argument. Reason: to support 'autotag dir .' Eventually, we
+#      # should still get artist, album, track and title.
+#           <track> <title>.ext
+#    - If rename regex and all required tags are available, rename the file.
+# 3) dump
+#    - Dump all tags in a file or all tags of all files in a folder
+# 4) download
+#    - Download album image or artist image based on provided arguments 
+# 5) fetch
+#    - Fetch and show raw data from Last.fm
+import argparse
+import os
+import re
+import sys
+
+from debuglib import setDebugLevel, t0, t1, t2
+from filelib import deleteJunkFiles
+from audiolib import createFileInfo, getAudioFormat, AlbumInfo
+
+########################### Global Variable ########################### 
+# Patterns to match folders and filenames. This is used to determine
+# artist, album, disc, track, title.
+lookupTable = [
+        # <artist> - <album>/CD <disc>/<track> <filename>.ext
+        { 're' : '(.*) - (.*)\/cd*(\d+)\/(\d+)[. ]*(.*)%s',
+            'artist' : 1, 'album' : 2, 'title' : 5, 'track' : 4, 'disc' : 3 },
+        { 're' : '(.*) - (.*)\/CD*(\d+)\/(\d+)[. ]*(.*)%s',
+            'artist' : 1, 'album' : 2, 'title' : 5, 'track' : 4, 'disc' : 3 },
+        # <artist> - <album>/Disc <disc>/<track> <filename>.ext
+        { 're' : '(.*) - (.*)\/DISC.(\d+)\/(\d+)[. ]*(.*)%s',
+            'artist' : 1, 'album' : 2, 'title' : 5, 'track' : 4, 'disc' : 3 },
+        { 're' : '(.*) - (.*)\/Disc.(\d+)\/(\d+)[. ]*(.*)%s',
+            'artist' : 1, 'album' : 2, 'title' : 5, 'track' : 4, 'disc' : 3 },
+        # <artist> - <album>/<track> <filename>.mp3
+        { 're' : '(.*) - (.*)\/(\d+)[. ]*(.*)%s',
+            'artist' : 1, 'album' : 2, 'title' : 4, 'track' : 3, 'disc' : None },
+        # <artist> - <album>/<ingore> <track> <ignore>.ext
+        { 're' : '(.*) - (.*)\/.* (\d+) .*%s',
+            'artist' : 1, 'album' : 2, 'title' : None, 'track' : 3, 'disc' : None },
+        # <track> <title>.ext
+        # Note : artist and album are required via argument
+        { 're' : '(\d+)[. ]*(.*)%s',
+            'artist' : None, 'album' : None, 'title' : 2, 'track' : 1, 'disc' : None },
+        ]
+
+########################### Tag a file Command ########################### 
+# Process a single file
+def tagFile( filename, artist, album, title, disc, track, parseRegex,
+             renameRegex, cover, downloadType, dryRun=False ):
+    t2( 'Entering', tagFile.__name__ )
+
+    # OPTION1: When there is no argument set for the file, we assume that
+    #          the filename is in the "artist - title.ext" format.
+    # OPTION2: When artist and title are missing from args, we can only
+    #          infer these two fields from the filename.
+    # We choose OPTION2.
+    #
+    # KEEP the default regex "<track> <title>"
+    '''
+    if not artist and not title: 
+        fname, ext = os.path.splitext( filename )
+        search = re.match( r'(.+) - (.+)', fname )
+        if not search:
+            t0( 'Warning : no change is applied to "%s"' % filename )
+            return
+        artist = search.group( 1 )
+        title = search.group( 2 )
+    '''
+    if parseRegex:
+        t0( 'Error : pareseRegex is currently not supported' )
+        return
+
+    fileInfo = createFileInfo( filename, artist, album, title, disc, track,
+                               cover, downloadType )
+    fileInfo.save( dryRun=dryRun ) 
+    if renameRegex:
+        fileInfo.rename( renameRegex, dryRun )
+
+    t2( 'Leaving', tagFile.__name__ )
+
+########################### Tag a Folder Command ########################### 
+# Walk the folder and create a FileInfo obj for a file that matches the
+# search string. Also create a AlbumInfo obj for that file.
+def analyzeFolder( folder, argArtist, argAlbum, cover, downloadType ):
+    t2( 'Entering', analyzeFolder.__name__ )
+    fileInfoList = []
+    albumDict = {} 
+    for root, dirs, files in os.walk( folder, topdown=False ):
+        for name in sorted( files ):
+            fullname = os.path.join( root, name )
+            # Removing leading './' in the file name
+            if fullname.startswith( './' ):
+                fullname = fullname[ 2: ]
+
+            # Delete junk files
+            if deleteJunkFiles( fullname ):
+                t2( 'Deleting %s (junk file)' % fullname )
+                continue
+
+            # Determine file format
+            fileFormat = getAudioFormat( name )
+            if not fileFormat:
+                t2( 'Skipping %s (unsupported format)' % fullname )
+                continue
+
+            t2( 'Processing', fullname )
+            # First, try to match the directory structure with pre-defined lookup regex
+            # to parse tags from the folder and the filename.
+            found = False
+            result = {}
+            result[ 'filename' ] = fullname 
+            for lookup in lookupTable:
+                searchString = lookup[ 're' ] % fileFormat
+                searchResult = re.search( searchString, fullname )
+                if searchResult:
+                    for tag in [ 'artist', 'album', 'title', 'disc', 'track' ]:
+                        pos = lookup[ tag ]
+                        if pos:
+                            result[ tag ] = searchResult.group( pos )
+                    found = True
+                    break
+
+            # A match is found. So create a FileInfo obj for the file
+            if found:
+                artist = result.get( 'artist', argArtist )
+                if artist:
+                    artist = artist.lstrip().rstrip()
+                album = result.get( 'album', argAlbum )
+                if album:
+                    album = album.lstrip().rstrip()
+                title = result.get( 'title' )
+                disc = result.get( 'disc' )
+                if disc:
+                    disc = str( int( disc ) )
+                track = result.get( 'track' )
+                track = str( int( track ) )
+
+                if artist and album:
+                    albumName = ( artist, album )
+                    albumInfo = albumDict.get( albumName )
+                    if not albumInfo:
+                        albumInfo = AlbumInfo( artist, album )
+                        albumDict[ albumName ] = albumInfo 
+
+                # From re in our current lookup table, I don't see how this
+                # can happen so just assert for further debugging.
+                # Note taht getting track info from last.fm is not reliable.
+                if not title:
+                    #title = albumInfo.getTrackTitle( track )
+                    t0( 'artist:', artist )
+                    t0( 'album :', album )
+                    t0( 'title :', title )
+                    t0( 'disc  :', disc )
+                    t0( 'track :', track )
+                    assert False, 'Title is not available'
+
+                # At this point, we should have all the tags available.
+                # Otherwise, the lookup should fail.
+                # Required tags are artist, album, track, and title.
+                # disc and cover are optional.
+                fileInfo = createFileInfo( fullname, artist, album, title,
+                                           disc, track, cover, downloadType )
+                fileInfoList.append( fileInfo )
+            else:
+                t2( "Warning : skipped %s (all lookups failed)" % fullname )
+
+    # fileInfoList is a list of FileInfo
+    # albumDict is a dict between "<artist> - <album>" and AlbumInfo
+    return fileInfoList, albumDict
+
+def tagFolder( folder, artist, album, renameRegex, cover, downloadType,
+               coverOnly=False, dryRun=False ):
+    t2( 'Entering', tagFolder.__name__ )
+    fileInfoList, albumDict  = analyzeFolder( folder, artist, album,
+                                              cover, downloadType )
+    t2( 'fileInfoList:' )
+    t2( fileInfoList )
+    t2()
+    t2( 'albumDict' )
+    t2( albumDict )
+    t2()
+    for f in fileInfoList:
+        albumInfo = albumDict[ ( f.artist, f.album ) ]
+        f.save( albumArtistInfo=albumInfo, coverOnly=coverOnly, dryRun=dryRun )
+        if renameRegex:
+            f.rename( renameRegex, dryRun )
+        t0()
+
+########################### Dump Command ########################### 
+def dumpFileFolder( dst ):
+    if os.path.isfile( dst ):
+        fileInfo = createFileInfo( dst )
+        fileInfo.dump()
+    elif os.path.isdir( dst ):
+        for i in sorted( os.listdir( dst ) ):
+            fullname = os.path.join( dst, i )
+            
+            # Delete junk files
+            if deleteJunkFiles( fullname ):
+                t2( 'Deleting %s (junk file)' % fullname )
+                continue
+
+            if not isSupportedFormat( fullname ):
+                continue
+
+            fileInfo = createFileInfo( fullname  )
+            t0( fullname )
+            fileInfo.dump()
+            t0()
+
+########################### Download Command ########################### 
+def downloadAlbumArt( artist, album=None ):
+    downloadInfo = None
+    if artist and album:
+        downloadInfo = AlbumInfo( artist, album )
+    elif artist:
+        downloadInfo = ArtistInfo( artist )
+
+    if downloadInfo:
+        albumArt = downloadInfo.getCover()
+        t0( albumArt )
+    else:
+        t0( 'Error : unable to download artwork (search failed)' )
+
+########################### Fetch Command ########################### 
+def fetchData( artist, album=None ):
+    downloadInfo = None
+    if artist and album:
+        downloadInfo = AlbumInfo( artist, album )
+    elif artist:
+        downloadInfo = ArtistInfo( artist )
+
+    if downloadInfo:
+        rawData = downloadInfo.getLastFmData()
+        t0( rawData )
+    else:
+        t0( 'Error : unable to fetch data (search failed)' )
+
+########################### Main Functions ########################### 
+
+def main( argv ):
+    reload( sys )
+    sys.setdefaultencoding( 'utf-8' )
+
+    parser = argparse.ArgumentParser( version='0.2',
+            description='autotag argument parser' )
+    parser.add_argument( '-X', '--dry-run', action='store_true', dest='dryRun',
+            help='Only dry run, no actually renaming' )
+    parser.add_argument( '-B', '--debugLevel', action='store', dest='debugLevel',
+            type=int, help='Set debug level' )
+    subparsers = parser.add_subparsers( dest='command' ) 
+    subparsers.required = True
+
+    # Option for file
+    file_parser = subparsers.add_parser( 'file', help='Tag a file' )
+    file_parser.add_argument( '-a', '--artist', action='store', dest='artist',
+            help='Specify the artist')
+    file_parser.add_argument( '-A', '--album', action='store', dest='album',
+            help='Specify the album of this song')
+    file_parser.add_argument( '-t', '--title', action='store', dest='title',
+            help='Specify the song title')
+    file_parser.add_argument( '-d', '--disc', action='store', dest='disc',
+            help='Specify the disc number')
+    file_parser.add_argument( '-n', '--track', action='store', dest='track',
+            help='Specify the track number')
+    file_parser.add_argument( '-f', '--parse-regex', action='store', dest='parseRegex',
+            help='Parse tags from filename with this simplified regex. '
+            '(Currently not supported)' )
+    file_parser.add_argument( '-r', '--rename-regex', action='store', dest='renameRegex',
+            help='Rename the file to the regex format' )
+    cover_group = file_parser.add_mutually_exclusive_group()
+    cover_group.add_argument( '-c', '--cover', action='store', dest='cover',
+            help='Use this image as the album cover' )
+    cover_group.add_argument( '-D', '--downloadType', action='store',
+            dest='downloadType', choices=( 'album', 'artist' ),
+            help='Download the album image or artist image as the cover' )
+    file_parser.add_argument( 'filename', action='store',
+            help='The name of the file to be tagged')
+
+    # Option for dir 
+    dir_parser = subparsers.add_parser( 'dir',
+            help='Attempt to parse tags from folder/filename then tag all files in the folder' )
+    dir_parser.add_argument( '-a', '--artist', action='store', dest='artist',
+            help='Specify the artist')
+    dir_parser.add_argument( '-A', '--album', action='store', dest='album',
+            help='Specify the album of this song')
+    dir_parser.add_argument( '-r', '--rename-regex', action='store', dest='renameRegex',
+            help='Rename all the files to the regex format' )
+    dir_parser.add_argument( '-o', '--cover-only', action='store_true', dest='coverOnly',
+            help='Only add cover image and not modify other tags' )
+    cover_group = dir_parser.add_mutually_exclusive_group()
+    cover_group.add_argument( '-c', '--cover', action='store', dest='cover',
+            help='Use this image as the album cover' )
+    cover_group.add_argument( '-D', '--downloadType', action='store',
+            dest='downloadType', choices=( 'album', 'artist' ),
+            help='Download the album image or artist image as the cover' )
+    dir_parser.add_argument( 'folder', action='store',
+            help='Tag all files in the folder using info from Last.fm.' )
+
+    # Option for dump 
+    dump_parser = subparsers.add_parser( 'dump',
+            help='Print the tags in the file or the folder' )
+    dump_parser.add_argument( 'dst', action='store',
+            help='The name of the file or the folder to be dumped' )
+
+    # Option for download only
+    download_parser = subparsers.add_parser( 'download',
+            help='Only download the album art without tagging any file' )
+    download_parser.add_argument( '-a', '--artist', action='store', dest='artist',
+            help='Specify the artist')
+    download_parser.add_argument( '-A', '--album', action='store', dest='album',
+            help='Specify the album of this song')
+
+    fetch_parser = subparsers.add_parser( 'fetch',
+            help='Fetch and print raw output from Last.Fm search' )
+    fetch_parser.add_argument( '-a', '--artist', action='store', dest='artist',
+            help='Specify the artist')
+    fetch_parser.add_argument( '-A', '--album', action='store', dest='album',
+            help='Specify the album of this song')
+
+    args = parser.parse_args()
+
+    if args.debugLevel:
+        setDebugLevel( args.debugLevel )
+        t0( "Set debugLevel to ", args.debugLevel )
+        t0()
+
+    if args.command == 'file':
+        tagFile( args.filename, args.artist, args.album, args.title, args.disc,
+                 args.track, args.parseRegex, args.renameRegex,
+                 args.cover, args.downloadType, dryRun=args.dryRun )
+    elif args.command == 'dir':
+        if args.cover and not os.path.exists( args.cover ):
+            t0( 'Error : %s does not exist' % args.cover )
+            return
+        tagFolder( args.folder, args.artist, args.album,
+                   args.renameRegex, args.cover, args.downloadType,
+                   coverOnly=args.coverOnly, dryRun=args.dryRun )
+    elif args.command == 'dump':
+        dumpFileFolder( args.dst )
+    elif args.command == 'download':
+        downloadAlbumArt( args.artist, args.album )
+    elif args.command == 'fetch':
+        fetchData( args.artist, args.album )
+
+if __name__ == '__main__':
+    main( sys.argv[ 1: ] )
