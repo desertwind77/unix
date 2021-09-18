@@ -22,7 +22,7 @@ git submodule add https://github.com/sjl/gundo.vim pack/plugins/start/gundo.vim
 # html5.vim
 git submodule add https://github.com/othree/html5.vim pack/plugins/start/html5.vim
 
-# indentline
+# indentline : show indent guide
 git submodule add https://github.com/Yggdroot/indentLine.git pack/plugins/start/indentline
 
 # ListToggle : toggling the display of the quickfix list and the location-list
@@ -41,13 +41,13 @@ git submodule add https://github.com/Xuyuanp/nerdtree-git-plugin pack/plugins/st
 # onedark.vim : color scheme for the GUI and 16/256/true-color terminals
 git submodule add https://github.com/joshdick/onedark.vim pack/plugins/start/onedark.vim
 
-# rainbow
+# rainbow : show the open and close parenthesises in matching colors
 git submodule add https://github.com/luochen1990/rainbow.git pack/plugins/start/rainbow
 
 # syntastic
 git submodule add https://github.com/vim-syntastic/syntastic pack/plugins/start/syntastic
 
-# tabline : show tab
+# tabline : show filename on the tab
 git submodule add https://github.com/mkitt/tabline.vim pack/plugins/start/tabline.vim
 
 # tabular
@@ -82,9 +82,6 @@ git submodule add https://github.com/hail2u/vim-css3-syntax pack/plugins/start/v
 # vim-javascript     vim-pyref               vim-yaml
 # vim-expand-region  vim-jsx            vim-python-pep8-indent
 # vim-markdown       vim-repeat vim-misc
-#
-#
-#
 #
 # vim-multiple-cursors
 # https://github.com/terryma/vim-multiple-cursors
@@ -234,3 +231,19 @@ Use <c-z> to mark/unmark multiple files and <c-o> to open them.
 
 - Run a terminal inside vim (from 8.1)
    :term
+
+- Comment on a multi-line code snipplet without using nerdcommenter
+   > First, go to the first line you want to comment, press Ctrl+V. This will
+     put the editor in the VISUAL BLOCK mode.
+   > Then using the arrow key and select until the last line.
+   > Now press Shift+I, which will put the editor in INSERT mode and
+     then press #
+   > This will add a hash to the first line.
+   > Then press Esc (give it a second), and it will insert a # character
+     on all other selected lines.
+
+- Swap windows using vim-windowswap
+  > Navigate to the window you'd like to move
+  > Press <leader>ww
+  > Navigate to the window you'd like to swap with
+  > Press <leader>ww again

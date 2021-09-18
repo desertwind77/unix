@@ -310,12 +310,7 @@ nnoremap <leader>cl :NERDCommenterAlignLeft<CR>
 nnoremap <leader>cb :NERDCommenterAlignBoth<CR>
 " Uncomments the selected line(s).
 nnoremap <leader>cu :NERDCommenterUncomment<CR>
-
 " <leader>ww is reserved for vim-windowswap
-" 1 Navigate to the window you'd like to move
-" 2 Press <leader>ww
-" 3 Navigate to the window you'd like to swap with
-" 4 Press <leader>ww again
 "
 " In normal mode, toogle paste with F2
 nnoremap <F2> :set invpaste paste?<CR>
@@ -326,16 +321,6 @@ set pastetoggle=<F2>
 "nnoremap <silent> <F5> :copen<CR>
 " quick edit
 "nnoremap <silent> <F6> :cclose<CR>
-
-"------------------------------ Tips -----------------------------
-" To comment a block of text
-" - First, go to the first line you want to comment, press Ctrl+V.
-"   This will put the editor in the VISUAL BLOCK mode.
-" - Then using the arrow key and select until the last line.
-" - Now press Shift+I, which will put the editor in INSERT mode and then press #
-" - This will add a hash to the first line.
-" - Then press Esc (give it a second), and it will insert a # character on all
-"   other selected lines.
 
 " We reset the vimrc augroup. Autocommands are added to this throughout the file.
 augroup vimrc
