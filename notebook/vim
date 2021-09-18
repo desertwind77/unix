@@ -4,22 +4,22 @@ mkdir -p ~/.vim/pack
 cd ~/.vim
 git init
 
-# ack.vim : grep and show result in a separate window
+# TODO ack.vim : grep and show result in a separate window
 git submodule add https://github.com/mileszs/ack.vim.git pack/plugins/start/ack.vim
 
 # canoline.vim : highlights the line of the cursor, only in the current window
 git submodule add https://github.com/miyakogi/conoline.vim pack/plugins/start/canoline.vim
 
-# ctrlp.vim
+# TODO ctrlp.vim : Full path fuzzy file, buffer, mru, tag, etc finder
 git submodule add https://github.com/kien/ctrlp.vim pack/plugins/start/ctrlp.vim
 
-# delimitMate
+# delimitMate : provide automatic closing of quotes, parenthesis, brackets, etc
 git submodule add https://github.com/Raimondi/delimitMate pack/plugins/start/delimitMate
 
 # gundo.vim : visualize your Vim undo tree
 git submodule add https://github.com/sjl/gundo.vim pack/plugins/start/gundo.vim
 
-# html5.vim
+# html5.vim : indent and syntax for HTML5
 git submodule add https://github.com/othree/html5.vim pack/plugins/start/html5.vim
 
 # indentline : show indent guide
@@ -28,10 +28,10 @@ git submodule add https://github.com/Yggdroot/indentLine.git pack/plugins/start/
 # ListToggle : toggling the display of the quickfix list and the location-list
 git submodule add https://github.com/Valloric/ListToggle pack/plugins/start/ListToggle
 
-# MatchTagAlways
+# MatchTagAlways : highlight the matching open and close HTML/XML tag
 git submodule add https://github.com/Valloric/MatchTagAlways pack/plugins/start/MatchTagAlways
 
-# nerdcommenter : toggle comment or uncomment
+# TODO nerdcommenter : toggle comment or uncomment
 git submodule add https://github.com/preservim/nerdcommenter.git pack/plugins/start/nerdcommenter
 
 # nerdtree : file system browser
@@ -44,13 +44,13 @@ git submodule add https://github.com/joshdick/onedark.vim pack/plugins/start/one
 # rainbow : show the open and close parenthesises in matching colors
 git submodule add https://github.com/luochen1990/rainbow.git pack/plugins/start/rainbow
 
-# syntastic
+# TODO syntastic : syntax checking
 git submodule add https://github.com/vim-syntastic/syntastic pack/plugins/start/syntastic
 
 # tabline : show filename on the tab
 git submodule add https://github.com/mkitt/tabline.vim pack/plugins/start/tabline.vim
 
-# tabular
+# tabular : tags browser
 git submodule add git://github.com/godlygeek/tabular.git pack/plugins/start/tabular
 
 # tagbar
@@ -59,16 +59,14 @@ git submodule add https://github.com/preservim/tagbar.git pack/plugins/start/tag
 # ultisnips : create snipplet automatically e.g. generating python class template
 git submodule add https://github.com/SirVer/ultisnips pack/plugins/start/ultisnips
 
-# vim-airline
+# vim-airline : good looking status and tabline
 git submodule add https://github.com/vim-airline/vim-airline pack/plugins/start/vim-airline
-
-# vim-airline-themes
 git submodule add https://github.com/vim-airline/vim-airline-themes pack/plugins/start/vim-airline-themes
 
-# vim-autotag
+# vim-autotag : update ctags database when saving a file
 git submodule add git://github.com/craigemery/vim-autotag.git pack/plugins/start/vim-autotag
 
-# vim-better-whitespace
+# vim-better-whitespace : remove unnecessary whitespaces
 git submodule add git://github.com/ntpeters/vim-better-whitespace.git pack/plugins/start/vim-better-whitespace
 
 # vim-colorschemes
@@ -77,20 +75,27 @@ git submodule add git://github.com/ntpeters/vim-better-whitespace.git pack/plugi
 # vim-css3-syntax
 git submodule add https://github.com/hail2u/vim-css3-syntax pack/plugins/start/vim-css3-syntax
 
-# unite.vim              vim-dispatch       vim-notes               vim-snippets
-# base16-vim    python-syntax      vim-easymotion
-# vim-javascript     vim-pyref               vim-yaml
-# vim-expand-region  vim-jsx            vim-python-pep8-indent
-# vim-markdown       vim-repeat vim-misc
-#
+# unite.vim
+# vim-dispatch
+# vim-notes
+# vim-snippets
+# base16-vim
+# python-syntax
+# vim-easymotion
+# vim-javascript
+# vim-pyref
+# vim-yaml
+# vim-expand-region
+# vim-jsx
+# vim-python-pep8-indent
+# vim-markdown
+# vim-repeat vim-misc
 # vim-multiple-cursors
 # https://github.com/terryma/vim-multiple-cursors
 # vim-signature
 # https://github.com/kshenoy/vim-signature
 # vim-speeddating : increase and decrease date with C^x and C^a
 # https://github.com/tpope/vim-speeddating
-# vim-session : session management
-# https://github.com/xolox/vim-session
 # vim-tmux-navigator : move betweem vim and tmux panes
 # https://github.com/christoomey/vim-tmux-navigator
 # vim-fugitive : git wrapper
@@ -98,10 +103,15 @@ git submodule add https://github.com/hail2u/vim-css3-syntax pack/plugins/start/v
 # vim-go : go plugin
 # https://github.com/fatih/vim-go
 
+# vim-session : session management.
+# Note vim-session requires vim-misc
+git submodule add https://github.com/xolox/vim-misc pack/plugins/start/vim-misc
+git submodule add https://github.com/xolox/vim-session pack/plugins/start/vim-session
+
 # vim-startify : a fancy start screen
 git submodule add https://github.com/mhinz/vim-startify pack/plugins/start/vim-startify
 
-# vim-surround : change the type of quote
+# vim-surround : change the type of quote, brackets, parentheses, XML/HTML tags
 git submodule add https://github.com/tpope/vim-surround pack/plugins/start/vim-surround
 
 # vim-windowswap : swap a window's location
@@ -215,14 +225,14 @@ Use <c-z> to mark/unmark multiple files and <c-o> to open them.
 
 6) Misc
 - Wrap existing text at 80 characters
-   > Set the textwidth to 80
-      :set textwidth=80
-   > Apply automatically within certain file types like Markdown
-      au BufRead,BufNewFile *.md setlocal textwidth=80
-   > Select the lines to re-format
-      v
-   > Reformat it
-      gq
+  > Set the textwidth to 80
+     :set textwidth=80
+  > Apply automatically within certain file types like Markdown
+     au BufRead,BufNewFile *.md setlocal textwidth=80
+  > Select the lines to re-format
+     v
+  > Reformat it
+     gq
 
 - Close the preview window or scratch
   Ctrl-w z
@@ -230,20 +240,42 @@ Use <c-z> to mark/unmark multiple files and <c-o> to open them.
   :pc[lose]
 
 - Run a terminal inside vim (from 8.1)
-   :term
+  :term
 
 - Comment on a multi-line code snipplet without using nerdcommenter
-   > First, go to the first line you want to comment, press Ctrl+V. This will
-     put the editor in the VISUAL BLOCK mode.
-   > Then using the arrow key and select until the last line.
-   > Now press Shift+I, which will put the editor in INSERT mode and
-     then press #
-   > This will add a hash to the first line.
-   > Then press Esc (give it a second), and it will insert a # character
-     on all other selected lines.
+  > First, go to the first line you want to comment, press Ctrl+V. This will
+    put the editor in the VISUAL BLOCK mode.
+  > Then using the arrow key and select until the last line.
+  > Now press Shift+I, which will put the editor in INSERT mode and
+    then press #
+  > This will add a hash to the first line.
+  > Then press Esc (give it a second), and it will insert a # character
+    on all other selected lines.
 
 - Swap windows using vim-windowswap
   > Navigate to the window you'd like to move
   > Press <leader>ww
   > Navigate to the window you'd like to swap with
   > Press <leader>ww again
+
+- Change parentheses, brackets, quotes, HTML/XML tags using vim-surround
+  Note that we have to type the command when the cursor is inside the quotes, etc
+      initially      "Hello world!"
+      cs"'           'Hello world!'
+      cs'<p>         <p>Hello world!</p>
+      cst"           "Hello world!"
+      ds"            Hello world!
+  When the cursor is on "Hello",
+      ysiw]          [Hello] world!
+      cs]{           { Hello } world!  or
+      cs]}           {Hello} world!
+      yssb or yss)   ({Hello} world!)
+      ds{ds)         Hello world!
+      ysiw<em>       <em>Hello</em> world!
+  Press a capital V and $ for linewise visual mdoe
+      S<p class="important"> <p class="important"><em>Hello</em> world!</p>
+
+   The . command will work with ds, cs, and yss if you install repeat.vim.
+
+- Exit vim from split mode or tab
+   :qall! or :qa!

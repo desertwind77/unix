@@ -144,15 +144,18 @@ let base16colorspace=256
 let g:rainbow_active = 1
 " Jump to the tagbar window immediately after it opens
 let g:tagbar_autofocus = 1
+
 " IndentLine config
 let g:indentLine_enabled = 1
 let g:indentLine_leadingSpaceChar = '.'
 let g:indentLine_leadingSpaceEnabled = 1
 let g:indentLine_char_list = ['|', '¦', '┆', '┊']
+
 " '\' + l to display location list (ListToggle)
 let g:lt_location_list_toggle_map = '<leader>l'
 " '\' + l to display quickfix list (ListToggle)
 let g:lt_quickfix_list_toggle_map = '<leader>q'
+
 " Create default mappings
 let g:NERDCreateDefaultMappings = 1
 " Add spaces after comment delimiters by default
@@ -171,6 +174,10 @@ let g:NERDCommentEmptyLines = 1
 let g:NERDTrimTrailingWhitespace = 1
 " Enable NERDCommenterToggle to check all selected lines is commented or not
 let g:NERDToggleCheckAllLines = 1
+
+" Do not auto save or load session created by vim-session
+let g:session_autosave = 'no'
+let g:session_autoload = 'no'
 
 " Trigger UltiSnips. Do not use <tab> if using YouCompleteMe
 let g:UltiSnipsExpandTrigger = "<c-l>"
@@ -310,8 +317,15 @@ nnoremap <leader>cl :NERDCommenterAlignLeft<CR>
 nnoremap <leader>cb :NERDCommenterAlignBoth<CR>
 " Uncomments the selected line(s).
 nnoremap <leader>cu :NERDCommenterUncomment<CR>
+
+" Command for vim-session
+nnoremap <leader>sc :CloseSession<CR>
+nnoremap <leader>sd :DeleteSession<CR>
+nnoremap <leader>so :OpenSession<CR>
+nnoremap <leader>ss :SaveSession<CR>
+
 " <leader>ww is reserved for vim-windowswap
-"
+
 " In normal mode, toogle paste with F2
 nnoremap <F2> :set invpaste paste?<CR>
 " In insert mdoe, toogle paste with F2
