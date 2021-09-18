@@ -248,6 +248,13 @@ endif
 " To map the F2 key, <silent> <F2>
 " To map Ctrl-s key, <C-s>
 
+function NERDTreeToggleAndRefresh()
+   :NERDTreeToggle
+   if g:NERDTree.IsOpen()
+      :NERDTreeRefreshRoot
+   endif
+endfunction
+
 " tab navigation
 nnoremap th :tabfirst<CR>
 nnoremap tj :tabprevious<CR>
@@ -282,7 +289,7 @@ nnoremap <leader>n :NERDTreeFocus<CR>
 " turn on spell check
 nnoremap <leader>s :set spell<CR>
 " toggle the file browser
-nnoremap <leader>t :NERDTreeToggle<CR>
+nnoremap <leader>t :call NERDTreeToggleAndRefresh()<CR>
 " show undo tree
 nnoremap <leader>u :GundoToggle<CR>
 " remove unnecessary white spaces
