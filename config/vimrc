@@ -1,6 +1,16 @@
 " .vimrc (2021/02/24)
 " Athichart Tangpong
 
+" Include the system settings
+if filereadable( "/etc/vimrc" )
+   source /etc/vimrc
+endif
+
+" Include Arista-specific settings
+if filereadable( $VIM . "/vimfiles/arista.vim" )
+   source $VIM/vimfiles/arista.vim
+endif
+
 "-------------------- General setting -------------------------
 if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
    set fileencodings=utf-8,latin1
@@ -101,20 +111,48 @@ set expandtab
 " Set c indentation style (I like the default style)
 "set cinoptions+=:0
 
+"---------------- Line wrap ------------------
+" Enable text wrap if the line is longer than, for example, 85 columns.
+" Default text wrap may break in the middle of a word. 'linebreak' will force
+" the text wrap to break at the word boundary. Sometimes 'nolist' is needed
+" for this to work.
+"set showbreak=â€¦
+set wrap linebreak nolist
+" Set command :Wrap to enable this
+"command! -nargs=* Wrap set wrap linebreak nolist
+" Go down one line in the wrapped line
+vmap <C-S-j> gj
+nmap <C-S-j> gj
+" Go up one line in the wrapped line
+vmap <C-S-k> gk
+nmap <C-S-k> gk
+" Go to the beginning of the wrapped line
+vmap <C-S-h> g^
+nmap <C-S-h> g^
+" Go to the end of the wrapped line
+vmap <C-S-l> g$
+nmap <C-S-l> g$
+
 "------------- Plugins settings --------------
-colorscheme molokai 
+colorscheme molokai
 if has( "gui_running" )
    colorscheme navajo
 endif
 
 let base16colorspace=256
+" Enable Rainbow to display matchin parenthesises with the same color
 let g:rainbow_active = 1
 " Jump to the tagbar window immediately after it opens
 let g:tagbar_autofocus = 1
+" IndentLine config
 let g:indentLine_enabled = 1
 let g:indentLine_leadingSpaceChar = '.'
 let g:indentLine_leadingSpaceEnabled = 1
 let g:indentLine_char_list = ['|', '¦', '┆', '┊']
+" '\' + l to display location list (ListToggle)
+let g:lt_location_list_toggle_map = '<leader>l'
+" '\' + l to display quickfix list (ListToggle)
+let g:lt_quickfix_list_toggle_map = '<leader>q'
 " Create default mappings
 let g:NERDCreateDefaultMappings = 1
 " Add spaces after comment delimiters by default
@@ -133,6 +171,15 @@ let g:NERDCommentEmptyLines = 1
 let g:NERDTrimTrailingWhitespace = 1
 " Enable NERDCommenterToggle to check all selected lines is commented or not
 let g:NERDToggleCheckAllLines = 1
+
+" Trigger UltiSnips. Do not use <tab> if using YouCompleteMe
+let g:UltiSnipsExpandTrigger = "<c-l>"
+let g:UltiSnipsSnippetsDir = "~/.vim/snippets"
+let g:UltiSnipsJumpForwardTrigger = "<c-j>"
+let g:UltiSnipsJumpBackwardTrigger = "<c-k>"
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit = "vertical"
+
 " Close the preview windows automatically
 "let g:ycm_autoclose_preview_window_after_insertion = 1
 let g:ycm_autoclose_preview_window_after_completion = 1
@@ -195,23 +242,43 @@ endif
 " To map Ctrl-s key, <C-s>
 
 " tab navigation
-nnoremap <C-S-Left>  :tabprevious<CR>
-nnoremap <C-S-Right> :tabnext<CR>
+nnoremap th :tabfirst<CR>
+nnoremap tj :tabprevious<CR>
+nnoremap tk :tabnext<CR>
+nnoremap tl :tablast<CR>
+nnoremap td :tabclose<CR>
+nnoremap tn :tabnew<CR>
+nnoremap tt :tabedit<Space>
+nnoremap tm :tabm<Space>
+" Press and release Ctrl-t, then j or k to move the current tab to the left or
+" the right
 nnoremap <C-t>j :execute 'silent! tabmove ' . (tabpagenr()-2)<CR>
 nnoremap <C-t>k :execute 'silent! tabmove ' . (tabpagenr()+1)<CR>
-" turn wrap text off
+
+" leadder is '\' in vim. so <leader>a means '\' + a
+" toggle wrap text on/off
 nnoremap <leader>a :set wrap!<CR>
-nnoremap <leader>b :TagbarOpen j<CR>
+" f - jump to the Tagbar window when open
+" j - jump to the Tagbar window if already open
+" c - autoclose
+nnoremap <leader>b :TagbarOpen fjc<CR>
 " show the list of opened buffers to choose from
 nnoremap <leader>c :buffers<CR>:buffer<Space>
+" list all the buffer
+nnoremap <leader>d :ls!<CR>
 " stop search highlight
 nnoremap <leader>h :nohlsearch<CR>
+" toggle indent line
 nnoremap <leader>i :IndentLinesToggle<CR>
-" list all the buffer
-nnoremap <leader>l :ls!<CR>
+" jump to the file brower
 nnoremap <leader>n :NERDTreeFocus<CR>
+" turn on spell check
 nnoremap <leader>s :set spell<CR>
+" toggle the file browser
 nnoremap <leader>t :NERDTreeToggle<CR>
+" show undo tree
+nnoremap <leader>u :GundoToggle<CR>
+" remove unnecessary white spaces
 nnoremap <leader>w :StripWhitespace<CR>
 " Comment out the current line or text selected in visual mode.
 nnoremap <leader>cc :NERDCommenterComment<CR>
@@ -243,6 +310,13 @@ nnoremap <leader>cl :NERDCommenterAlignLeft<CR>
 nnoremap <leader>cb :NERDCommenterAlignBoth<CR>
 " Uncomments the selected line(s).
 nnoremap <leader>cu :NERDCommenterUncomment<CR>
+
+" <leader>ww is reserved for vim-windowswap
+" 1 Navigate to the window you'd like to move
+" 2 Press <leader>ww
+" 3 Navigate to the window you'd like to swap with
+" 4 Press <leader>ww again
+"
 " In normal mode, toogle paste with F2
 nnoremap <F2> :set invpaste paste?<CR>
 " In insert mdoe, toogle paste with F2
@@ -254,7 +328,7 @@ set pastetoggle=<F2>
 "nnoremap <silent> <F6> :cclose<CR>
 
 "------------------------------ Tips -----------------------------
-" To comment a block of text is almost the same:
+" To comment a block of text
 " - First, go to the first line you want to comment, press Ctrl+V.
 "   This will put the editor in the VISUAL BLOCK mode.
 " - Then using the arrow key and select until the last line.
@@ -262,21 +336,6 @@ set pastetoggle=<F2>
 " - This will add a hash to the first line.
 " - Then press Esc (give it a second), and it will insert a # character on all
 "   other selected lines.
-
-"------------------------------ Reference ---------------------------
-" http://vim.wikia.com/wiki/Set_working_directory_to_the_current_file
-" http://vim.wikia.com/wiki/Searching
-" http://vim.wikia.com/wiki/Indenting_source_code
-" http://vimdoc.sourceforge.net/htmldoc/indent.html (cinoptions)
-" http://vimdoc.sourceforge.net/htmldoc/filetype.html
-" http://vimdoc.sourceforge.net/htmldoc/intro.html
-" http://vimdoc.sourceforge.net/htmldoc/autocmd.html
-" (For set shortmess=a)
-" http://vim.wikia.com/wiki/Avoiding_the_%22Hit_ENTER_to_continue%22_prompts
-" (set mouse behavior)
-" http://vimdoc.sourceforge.net/htmldoc/usr_09.html
-" http://vim.wikia.com/wiki/Vim_buffer_FAQ
-" http://vim.wikia.com/wiki/Cscope
 
 " We reset the vimrc augroup. Autocommands are added to this throughout the file.
 augroup vimrc
