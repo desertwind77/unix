@@ -279,3 +279,14 @@ Use <c-z> to mark/unmark multiple files and <c-o> to open them.
 
 - Exit vim from split mode or tab
    :qall! or :qa!
+
+- Reload the file e.g. after removing the read-only permission so vim allow
+  us to edit the file
+   :e or :e! (discard all change)
+
+- Scroll the vim terminal window
+   To enter the normal mode which we can use with vim's normal navigation
+   and search
+      Ctrl-\ Ctrl-n
+   To return to the terminal
+      i or a

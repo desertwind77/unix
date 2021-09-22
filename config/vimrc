@@ -174,6 +174,8 @@ let g:NERDCommentEmptyLines = 1
 let g:NERDTrimTrailingWhitespace = 1
 " Enable NERDCommenterToggle to check all selected lines is commented or not
 let g:NERDToggleCheckAllLines = 1
+" Quit NerdTree after a file is opened
+let g:NERDTreeQuitOnOpen=1
 
 " Do not auto save or load session created by vim-session
 let g:session_autosave = 'no'
