@@ -1,3 +1,9 @@
+> Install Hack Nerd Font for exa --icons to work
+   brew tap homebrew/cask-fonts
+   brew install --cask font-hack-nerd-font
+
+   After this, change the font in iterm2 to Hack
+
 > To enable/disable FTP
    sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist
    sudo -s launchctl unload -w /System/Library/LaunchDaemons/ftp.plist
