@@ -7,22 +7,23 @@
 
    # For Linux
    #  ack         : grep
-   #  bat         : more
+   #  bat         : cat clone
    #  cmus        : console music player
    #  elinks      : lynx
-   #  exa         : ls
+   #  fd-find     : find clone
+   #  exa         : ls clone with cool features like --icons and --git
    #  hyperfine   : time
    #  jq          : commandline JSON processor
    #  ncdu        : NCurses Disk Usage
-   #  procs       : ps
+   #  procs       : modern ps clones
    #  ripgrep     : rp = grep
    #  sd          : find and replace
    #  tldr        : man
    #  tig         : git status
    #  timeshift   : backup
-   #  tokei       : wc
-   bat cmus cscope ctags elinks exa ffmpeg fish flac git-lfs htop hyperfine
-   jq ncdu mc mosh neofetch octave sd tealdeer telnet tig timeshift tokei tmux
+   #  tokei       : show statistics about the code 
+   bat cmus cscope ctags elinks exa fd-find ffmpeg fish flac git-lfs htop hyperfine
+   jq ncdu mc mosh neofetch octave procs sd tealdeer telnet tig timeshift tokei tmux
    vlc wget youtube-dl
 
    # For admin and devel:
@@ -40,7 +41,8 @@
    #  ranger      : file manager
    #  xrdp        : remote desktop
    #  zoxide
-   ack bat cscope dos2unix duf dust fd fluid-synth grex gs imageMagick lynx mas mc mosh ranger sshfs tmux trash-cli wget youtube-dl zoxide
+   ack bat cscope dos2unix duf dust fd fluid-synth grex gs imageMagick lynx mas
+   mc mosh procs ranger sshfs tmux trash-cli wget youtube-dl zoxide
    # For YouCompleteMe on Mac
    cmake go java mono nodejs python vim
 
@@ -348,6 +350,14 @@ port protocol="udp" port="60001-60100"/>
 
    features
       emmet                generate html/css snipplet using short codes
+
+> TODO
+   awk
+   fd          https://github.com/sharkdp/fd
+   procs       https://github.com/dalance/procs
+   sd/sed      https://github.com/chmln/sd
+   https://dev.to/zaiste/15-command-line-tools-to-make-you-better-at-shell-cli-35n6?fbclid=IwAR39EbkE-2VCXpNnMpwKlC569_wyqF4GB7VP12qtKkkEdecCXXTP49K5Ty4
+
 
 > Cheat sheet
   curl chea.sh
