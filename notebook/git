@@ -10,3 +10,12 @@
    git remote add origin https://github.com/desertwind77/config.git
    git branch -M main
    git push -u origin main
+
+> Patch the diff
+   git diff
+   git diff <filename>
+   git diff <branch>
+   git diff --staged [filename]
+   git diff commit_id1 commit_id2
+   git diff > my_diff.patch
+   git apply my_diff.patch
