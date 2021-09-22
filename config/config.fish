@@ -83,9 +83,10 @@ if status is-interactive
    #---------------------- Aliases ---------------------
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
    # Replacing ls with exa
-   alias ls='exa'
-   alias ll='exa --long --git'
-   alias la='exa -a'
+   alias ls='exa --icons'
+   # exa options : --extended --only-dirs
+   alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
+   alias la='exa --icons -a'
    alias reload='source ~/.config/fish/config.fish'
    alias tl='tmux ls'
    alias ta='tmux attach -dt'
