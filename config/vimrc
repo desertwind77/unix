@@ -293,6 +293,9 @@ nnoremap <leader>s :set spell<CR>
 " toggle the file browser
 nnoremap <leader>t :call NERDTreeToggleAndRefresh()<CR>
 " show undo tree
+if has( 'python3' )
+   let g:gundo_prefer_python3 = 1
+endif
 nnoremap <leader>u :GundoToggle<CR>
 " remove unnecessary white spaces
 nnoremap <leader>w :StripWhitespace<CR>

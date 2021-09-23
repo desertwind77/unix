@@ -34,11 +34,25 @@ if status is-interactive
    # batshow : git show v0.6.0:src/main.rs | bat -l rs
    # see https://github.com/sharkdp/bat
 
+   # For bash or zsh
+   # fd() {
+   #     preview="git diff $@ --color=always -- {-1}"
+   #     git diff $@ --name-only | fzf -m --ansi --preview $preview
+   # }
+   function gdiff -d ""
+      # Comparing your current branch to master
+      #     gdiff <branch>
+      # Comparing the changes between two commits
+      #     gdiff <commit1>..<commit2>
+      # Note that this works from the root of the git repository
+      git diff $argv --name-only | fzf -m -m --ansi --preview "git diff $argv --color=always -- {-1}"
+   end
+
    #---------------------- powerline-status ---------------------
    # powerline-config path
    if test -d ~/.local/bin
       # Fedora Linux
-      set -gx PATH ~/.local/bin $PATH 
+      set -gx PATH ~/.local/bin $PATH
    else if test -d ~/Library/Python/3.8/bin
       # Mac OS X
       set -gx PATH ~/Library/Python/3.8/bin $PATH
@@ -67,7 +81,7 @@ if status is-interactive
    #---------------------- git ---------------------
 	function gclone -d "Clone a git repository from Victory"
       set num (count $argv)
-      if test $num = 1 
+      if test $num = 1
          set project $argv[1]
          command git clone athichart@victorybattleship.local:/Users/athichart/Google\ Drive/git/$project
       else
@@ -82,6 +96,7 @@ if status is-interactive
 
    #---------------------- Aliases ---------------------
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
+   alias fzf='fzf --preview "bat {-1} --color=always"'
    # Replacing ls with exa
    alias ls='exa --icons'
    # exa options : --extended --only-dirs
@@ -93,7 +108,7 @@ if status is-interactive
    alias vi='vim'
 
    #---------------------- Variables ---------------------
-   set -gx PKG_CONFIG_PATH /usr/local/lib/pkgconfig $PKG_CONFIG_PATH 
+   set -gx PKG_CONFIG_PATH /usr/local/lib/pkgconfig $PKG_CONFIG_PATH
    set -gx PATH "$HOME/bin" "$HOME/Workspace/scripts" $PATH;
    set -gx EDITOR vim
    set -gx VISUAL vim

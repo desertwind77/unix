@@ -11,6 +11,7 @@
    #  cmus        : console music player
    #  elinks      : lynx
    #  fd-find     : find clone
+   #  fzf         : fuzzy finder taking a list of strings and makes it searchable
    #  exa         : ls clone with cool features like --icons and --git
    #  hyperfine   : time
    #  jq          : commandline JSON processor
@@ -35,13 +36,14 @@
    #  duf         : du
    #  fd          : find
    #  fluid-synth : to play midi e.g. from Frescobaldi
+   #  fzf         : fuzzy finder
    #  grex        :
    #  imageMagick : to convert image from one format to another
    #  mas         : to query software update in Mac App Store
    #  ranger      : file manager
    #  xrdp        : remote desktop
    #  zoxide
-   ack bat cscope dos2unix duf dust fd fluid-synth grex gs imageMagick lynx mas
+   ack bat cscope dos2unix duf dust fd fluid-synth fzf grex gs imageMagick lynx mas
    mc mosh procs ranger sshfs tmux trash-cli wget youtube-dl zoxide
    # For YouCompleteMe on Mac
    cmake go java mono nodejs python vim
