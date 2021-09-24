@@ -108,8 +108,10 @@ if status is-interactive
    alias vi='vim'
 
    #---------------------- Variables ---------------------
+   set -gx RUSTUP_HOME "$HOME/.rustup"
+   set -gx CARGO_HOME "$HOME/.cargo"
    set -gx PKG_CONFIG_PATH /usr/local/lib/pkgconfig $PKG_CONFIG_PATH
-   set -gx PATH "$HOME/bin" "$HOME/Workspace/scripts" $PATH;
+   set -gx PATH "$HOME/bin" "$HOME/Workspace/scripts" "$CARGO_HOME/bin" $PATH;
    set -gx EDITOR vim
    set -gx VISUAL vim
 
