@@ -130,6 +130,9 @@ git commit
 To Update
 ---------
 git submodule update --remote --merge
+or
+git submodule update --init --recursive
+
 git commit
 
 Buffer / Window / Tab
