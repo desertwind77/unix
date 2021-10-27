@@ -104,10 +104,20 @@ port protocol="udp" port="60001-60100"/>
    curl -L https://get.oh-my.fish | fish
    omf install powerline
    pip3 install powerline-status
-   
+
    omf list
    omf theme
    omf theme agnoster
+
+> rust
+   1) Install
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   2) Verify
+      rustc --version
+   3) Update
+      rustup update
+   4) Install software
+      cargo install gitui
 
 > ssh without password
   1) Generate public and private keys on the client
