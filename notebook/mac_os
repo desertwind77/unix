@@ -45,3 +45,7 @@
   mas upgrade
   mas search <name>
   mas install <app no>
+
+> Steam
+   - Fixing Rocksmith Real Tone cable
+      Changing from "RealToneCableOnly=0" in Rocksmith.ini to "RealToneCableOnly=1"
