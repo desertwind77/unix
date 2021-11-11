@@ -82,8 +82,3 @@ alias working="cd /Volumes/Public/My\ Photo/Working"
 alias clean="rm -f .*~ *~ a.out core *.pyc"
 alias reload='source $HOME/Dropbox/Unix/startup/bashrc'
 alias vi='vim'
-alias scrap='scraper -gdb_apikey 83cafde7c61f6f57f523241ca6abe58165cdc42c704ae0cd953a6846a9a463b6  -add_not_found -image_dir boxart -image_path boxart'
-
-export PYTHONPATH=$HOME/Dropbox/Scripts/python
-export GOPATH=$HOME/Dropbox/Unix/go
-export PATH=$PATH:$HOME/Dropbox/Scripts:$GOPATH/bin
