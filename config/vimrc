@@ -146,10 +146,16 @@ let g:rainbow_active = 1
 let g:tagbar_autofocus = 1
 
 " IndentLine config
-let g:indentLine_enabled = 1
-let g:indentLine_leadingSpaceChar = '.'
-let g:indentLine_leadingSpaceEnabled = 1
-let g:indentLine_char_list = ['|', '¦', '┆', '┊']
+"let g:indentLine_enabled = 1
+"let g:indentLine_leadingSpaceChar = '.'
+"let g:indentLine_leadingSpaceEnabled = 1
+"let g:indentLine_char_list = ['|', '¦', '┆', '┊']
+
+" vim-indent-guides
+let g:indent_guides_enable_on_vim_startup = 1
+let g:indent_guides_guide_size = 1
+let g:indent_guides_start_level = 2
+let g:indent_guides_auto_colors = 1
 
 " '\' + l to display location list (ListToggle)
 let g:lt_location_list_toggle_map = '<leader>l'
@@ -285,7 +291,8 @@ nnoremap <leader>d :ls!<CR>
 " stop search highlight
 nnoremap <leader>h :nohlsearch<CR>
 " toggle indent line
-nnoremap <leader>i :IndentLinesToggle<CR>
+"nnoremap <leader>i :IndentLinesToggle<CR>
+nnoremap <leader>i :IndentGuidesToggle<CR>
 " jump to the file brower
 nnoremap <leader>n :NERDTreeFocus<CR>
 " turn on spell check
@@ -329,6 +336,8 @@ nnoremap <leader>cl :NERDCommenterAlignLeft<CR>
 nnoremap <leader>cb :NERDCommenterAlignBoth<CR>
 " Uncomments the selected line(s).
 nnoremap <leader>cu :NERDCommenterUncomment<CR>
+" Turn off line number
+nnoremap <leader>nn :set number!<CR>"
 
 " Command for vim-session
 nnoremap <leader>sc :CloseSession<CR>
