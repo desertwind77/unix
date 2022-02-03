@@ -75,6 +75,9 @@ class CreditCardHandler( object ):
                 if category == 'Misc':
                     miscList.append( row )
                 if category:
+                    # To print 'Food'
+                    #if category == 'Food':
+                    #    print( row )
                     expenseDict[ category ] += amount 
                 else:
                     unknownVendors.append( row )
@@ -132,7 +135,7 @@ def main():
         total = 0
         for expense in allExpenses:
             total += expense.get( category, 0 )
-        expenseSummary[ category ] = total 
+        expenseSummary[ category ] = total
     expenseSummary = cleanupExpense( expenseSummary )
 
     print( 'Summary:' )
