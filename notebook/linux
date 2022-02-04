@@ -11,19 +11,20 @@
    #  cmus        : console music player
    #  elinks      : lynx
    #  fd-find     : find clone
+   #  fx          : commandline json viewer
    #  fzf         : fuzzy finder taking a list of strings and makes it searchable
    #  exa         : ls clone with cool features like --icons and --git
    #  hyperfine   : time
    #  jq          : commandline JSON processor
    #  ncdu        : NCurses Disk Usage
    #  procs       : modern ps clones
-   #  ripgrep     : rp = grep
+   #  ripgrep     : rg = grep
    #  sd          : find and replace
    #  tldr        : man
    #  tig         : git status
    #  timeshift   : backup
-   #  tokei       : show statistics about the code 
-   bat cmus cscope ctags elinks exa fd-find ffmpeg fish flac git-lfs htop hyperfine
+   #  tokei       : show statistics about the code
+   bat cmus cscope ctags elinks exa fd-find ffmpeg fish flac fx git-lfs htop hyperfine
    jq ncdu mc mosh neofetch octave procs sd tealdeer telnet tig timeshift tokei tmux
    vlc wget youtube-dl
 
