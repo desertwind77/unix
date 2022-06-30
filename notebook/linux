@@ -137,6 +137,26 @@ port protocol="udp" port="60001-60100"/>
       [systemd] systemctl list-unit-files --state=disabled/enabled
       [sysvinit] chkconfig --list
 
+> Enable mDNS
+# Configure firewall
+sudo firewall-cmd --permanent --add-service=mdns
+sudo firewall-cmd --reload
+
+# Configure systemd-resolved
+sudo mkdir -p /etc/systemd/resolved.conf.d
+sudo tee /etc/systemd/resolved.conf.d/00-custom.conf << EOF > /dev/null
+[Resolve]
+MulticastDNS=yes
+EOF
+sudo systemctl restart systemd-resolved.service
+
+# Configure NetworkManager
+sudo tee /etc/NetworkManager/conf.d/00-custom.conf << EOF > /dev/null
+[connection]
+connection.mdns=2
+EOF
+sudo systemctl restart NetworkManager.service
+
 > bash for loop
    1) bash
       for i in 1, 2, 3, 4, 5
