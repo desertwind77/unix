@@ -1,0 +1,93 @@
+# We need this guard; otherwise, scp will fail.
+if status is-interactive
+    #---------------------- Function ---------------------
+	function mkcd -d "Create a directory and set CWD"
+      command mkdir $argv
+      if test $status = 0
+         switch $argv[ ( count $argv ) ]
+            case '-*'
+            case '*'
+               cd $argv[ ( count $argv ) ]
+               return
+         end
+      end
+   end  # funciton
+
+   function notify -d "Beep when the last background job finish"
+      set -l job ( jobs -l -g )
+      # Disabling the following line; otherwise, this function will not work
+      #or begin; echo "There are no jobs" >&2; return 1; end
+
+      function _notify_job_$job --on-job-exit $job --inherit-variable job
+         # beep
+         echo -n \a
+         functions -e _notify_job_$job
+      end
+   end # function
+
+   function batdiff -d "Running git diff and display using bat"
+      git diff --name-only --diff-filter=d | xargs bat --diff
+   end
+
+   # TODO
+   # battail : tail -f /var/log/pacman.log | bat --paging=never -l log
+   # batshow : git show v0.6.0:src/main.rs | bat -l rs
+   # see https://github.com/sharkdp/bat
+
+   # For bash or zsh
+   # fd() {
+   #     preview="git diff $@ --color=always -- {-1}"
+   #     git diff $@ --name-only | fzf -m --ansi --preview $preview
+   # }
+   function gdiff -d ""
+      # Comparing your current branch to master
+      #     gdiff <branch>
+      # Comparing the changes between two commits
+      #     gdiff <commit1>..<commit2>
+      # Note that this works from the root of the git repository
+      git diff $argv --name-only | fzf -m -m --ansi --preview "git diff $argv --color=always -- {-1}"
+   end
+
+   #---------------------- home brew ---------------------
+   set -gx HOMEBREW_PREFIX "/opt/homebrew";
+   set -gx HOMEBREW_CELLAR "$HOMEBREW_PREFIX/Cellar";
+   set -gx PATH "$HOMEBREW_PREFIX/bin" "$HOMEBREW_PREFIX/sbin" "$PATH"
+   set -gx MANPATH "$HOMEBREW_PREFIX/manpages" $MANPATH;
+   set -gx INFOPATH "$HOMEBREW_PREFIX/share/info" $INFOPATH;
+
+   # -------------------- Python 3.10 --------------------
+   set -gx PYTHON_PATH "/Library/Frameworks/Python.framework/Versions/3.10"
+   set -gx PYTHON_PACKAGES_PATH "$PYTHON_PATH/lib/python3.10/site-packages"
+   set -gx PATH "$PYTHON_PATH/bin" "$PATH"
+
+   #---------------------- Aliases ---------------------
+   # fzf
+   alias fzf='fzf --preview "bat {-1} --color=always"'
+
+   # exa
+   alias ls='exa --icons'
+   alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
+   alias la='exa --icons -a'
+
+   # git
+   alias gts='git status'
+   alias gtl='git log'
+   alias gtpush='git push origin master'
+   alias gtpull='git pull origin master'
+
+   # tmux
+   alias tl='tmux ls'
+   alias ta='tmux attach -dt'
+
+   # misc
+   alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
+   alias reload='source ~/.config/fish/config.fish'
+   alias vi='vim'
+
+   #---------------------- Variables ---------------------
+   set -gx PATH "$HOME/Workspace/scripts" $PATH;
+   set -gx EDITOR vim
+   set -gx VISUAL vim
+
+   #neofetch
+end

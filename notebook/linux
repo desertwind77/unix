@@ -32,30 +32,7 @@
    gcc-g++ go httpd kernel-devel ncurses-compat-libs vim-enhanced vim-X11
    mariadb-server php-mysqlnd phyMyAdmin setroubleshoot
 
-   # For MacOS using brew
-   #  dos2unix    : to translate dos files to unix files
-   #  duf         : du
-   #  fd          : find
-   #  fluid-synth : to play midi e.g. from Frescobaldi
-   #  fzf         : fuzzy finder
-   #  grex        :
-   #  imageMagick : to convert image from one format to another
-   #  mas         : to query software update in Mac App Store
-   #  ranger      : file manager
-   #  xrdp        : remote desktop
-   #  zoxide
-   ack bat cscope dos2unix duf dust fd fluid-synth fzf grex gs imageMagick lynx mas
-   mc mosh procs ranger sshfs tmux trash-cli wget youtube-dl zoxide
-   # For YouCompleteMe on Mac
-   cmake go java mono nodejs python vim
-
-   # Python using pip3 install --user
-   #  iptcinfo and Pillow  : for my portMgr
-   #  enum34               : to enable enum support in python
-   #  eyeD3                : for reading/writing mp3 tag
-   #  mutagen              : for viewing and editing audio files tag
-   #  unidecode            : for translating unicdoe into ascii
-   iptcinfo Pillow Django enum34 eyeD3 mutagen unidecode pylint
+   # See how to install fish in the file mac_os
 
 > Inital config after installation
    - Set hostname
@@ -100,15 +77,6 @@ port protocol="udp" port="60001-60100"/>
       QUIT;
 
    - Disable SELINUX
-
-> Install omf (Oh My Fish!) : https://ostechnix.com/oh-fish-make-shell-beautiful/
-   curl -L https://get.oh-my.fish | fish
-   omf install powerline
-   pip3 install powerline-status
-
-   omf list
-   omf theme
-   omf theme agnoster
 
 > rust
    1) Install
