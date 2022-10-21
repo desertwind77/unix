@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 '''
-test
+vmgr : vim plugin manager for intsalling, updating
+and uninstalling vim plugins
 '''
 # Install, uninstall, or update vim plugins listed in vim_plugin.json
 
@@ -11,176 +12,197 @@ import os
 import shutil
 import subprocess
 import sys
+# pylint: disable=import-error
 from colorama import Fore, Style
 
-gitRep = '.git'
-pluginFileName = 'config/vmgr.json'
-pluginInfo = None
-pluginBase = None
-pluginDir = None
-force = False
+GIT_REPO = '.git'
+PLUGIN_FILENAME = 'config/vmgr.json'
+PLUGIN_INFO = None
+PLUGIN_BASE = None
+PLUGIN_DIR = None
+FORCE = False
 
-def loadConfig():
-   # __file__ stores the absolute path of the python script
-   # realpath() return the canonical path of the specified
-   # filename by eliminating any symbolic links encountered
-   # in the path
-   scriptPath = os.path.realpath( os.path.dirname( __file__ ) )
-   pluginPath = os.path.join( scriptPath, pluginFileName )
+def load_config():
+    '''Load the plugin configuration'''
 
-   # A formatted string literal or f-string is a string literal
-   # that is prefixed with 'f' or 'F'. These strings may contain
-   # replacement fields, which are expressions delimited by curly
-   # braces {}. While other string literals always have a constant
-   # value, formatted strings are really expressions evaluated
-   # at run time.
-   try:
-      pluginFile = open( pluginPath )
-   except FileNotFoundError:
-      # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
-      print( f'{pluginPath} not found' )
-      sys.exit( 1 )
+    # __file__ stores the absolute path of the python script
+    # realpath() return the canonical path of the specified
+    # filename by eliminating any symbolic links encountered
+    # in the path
+    script_path = os.path.realpath( os.path.dirname( __file__ ) )
+    plugin_path = os.path.join( script_path, PLUGIN_FILENAME )
 
-   print( f'Loading config file: {pluginPath}' )
-   global pluginInfo, pluginBase, pluginDir
-   pluginData = json.load( pluginFile )
-   pluginInfo = pluginData[ 'PluginInfo']
-   pluginBase = pluginData[ 'InstallInfo' ][ 'PluginBase' ] 
-   pluginDir = pluginData[ 'InstallInfo' ][ 'PluginDir' ] 
+    # A formatted string literal or f-string is a string literal
+    # that is prefixed with 'f' or 'F'. These strings may contain
+    # replacement fields, which are expressions delimited by curly
+    # braces {}. While other string literals always have a constant
+    # value, formatted strings are really expressions evaluated
+    # at run time.
 
-def installPlugin():
-   assert pluginBase and pluginDir 
+    plugin_info = plugin_base = plugin_dir = None
+    try:
+        with open( plugin_path, encoding="utf-8" ) as plugin_file:
+            print( f'Loading config file: {plugin_path}' )
+            plugin_data = json.load( plugin_file )
+            plugin_info = plugin_data[ 'PluginInfo']
+            plugin_base = plugin_data[ 'InstallInfo' ][ 'PluginBase' ]
+            plugin_dir = plugin_data[ 'InstallInfo' ][ 'PluginDir' ]
+    except FileNotFoundError:
+        # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
+        print( f'{plugin_path} not found' )
+        sys.exit( 1 )
 
-   fullPluginDir = os.path.join( pluginBase, pluginDir )
-   if not os.path.isdir( fullPluginDir ) or force:
-      # TODO : test this
-      if force:
-         shutil.rmtree( fullPluginDir )
-      # os.makedirs() create a directory recursively while os.mkdir()
-      # does not do recursively
-      os.makedirs( fullPluginDir )
+    return plugin_info, plugin_base, plugin_dir
 
-   currentDir = os.getcwd()
-   os.chdir( pluginBase )
+def install_plugin():
+    '''Install all the plugins'''
 
-   # Initalize git repository
-   if not os.path.isdir( gitRep ): 
-      cmd = [ 'git', 'init' ]
-      result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+    assert PLUGIN_BASE and PLUGIN_DIR
 
-   for name, data in pluginInfo.items():
-      desc = data[ 'Desc' ]
-      url = data[ 'URL' ]
-      enable = ( data[ 'Enable' ] == 'True' )
-      des = os.path.join( pluginDir, name )
+    full_plugin_dir = os.path.join( PLUGIN_BASE, PLUGIN_DIR )
+    if not os.path.isdir( full_plugin_dir ) or FORCE:
+        # pylint: disable=fixme
+        # TODO : test this
+        if FORCE:
+            shutil.rmtree( full_plugin_dir )
+        # os.makedirs() create a directory recursively while os.mkdir()
+        # does not do recursively
+        os.makedirs( full_plugin_dir )
 
-      if not enable or os.path.isdir( des ):
-         print( f'Skipped {name}' )
-         continue
+    current_dir = os.getcwd()
+    os.chdir( PLUGIN_BASE )
 
-      cmd = [ 'git', 'submodule', 'add', url, des ]
-      result = subprocess.run( cmd, stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL )
-      if result.returncode == 0:
-         print( f'Installed {name}' )
-      else:
-         print( f'Unable to install {name} with command:' )
-         print( f'   {cmd}' )
+    # Initalize git repository
+    if not os.path.isdir( GIT_REPO ):
+        cmd = [ 'git', 'init' ]
+        try:
+            subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+        except subprocess.CalledProcessError:
+            print( 'Unable to initialize the git repository' )
+            return
 
-   cmd = [ 'git', 'commit', '-m', 'Vim plugin installation' ]
-   subprocess.run( cmd )
+    # Install each plugin
+    for name, data in PLUGIN_INFO.items():
+        url = data[ 'URL' ]
+        enable = ( data[ 'Enable' ] == 'True' )
+        des = os.path.join( PLUGIN_DIR, name )
 
-   os.chdir( currentDir )
+        if not enable or os.path.isdir( des ):
+            print( f'Skipped {name}' )
+            continue
 
-def uninstallPlugin( name ):
-   assert pluginBase and pluginDir 
+        cmd = [ 'git', 'submodule', 'add', url, des ]
+        try:
+            subprocess.run( cmd, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, check=True )
+        except subprocess.CalledProcessError:
+            print( f'Unable to install {name} with command:' )
+            print( f'   {cmd}' )
+            continue
+        print( f'Installed {name}' )
 
-   currentDir = os.getcwd()
-   if not os.path.isdir( pluginBase ):
-      print( f'The directory {pluginBase} is not found' )
-      return
-   os.chdir( pluginBase )
+    cmd = [ 'git', 'commit', '-m', 'Vim plugin installation' ]
+    try:
+        subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+    except subprocess.CalledProcessError:
+        pass
 
-   des = os.path.join( pluginDir, name )
-   if not os.path.isdir( des ):
-      print( f'{name} is not installed' )
-      return
+    os.chdir( current_dir )
 
-   cmd = [ 'git', 'submodule', 'deinit', '--force', des ]
-   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
-   if result.returncode != 0:
-      print( f'Fatal error in uninstalling {name} (step1)' )
-      return
+def uninstall_plugin( name ):
+    '''Uninstall a specific plugin'''
 
-   cmd = [ 'git', 'rm', des ]
-   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
-   if result.returncode != 0:
-      print( f'Fatal error in uninstalling {name} (step2)' )
-      return
+    assert PLUGIN_BASE and PLUGIN_DIR
 
-   gitDes = os.path.join ( gitRep, 'modules', des )
-   shutil.rmtree( gitDes )
+    current_dir = os.getcwd()
+    if not os.path.isdir( PLUGIN_BASE ):
+        print( f'The directory {PLUGIN_BASE} is not found' )
+        return
+    os.chdir( PLUGIN_BASE )
 
-   cmd = [ 'git', 'commit', '-m', f'Removing {name}' ]
-   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
-   if result.returncode != 0:
-      print( f'Fatal error in uninstalling {name} (step3)' )
-      return
+    des = os.path.join( PLUGIN_DIR, name )
+    if not os.path.isdir( des ):
+        print( f'{name} is not installed' )
+        return
 
-   os.chdir( currentDir )
+    cmds = [
+            [ 'git', 'submodule', 'deinit', '--force', des ],
+            [ 'git', 'rm', des ],
+            [ 'git', 'commit', '-m', f'Removing {name}' ],
+    ]
 
-def updatePlugin():
-   assert pluginBase and pluginDir 
+    for cmd in cmds:
+        try:
+            subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+        except subprocess.CalledProcessError:
+            print( f'Fatal error in uninstalling {name}' )
+            print( f'   {cmd}' )
+            os.chdir( current_dir )
+            return
 
-   currentDir = os.getcwd()
-   if not os.path.isdir( pluginBase ):
-      print( f'The directory {pluginBase} is not found' )
-      return
-   os.chdir( pluginBase )
+    git_dest = os.path.join ( GIT_REPO, 'modules', des )
+    shutil.rmtree( git_dest )
 
-   now = datetime.now()
-   datetime_string = now.strftime( "%d/%m/%Y %H:%M:%S" )
+    os.chdir( current_dir )
 
-   # Running either of these commands
-   #     git submodule update --remote --merge
-   #     git submodule update --init --recursive
-   cmd = [ 'git', 'submodule', 'update', '--remote', '--merge' ]
-   try:
-      subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
-   except subprocess.CalledProcessError:
-      print( 'Fatal error in updating plugins (step1)' )
-      return
+def update_plugin():
+    '''Update all the plugins'''
 
-   # Intentionally, skip checking the return code because if return code is
-   # not 0 in case of no update. This is misleading.
-   cmd = [ 'git', 'commit', '-a', '-m',
-           f'"[{datetime_string}] Updating plugin"' ]
-   subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+    assert PLUGIN_BASE and PLUGIN_DIR
 
-   os.chdir( currentDir )
+    current_dir = os.getcwd()
+    if not os.path.isdir( PLUGIN_BASE ):
+        print( f'The directory {PLUGIN_BASE} is not found' )
+        return
+    os.chdir( PLUGIN_BASE )
+
+    now = datetime.now()
+    datetime_string = now.strftime( "%d/%m/%Y %H:%M:%S" )
+
+    # Running either of these commands
+    #     git submodule update --remote --merge
+    #     git submodule update --init --recursive
+    cmd = [ 'git', 'submodule', 'update', '--remote', '--merge' ]
+    try:
+        subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+    except subprocess.CalledProcessError:
+        print( 'Fatal error in updating plugins' )
+        os.chdir( current_dir )
+        return
+
+    cmd = [ 'git', 'commit', '-a', '-m',
+            f'"[{datetime_string}] Updating plugin"' ]
+    try:
+        subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+    except subprocess.CalledProcessError:
+        # Suppressing the exception on purpose because git commit may
+        # return a non-zero code when there is nothing to commit.
+        pass
+
+    os.chdir( current_dir )
 
 if __name__ == '__main__':
-   parser = argparse.ArgumentParser( description='vim plugin manager' )
-   subparser = parser.add_subparsers( dest='command' )
-   subparser.required = True
+    parser = argparse.ArgumentParser( description='vim plugin manager' )
+    subparser = parser.add_subparsers( dest='command' )
+    subparser.required = True
 
-   subparser.add_parser( 'install', help='Install all vim plugins' )
+    subparser.add_parser( 'install', help='Install all vim plugins' )
+    subparser.add_parser( 'update', help='update all vim plugins' )
 
-   uninstallParser = subparser.add_parser( 'uninstall',
-                                           help='uninstall vim plugin' )
-   uninstallParser.add_argument( 'name', action='store',
-                                 help='plugin to be uninstalled' )
+    uninstallParser = subparser.add_parser( 'uninstall',
+                                            help='uninstall vim plugin' )
+    uninstallParser.add_argument( 'name', action='store',
+                                  help='plugin to be uninstalled' )
 
-   subparser.add_parser( 'update', help='update all vim plugins' )
+    args = parser.parse_args()
 
-   args = parser.parse_args()
+    PLUGIN_INFO, PLUGIN_BASE, PLUGIN_DIR = load_config()
 
-   loadConfig()
-   if args.command == 'install':
-      installPlugin()
-   elif args.command == 'uninstall':
-      uninstallPlugin( args.name )
-   elif args.command == 'update':
-      updatePlugin()
+    if args.command == 'install':
+        install_plugin()
+    elif args.command == 'uninstall':
+        uninstall_plugin( args.name )
+    elif args.command == 'update':
+        update_plugin()
 
-   print( f'{Fore.GREEN}Success{Style.RESET_ALL}' ) 
+    print( f'{Fore.GREEN}Success{Style.RESET_ALL}' )
