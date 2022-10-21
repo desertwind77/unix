@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 gitRep = '.git'
-pluginFileName = 'config/vimManage.json'
+pluginFileName = 'config/vimManager.json'
 pluginInfo = None
 pluginBase = None
 pluginDir = None
