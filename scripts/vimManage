@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+# Install, uninstall, or update vim plugins listed in vim_plugin.json
+
+from datetime import datetime
+from colorama import Fore, Style
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+gitRep = '.git'
+pluginFileName = 'vim_plugin.json'
+pluginInfo = None
+pluginBase = None
+pluginDir = None
+force = False
+
+def loadConfig():
+   # __file__ stores the absolute path of the python script
+   # realpath() return the canonical path of the specified
+   # filename by eliminating any symbolic links encountered
+   # in the path
+   scriptPath = os.path.realpath( os.path.dirname( __file__ ) )
+   pluginPath = os.path.join( scriptPath, pluginFileName )
+
+   # A formatted string literal or f-string is a string literal
+   # that is prefixed with 'f' or 'F'. These strings may contain
+   # replacement fields, which are expressions delimited by curly
+   # braces {}. While other string literals always have a constant
+   # value, formatted strings are really expressions evaluated
+   # at run time.
+   try:
+      pluginFile = open( pluginPath )
+   except FileNotFoundError:
+      # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
+      print( f'{pluginPath} not found' )
+      sys.exit( 1 )
+
+   print( f'Loading config file: {pluginPath}' )
+   global pluginInfo, pluginBase, pluginDir
+   pluginData = json.load( pluginFile )
+   pluginInfo = pluginData[ 'PluginInfo']
+   pluginBase = pluginData[ 'InstallInfo' ][ 'PluginBase' ] 
+   pluginDir = pluginData[ 'InstallInfo' ][ 'PluginDir' ] 
+
+def installPlugin():
+   assert pluginBase and pluginDir 
+
+   fullPluginDir = os.path.join( pluginBase, pluginDir )
+   if not os.path.isdir( fullPluginDir ) or force:
+      # TODO : test this
+      if force:
+         shutil.rmtree( fullPluginDir )
+      # os.makedirs() create a directory recursively while os.mkdir()
+      # does not do recursively
+      os.makedirs( fullPluginDir )
+
+   currentDir = os.getcwd()
+   os.chdir( pluginBase )
+
+   # Initalize git repository
+   if not os.path.isdir( gitRep ): 
+      cmd = [ 'git', 'init' ]
+      result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+
+   for name, data in pluginInfo.items():
+      desc = data[ 'Desc' ]
+      url = data[ 'URL' ]
+      enable = ( data[ 'Enable' ] == 'True' )
+      des = os.path.join( pluginDir, name )
+
+      if not enable or os.path.isdir( des ):
+         print( f'Skipped {name}' )
+         continue
+
+      cmd = [ 'git', 'submodule', 'add', url, des ]
+      result = subprocess.run( cmd, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL )
+      if result.returncode == 0:
+         print( f'Installed {name}' )
+      else:
+         print( f'Unable to install {name} with command:' )
+         print( f'   {cmd}' )
+
+   cmd = [ 'git', 'commit', '-m', 'Vim plugin installation' ]
+   subprocess.run( cmd )
+
+   os.chdir( currentDir )
+
+def uninstallPlugin( name ):
+   assert pluginBase and pluginDir 
+
+   currentDir = os.getcwd()
+   if not os.path.isdir( pluginBase ):
+      print( f'The directory {pluginBase} is not found' )
+      return
+   os.chdir( pluginBase )
+
+   des = os.path.join( pluginDir, name )
+   if not os.path.isdir( des ):
+      print( f'{name} is not installed' )
+      return
+
+   cmd = [ 'git', 'submodule', 'deinit', '--force', des ]
+   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+   if result.returncode != 0:
+      print( f'Fatal error in uninstalling {name} (step1)' )
+      return
+
+   cmd = [ 'git', 'rm', des ]
+   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+   if result.returncode != 0:
+      print( f'Fatal error in uninstalling {name} (step2)' )
+      return
+
+   gitDes = os.path.join ( gitRep, 'modules', des )
+   shutil.rmtree( gitDes )
+
+   cmd = [ 'git', 'commit', '-m', f'Removing {name}' ]
+   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+   if result.returncode != 0:
+      print( f'Fatal error in uninstalling {name} (step3)' )
+      return
+
+   os.chdir( currentDir )
+
+def updatePlugin():
+   assert pluginBase and pluginDir 
+
+   currentDir = os.getcwd()
+   if not os.path.isdir( pluginBase ):
+      print( f'The directory {pluginBase} is not found' )
+      return
+   os.chdir( pluginBase )
+
+   now = datetime.now()
+   dateTimeString = now.strftime( "%d/%m/%Y %H:%M:%S" )
+
+   # Running either of these commands
+   #     git submodule update --remote --merge
+   #     git submodule update --init --recursive
+   cmd = [ 'git', 'submodule', 'update', '--remote', '--merge' ]
+   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
+   if result.returncode != 0:
+      print( f'Fatal error in updating plugins (step1)' )
+      return
+
+   # Intentionally, skip checking the return code because if return code is
+   # not 0 in case of no update. This is misleading.
+   cmd = [ 'git', 'commit', '-a', '-m',
+           f'"[{dateTimeString}] Updating plugin"' ]
+   subprocess.run( cmd, stdout=subprocess.DEVNULL )
+
+   os.chdir( currentDir )
+
+if __name__ == '__main__':
+   parser = argparse.ArgumentParser( description='vim plugin manager' )
+   subparser = parser.add_subparsers( dest='command' )
+   subparser.required = True
+
+   subparser.add_parser( 'install', help='Install all vim plugins' )
+
+   uninstallParser = subparser.add_parser( 'uninstall',
+                                           help='uninstall vim plugin' )
+   uninstallParser.add_argument( 'name', action='store',
+                                 help='plugin to be uninstalled' )
+
+   subparser.add_parser( 'update', help='update all vim plugins' )
+
+   args = parser.parse_args()
+
+   loadConfig()
+   if args.command == 'install':
+      installPlugin()
+   elif args.command == 'uninstall':
+      uninstallPlugin( args.name )
+   elif args.command == 'update':
+      updatePlugin()
+
+   print( f'{Fore.GREEN}Success{Style.RESET_ALL}' ) 
