@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
+'''
+test
+'''
 # Install, uninstall, or update vim plugins listed in vim_plugin.json
 
 from datetime import datetime
-from colorama import Fore, Style
 import argparse
 import json
 import os
 import shutil
 import subprocess
 import sys
+from colorama import Fore, Style
 
 gitRep = '.git'
 pluginFileName = 'config/vimManager.json'
@@ -136,22 +139,23 @@ def updatePlugin():
    os.chdir( pluginBase )
 
    now = datetime.now()
-   dateTimeString = now.strftime( "%d/%m/%Y %H:%M:%S" )
+   datetime_string = now.strftime( "%d/%m/%Y %H:%M:%S" )
 
    # Running either of these commands
    #     git submodule update --remote --merge
    #     git submodule update --init --recursive
    cmd = [ 'git', 'submodule', 'update', '--remote', '--merge' ]
-   result = subprocess.run( cmd, stdout=subprocess.DEVNULL )
-   if result.returncode != 0:
-      print( f'Fatal error in updating plugins (step1)' )
+   try:
+      subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+   except subprocess.CalledProcessError:
+      print( 'Fatal error in updating plugins (step1)' )
       return
 
    # Intentionally, skip checking the return code because if return code is
    # not 0 in case of no update. This is misleading.
    cmd = [ 'git', 'commit', '-a', '-m',
-           f'"[{dateTimeString}] Updating plugin"' ]
-   subprocess.run( cmd, stdout=subprocess.DEVNULL )
+           f'"[{datetime_string}] Updating plugin"' ]
+   subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
 
    os.chdir( currentDir )
 
