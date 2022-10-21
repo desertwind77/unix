@@ -1,5 +1,6 @@
 # This is git ignore file
 .gitignore
+.DS_Store
 .*.swp
 .*.swo
 *~
