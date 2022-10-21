@@ -14,7 +14,7 @@ import sys
 from colorama import Fore, Style
 
 gitRep = '.git'
-pluginFileName = 'config/vimManager.json'
+pluginFileName = 'config/vmgr.json'
 pluginInfo = None
 pluginBase = None
 pluginDir = None
