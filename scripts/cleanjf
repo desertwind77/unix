@@ -2,6 +2,10 @@
 '''
 Remove auto-created files.
 These files may make sense on one platform but not the others
+
+As of now, I don't see any need to have an option to support
+a user-specified config file. So I don't add this feature.
+If need be, we can add this in the future.
 '''
 
 import argparse
