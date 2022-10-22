@@ -14,13 +14,13 @@ import subprocess
 import sys
 # pylint: disable=import-error
 from colorama import Fore, Style
+from tabulate import tabulate
 
 GIT_REPO = '.git'
 PLUGIN_FILENAME = 'config/vmgr.json'
 PLUGIN_INFO = None
 PLUGIN_BASE = None
 PLUGIN_DIR = None
-FORCE = False
 
 def load_config():
     '''Load the plugin configuration'''
@@ -54,17 +54,15 @@ def load_config():
 
     return plugin_info, plugin_base, plugin_dir
 
-def install_plugin():
+def install_plugin( force=False):
     '''Install all the plugins'''
 
     assert PLUGIN_BASE and PLUGIN_DIR
 
     full_plugin_dir = os.path.join( PLUGIN_BASE, PLUGIN_DIR )
-    if not os.path.isdir( full_plugin_dir ) or FORCE:
-        # pylint: disable=fixme
-        # TODO : test this
-        if FORCE:
-            shutil.rmtree( full_plugin_dir )
+    if not os.path.isdir( full_plugin_dir ) or force:
+        if force:
+            shutil.rmtree( PLUGIN_BASE )
         # os.makedirs() create a directory recursively while os.mkdir()
         # does not do recursively
         os.makedirs( full_plugin_dir )
@@ -97,7 +95,8 @@ def install_plugin():
                             stderr=subprocess.DEVNULL, check=True )
         except subprocess.CalledProcessError:
             print( f'Unable to install {name} with command:' )
-            print( f'   {cmd}' )
+            print_cmd = ' '.join( cmd )
+            print( f'   {print_cmd}' )
             continue
         print( f'Installed {name}' )
 
@@ -181,28 +180,52 @@ def update_plugin():
 
     os.chdir( current_dir )
 
+def show_plugin():
+    '''Show all the plugins to be installed'''
+
+    assert PLUGIN_BASE and PLUGIN_DIR
+
+    tab_header = [ 'Plugin', 'Enable', 'Description' ]
+    tab_width = [ None, 6, 40 ]
+    tab_data = []
+    for name, data in PLUGIN_INFO.items():
+        desc = data[ 'Desc' ]
+        enable = ( data[ 'Enable' ] == 'True' )
+        tab_data.append( [ name, enable, desc ] )
+
+    print( tabulate( tab_data, headers=tab_header,tablefmt="rounded_grid",
+                     maxcolwidths=tab_width ) )
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='vim plugin manager' )
     subparser = parser.add_subparsers( dest='command' )
     subparser.required = True
 
-    subparser.add_parser( 'install', help='Install all vim plugins' )
+    subparser.add_parser( 'show', help='Show all vim plugins to be installed' )
+
+    install_parser= subparser.add_parser( 'install',
+                                          help='Install all vim plugins' )
+    install_parser.add_argument( '-f', '--force',
+                                 action='store_true', dest='force' )
+
     subparser.add_parser( 'update', help='update all vim plugins' )
 
-    uninstallParser = subparser.add_parser( 'uninstall',
-                                            help='uninstall vim plugin' )
-    uninstallParser.add_argument( 'name', action='store',
-                                  help='plugin to be uninstalled' )
+    uninstall_parser = subparser.add_parser( 'uninstall',
+                                             help='Uninstall vim plugin' )
+    uninstall_parser.add_argument( 'name', action='store',
+                                    help='plugin to be uninstalled' )
 
     args = parser.parse_args()
 
     PLUGIN_INFO, PLUGIN_BASE, PLUGIN_DIR = load_config()
 
     if args.command == 'install':
-        install_plugin()
+        install_plugin( args.force )
     elif args.command == 'uninstall':
         uninstall_plugin( args.name )
     elif args.command == 'update':
         update_plugin()
+    elif args.command == 'show':
+        show_plugin()
 
     print( f'{Fore.GREEN}Success{Style.RESET_ALL}' )
