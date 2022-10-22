@@ -22,7 +22,7 @@ PLUGIN_INFO = None
 PLUGIN_BASE = None
 PLUGIN_DIR = None
 
-def load_config():
+def load_config( verbose=False):
     '''Load the plugin configuration'''
 
     # __file__ stores the absolute path of the python script
@@ -42,7 +42,9 @@ def load_config():
     plugin_info = plugin_base = plugin_dir = None
     try:
         with open( plugin_path, encoding="utf-8" ) as plugin_file:
-            print( f'Loading config file: {plugin_path}' )
+            if verbose:
+                print( f'Loading config file: {plugin_path}' )
+
             plugin_data = json.load( plugin_file )
             plugin_info = plugin_data[ 'PluginInfo']
             plugin_base = plugin_data[ 'InstallInfo' ][ 'PluginBase' ]
@@ -198,6 +200,9 @@ def show_plugin():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='vim plugin manager' )
+    parser.add_argument( '-v', '--verbose', action='store_true', dest='verbose',
+                         help='Print log message' )
+
     subparser = parser.add_subparsers( dest='command' )
     subparser.required = True
 
@@ -217,7 +222,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    PLUGIN_INFO, PLUGIN_BASE, PLUGIN_DIR = load_config()
+    PLUGIN_INFO, PLUGIN_BASE, PLUGIN_DIR = load_config( verbose=args.verbose )
 
     if args.command == 'install':
         install_plugin( args.force )
