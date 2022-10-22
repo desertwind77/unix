@@ -9,6 +9,11 @@
          "URL" : "https://github.com/mileszs/ack.vim.git",
          "Enable" : "True"
       },
+      "base16-vim" : {
+         "Desc" : "Base16 colorschemes",
+         "URL" : "https://github.com/chriskempson/base16-vim",
+         "Enable" : "True"
+      },
       "canoline.vim" : {
          "Desc" : "Highlights the line of the cursor, only in the current window",
          "URL" : "https://github.com/miyakogi/conoline.vim",
@@ -33,12 +38,6 @@
          "Desc" : "Indent and syntax for HTML5",
          "URL" : "https://github.com/othree/html5.vim",
          "Enable" : "True"
-      },
-      "indentline" : {
-         "Desc" : "Show indent guide",
-         "URL" : "https://github.com/Yggdroot/indentLine.git",
-         "Enable" : "False",
-         "Comment" : "Replaced by vim-indent-guides"
       },
       "ListToggle" : {
          "Desc" : "Toggling the display of the quickfix list and the location-list",
@@ -70,6 +69,11 @@
          "URL" : "https://github.com/joshdick/onedark.vim",
          "Enable" : "True"
       },
+      "python-syntax" : {
+         "Desc" : "An enhanced version of the original Vim 6.1 Python syntax highlighting python.vim",
+         "URL" : "https://github.com/vim-python/python-syntax",
+         "Enable" : "True"
+      },
       "rainbow" : {
          "Desc" : "Show the open and close parenthesises in matching colors",
          "URL" : "https://github.com/luochen1990/rainbow.git",
@@ -94,6 +98,11 @@
          "Desc" : "A class outline viewer for Vim",
          "URL" : "https://github.com/preservim/tagbar.git",
          "Enable" : "True"
+      },
+      "unite.vim" : {
+         "Desc" : "Search and display information from arbitrary sources like files, buffers, recently used files or registers. You can run several pre-defined actions on a target displayed in the unite window",
+         "URL" : "https://github.com/Shougo/unite.vim",
+         "Enable" : "False"
       },
       "ultisnips" : {
          "Desc" : "Create snipplet automatically e.g. generating python class template",
@@ -130,10 +139,45 @@
          "URL" : "https://github.com/hail2u/vim-css3-syntax",
          "Enable" : "True"
       },
+      "vim-dispatch" : {
+         "Desc" : "Compile and show results in another windows",
+         "URL" : "https://github.com/tpope/vim-dispatch",
+         "Enable" : "False"
+      },
+      "vim-easymotion" : {
+         "Desc" : "A much simpler way to sue some motions",
+         "URL" : "https://github.com/easymotion/vim-easymotion",
+         "Enable" : "False"
+      },
+      "vim-expand-region" : {
+         "Desc" : "Visually select increasingly larger regions of text using the same key combination",
+         "URL" : "https://github.com/terryma/vim-expand-region",
+         "Enable" : "False"
+      },
+      "vim-fugitive" : {
+         "Desc" : "Git wrapper",
+         "URL" : "https://github.com/tpope/vim-fugitive",
+         "Enable" : "False"
+      },
+      "vim-go" : {
+         "Desc" : "Go language support",
+         "URL" : "https://github.com/fatih/vim-go",
+         "Enable" : "False"
+      },
       "vim-indent-guides" : {
          "Desc" : "Show indent guide",
          "URL" : "https://github.com/nathanaelkane/vim-indent-guides",
          "Enable" : "True"
+      },
+      "vim-javascript" : {
+         "Desc" : "JavaScript bundle for vim, this bundle provides syntax highlighting and improved indentation",
+         "URL" : "https://github.com/pangloss/vim-javascript",
+         "Enable" : "False"
+      },
+      "vim-jsx" : {
+         "Desc" : "React JSX syntax highlighting and indenting",
+         "URL" : "https://github.com/mxw/vim-jsx",
+         "Enable" : "Falses"
       },
       "vim-markdown" : {
          "Desc" : "Markdown vim mode",
@@ -145,10 +189,45 @@
          "URL" : "https://github.com/xolox/vim-misc",
          "Enable" : "True"
       },
+      "vim-notes" : {
+         "Desc" : "Note-taking in vim",
+         "URL" : "https://github.com/xolox/vim-notes",
+         "Enable" : "False"
+      },
+      "vim-pyref" : {
+         "Desc" : "Look up the python documentation for keywords and identifiers from internet",
+         "URL" : "https://github.com/xolox/vim-pyref",
+         "Enable" : "False"
+      },
+      "vim-python-pep8-indent" : {
+         "Desc" : "Change the python indentation behavior to comply with PEP8",
+         "URL" : "https://github.com/xolox/vim-pyref",
+         "Enable" : "False"
+      },
+      "vim-repeat" : {
+         "Desc" : "Enable repeating supported plugin maps with '.'",
+         "URL" : "https://github.com/tpope/vim-repeat",
+         "Enable" : "False"
+      },
       "vim-session" : {
          "Desc" : "Session management",
          "URL" : "https://github.com/xolox/vim-session",
          "Enable" : "True"
+      },
+      "vim-signature" : {
+         "Desc" : "Place, toggle, and display marks and navigate between them",
+         "URL" : "https://github.com/xolox/vim-session",
+         "Enable" : "False"
+      },
+      "vim-snippets" : {
+         "Desc" : "This repository contains snippets files for various programming languages.",
+         "URL" : "https://github.com/honza/vim-snippets",
+         "Enable" : "False"
+      },
+      "vim-speeddating" : {
+         "Desc" : "Increase and decrease date with C^x and C^a",
+         "URL" : "https://github.com/tpope/vim-speeddating",
+         "Enable" : "False"
       },
       "vim-startify" : {
          "Desc" : "A fancy start screen",
@@ -160,10 +239,25 @@
          "URL" : "https://github.com/tpope/vim-surround",
          "Enable" : "True"
       },
+      "vim-tmux-navigator" : {
+         "Desc" : "Move betweem vim and tmux panes",
+         "URL" : "https://github.com/christoomey/vim-tmux-navigator",
+         "Enable" : "False"
+      },
+      "vim-visual_multi" : {
+         "Desc" : "Multiple cursors",
+         "URL" : "https://github.com/terryma/vim-multiple-cursors",
+         "Enable" : "False"
+      },
       "vim-windowswap" : {
          "Desc" : "Swap a window's location",
          "URL" : "https://github.com/wesQ3/vim-windowswap",
          "Enable" : "True"
+      },
+      "vim-yaml" : {
+         "Desc" : "Simpler and faster syntax for Yaml",
+         "URL" : "https://github.com/wesQ3/vim-windowswap",
+         "Enable" : "False"
       },
       "YouCompleteMe" : {
          "Desc" : "Autocomplete for python",
