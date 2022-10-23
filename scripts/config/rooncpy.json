@@ -1,0 +1,6 @@
+{
+   "config" : {
+      "destination" : "/Volumes/Public/Music",
+      "targets" : [ "cd", "dsd", "flac", "mqa" ]
+   }
+}
