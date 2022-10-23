@@ -1,164 +1,207 @@
 #!/usr/bin/env python3
+'''
+Process credit card statements
+'''
+
 import argparse
 from collections import defaultdict
 import csv
 import json
 import os
-from pprint import pprint
 import re
 import sys
 
-configFileName = 'config/creditReport.json'
+CONFIG = 'config/creditreport.json'
 
-def loadConfig():
-   # Obtain the full path of the script from sys.argv[ 0 ]
-   # or __file__
-   command = sys.argv[ 0 ]
-   # Extract the directory from the fullpath
-   dirName = os.path.dirname( command )
-   # Resolve symbolic links if present
-   dirName = os.path.realpath( dirName )
-   defaultConfig = os.path.join( dirName, configFileName ) 
+def load_config():
+    '''Load the configuration'''
+    # Obtain the full path of the script from sys.argv[ 0 ]
+    # or __file__
+    command = sys.argv[ 0 ]
+    # Extract the directory from the fullpath
+    dir_name = os.path.dirname( command )
+    # Resolve symbolic links if present
+    dir_name = os.path.realpath( dir_name )
+    default_config = os.path.join( dir_name, CONFIG )
 
-   config = None
-   try:
-      with open( defaultConfig ) as f:
-          config = json.load( f )
-   except FileNotFoundError:
-     # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
-     print( f'{defaultConfig} not found' )
-     sys.exit( 1 )
+    config_data = None
+    try:
+        with open( default_config, encoding="utf-8" ) as file:
+            config_data = json.load( file )
+    except FileNotFoundError:
+        # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
+        print( f'{default_config} not found' )
+        sys.exit( 1 )
 
-   return config
+    return config_data
 
-def cleanupExpense( expenseDict, modifier=1 ):
-   expenseDict = dict( expenseDict )
-   for category, amount in expenseDict.items():
-      expenseDict[ category ] = modifier * round( amount, 2 )
-   return expenseDict
+def adjust_expense( expense_dict, modifier=1 ):
+    '''Adjust the expenses. This is because the expenses on some
+    credit cards are positive and the others negative.'''
+    expense_dict = dict( expense_dict )
+    for category, amount in expense_dict.items():
+        expense_dict[ category ] = modifier * round( amount, 2 )
+    return expense_dict
 
-def printDict( myDict ):
-   keys = sorted( myDict.keys() )
-   for key in keys:
-      print( "%s\t%.2f" % ( key, myDict[ key ] ) )
+def print_expense_dict( expense_dict ):
+    '''Print the dictionary'''
+    keys = sorted( expense_dict.keys() )
+    for key in keys:
+        print( f'{key}\t{expense_dict[ key ]:.2f}' )
 
-class CreditCardHandler( object ):
-    def __init__( self, name, config, statementFile ):
+class CreditCardHandler():
+    '''The card to represent each credit card statement'''
+
+    def __init__( self, name, config, statement_file ):
         self.name = name
         self.config = config
-        self.statementFile = statementFile
-        self.categoryConfig = self.config[ 'Category' ]
-        self.cardConfig = self.config[ "Credit Card" ][ self.name ]
+        self.statement_file = statement_file
+        self.card_config = self.config[ "Credit Card" ][ self.name ]
+        self.category_config = self.build_category_config()
 
-    def processTransaction( self ):
-        positiveAmount = self.cardConfig.get( 'Positive Amount', None ) 
-        fieldDesc = self.cardConfig[ 'Fields' ][ 'Description' ]
-        fieldAmount = self.cardConfig[ 'Fields' ][ 'Amount' ]
+    def build_category_config( self ):
+        '''Build a dictionary from 'expense' to category'''
+        config_data = self.config[ 'Category' ]
+        category_dict = {}
 
-        def isKnownCategory( transaction ):
-            knownCategory = None
+        for category, expenses in config_data.items():
+            if category in [ 'Comment' ]:
+                continue
 
-            for vendor, category in self.categoryConfig.items():
+            for expense in expenses:
+                category_dict[ expense ] = category
+
+        return category_dict
+
+    def process_transaction( self ):
+        '''Process all transactions on this card'''
+        field_desc = self.card_config[ 'Fields' ][ 'Description' ]
+        field_amount = self.card_config[ 'Fields' ][ 'Amount' ]
+
+        def is_known_category( transaction ):
+            known_category = None
+
+            for vendor, category in self.category_config.items():
                 if re.search( vendor.lower(), transaction ):
-                    knownCategory = category
+                    known_category = category
                     break
 
-            return knownCategory
+            return known_category
 
-        expenseDict = defaultdict( float )
-        unknownVendors = []
-        miscList = []
+        expense_dict = defaultdict( float )
+        unknown_vendors = []
+        misc_list = []
 
-        with open( self.statementFile, 'rt' ) as f:
-            reader = csv.reader( f )
+        with open( self.statement_file, 'rt', encoding="utf-8" ) as file:
+            reader = csv.reader( file )
 
-            skipHeader = True
+            skip_header = True
             for row in reader:
-                if skipHeader:
-                    skipHeader = False
+                if skip_header:
+                    skip_header = False
                     continue
 
-                transaction = row[ fieldDesc ].lower()
-                amount = float( row[ fieldAmount ] )
-                category = isKnownCategory( transaction )
+                transaction = row[ field_desc ].lower()
+                amount = float( row[ field_amount ] )
+                category = is_known_category( transaction )
                 if category == 'Ignore':
                     continue
                 if category == 'Misc':
-                    miscList.append( row )
+                    misc_list.append( row )
                 if category:
-                    # To print 'Food'
-                    #if category == 'Food':
-                    #    print( row )
-                    expenseDict[ category ] += amount 
+                    # To print a category for debugging e.g. 'Food'
+                    # if category == 'Health':
+                    #     print( row )
+                    expense_dict[ category ] += amount
                 else:
-                    unknownVendors.append( row )
+                    unknown_vendors.append( row )
 
-        # Clean up
-        modifier = 1 if not positiveAmount else -1
-        expenseDict = cleanupExpense( expenseDict, modifier )
+        # The expense on this card is positive. Let's make them negative.
+        if self.card_config.get( 'Positive Amount', None ):
+            expense_dict = adjust_expense( expense_dict, -1 )
 
-        return expenseDict, unknownVendors, miscList
+        return expense_dict, unknown_vendors, misc_list
+
+def process_statements( config, cards ):
+    '''Process all card statements'''
+
+    has_unknown_entries = False
+    all_expenses = []
+    all_misc_expenses = []
+    # Process each credit card statement
+    #   expenses = a dictionary of category to expense
+    #   for example:
+    #       food    1000
+    #       grocery 2000
+    #
+    #   mis_list = a list of miscellenous expenses
+    for card in cards:
+        expenses, unknowns, misc_list = card.process_transaction()
+        if unknowns:
+            has_unknown_entries = True
+            if unknowns:
+                print( f'Unknown transaction in {card.statement_file}' )
+            for row in unknowns:
+                print( row )
+            print()
+        else:
+            all_expenses.append( expenses )
+            all_misc_expenses += misc_list
+
+    # If there are any expense of unknown categories, let's exit
+    # and resolve the unknown transactions first. Then we can re-try.
+    if has_unknown_entries:
+        sys.exit( 1 )
+
+    # Combine the expenses of the same category
+    all_categories = []
+    for category, _ in config[ 'Category' ].items():
+        if category in [ 'Comment', 'Ignore' ]:
+            continue
+        all_categories.append( category )
+
+    expense_summary = defaultdict( float )
+    for category in all_categories:
+        total = 0
+        for expense in all_expenses:
+            total += expense.get( category, 0 )
+        expense_summary[ category ] = total
+    expense_summary = adjust_expense( expense_summary )
+
+    print( 'Summary:' )
+    print_expense_dict( expense_summary )
+
+    print( '\nMiscellenous:' )
+    for row in all_misc_expenses:
+        print( row )
 
 def main():
-   parser = argparse.ArgumentParser( description='Credit Card statement processing' )
-   parser.add_argument( '-a', '--amex', action='store', dest='amex',
-                        help='American Express statement' )
-   parser.add_argument( '-f', '--freedom', action='store', dest='freedom', 
-                        help='Chase Freedom statement' )
-   parser.add_argument( '-s', '--sapphire', action='store', dest='sapphire', 
-                        help='Chase Sapphire statement' )
-   args = parser.parse_args() 
+    '''The main function'''
+    parser = argparse.ArgumentParser(
+            description='Credit Card statement processing' )
+    parser.add_argument( '-a', '--amex', action='store', dest='amex',
+                         help='American Express statement' )
+    parser.add_argument( '-f', '--freedom', action='store', dest='freedom',
+                         help='Chase Freedom statement' )
+    parser.add_argument( '-s', '--sapphire', action='store', dest='sapphire',
+                         help='Chase Sapphire statement' )
+    args = parser.parse_args()
 
-   config = loadConfig()
+    config = load_config()
 
-   cards = []
-   if args.amex:
-      cards.append( CreditCardHandler( 'Amex', config, args.amex ) )
-   if args.freedom:
-      cards.append( CreditCardHandler( 'Freedom', config, args.freedom ) )
-   if args.sapphire:
-      cards.append( CreditCardHandler( 'Sapphire', config, args.sapphire ) )
-   if not cards:
-      parser.print_help()
-      return
+    cards = []
+    if args.amex:
+        cards.append( CreditCardHandler( 'Amex', config, args.amex ) )
+    if args.freedom:
+        cards.append( CreditCardHandler( 'Freedom', config, args.freedom ) )
+    if args.sapphire:
+        cards.append( CreditCardHandler( 'Sapphire',
+                                         config, args.sapphire ) )
+    if not cards:
+        parser.print_help()
+        return
 
-   hasUnknown = False
-   allExpenses = []
-   allMisc = []
-   for card in cards:
-      expenses, unknowns, miscList = card.processTransaction()
-      if unknowns:
-         hasUnknown = True
-         for row in unknowns:
-             print( 'Unknown transaction in %s' % card.statementFile )
-             print( row )
-         print()
-      else:
-         allExpenses.append( expenses )
-         allMisc += miscList
-
-   if hasUnknown:
-      # Let's exit, resolve the unknown transactions, and then try again.
-      sys.exit()
-
-   allCategories = []
-   for expense in allExpenses:
-      allCategories += expense.keys()
-
-   expenseSummary = defaultdict( float )
-   for category in allCategories:
-      total = 0
-      for expense in allExpenses:
-         total += expense.get( category, 0 )
-      expenseSummary[ category ] = total
-   expenseSummary = cleanupExpense( expenseSummary )
-
-   print( 'Summary:' )
-   printDict( expenseSummary )
-
-   print( '\nMiscellenous:' )
-   for row in allMisc:
-      print( row )
+    process_statements( config, cards )
 
 if __name__ == "__main__":
-   main()
+    main()
