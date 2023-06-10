@@ -255,7 +255,7 @@ class Portfolio:
             '''Get the destination filename from the source filename'''
             if basename is not None and index is not None:
                 _, ext = os.path.splitext( src )
-                return f'{basename} {index}{ext}'
+                return f'{basename} {index:03d}{ext}'
             return src
 
         commands = []
@@ -288,7 +288,7 @@ def process_copy_command( commands, dry_run ):
     '''Execute all copy commands'''
     size = len( commands )
     for count, command in enumerate( commands ):
-        print( f'{count + 1}/{size} {command}' )
+        print( f'{count + 1}/{size} {command}', flush=True )
         if not dry_run:
             shutil.copy( command.src, command.dst )
 
@@ -323,7 +323,7 @@ def main():
             commands += portfolio.process( next_index )
 
         process_copy_command( commands, arguments.dry_run )
-        if not arguments.keep_source:
+        if not arguments.dry_run and not arguments.keep_source:
             move_source_folders( config, arguments.folder_list )
     except ( FileNotFoundError,
              DirectoryNotFound,
