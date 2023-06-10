@@ -361,10 +361,10 @@ set pastetoggle=<F2>
 augroup vimrc
    autocmd!
 augroup END
-autocmd vimrc FileType python
-         \ setlocal expandtab |
-         \ setlocal tabstop=3 |
-         \ setlocal shiftwidth=3 |
-         \ setlocal softtabstop=3 |
-         \ setlocal shiftwidth=3 |
-         \ setlocal tw=85 |
+"autocmd vimrc FileType python
+"         \ setlocal expandtab |
+"         \ setlocal tabstop=3 |
+"         \ setlocal shiftwidth=3 |
+"         \ setlocal softtabstop=3 |
+"         \ setlocal shiftwidth=3 |
+"         \ setlocal tw=85 |
