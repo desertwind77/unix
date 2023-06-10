@@ -1,0 +1,169 @@
+{
+   "config" : {
+      "SourceSubfolders" : [ "Full", "PSD", "Web" ],
+      "TaggedSubfolder" : "Web",
+      "ProcessedLocation" : "/Volumes/G-RAID/Photo/Processed",
+      "Destinations" : {
+         "GoogleDrive" : "/Users/athichart/Google Drive/My Drive/Portfolio",
+         "Portfolio" : "/Volumes/G-RAID/Photo/Portfolio",
+         "PhotoFrameFamily" : "/Volumes/G-RAID/Photo/Photo Frame/Family",
+         "PhotoFramePortfolio" : "/Volumes/G-RAID/Photo/Photo Frame/Portfolio"
+      },
+      "Portfolio" : {
+         "Abstract" : {
+            "baseName" : "Abstract",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Astrophotography" : {
+            "baseName" : "Astrophotography",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Black And White" : {
+            "baseName" : "Black And White",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Bon Appetit" : {
+            "Destinations" : {
+               "Portfolio" : [ "Full", "Web" ],
+               "GoogleDrive" : "Web"
+            }
+         },
+         "Buddha" : {
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Digital Painting" : {
+            "baseName" : "Digital Painting",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web"
+            }
+         },
+         "Infrared" : {
+            "baseName" : "Infrared",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Landscape" : {
+            "baseName" : "Landscape",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "My Family" : {
+            "baseName" : "Family",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFrameFamily" : "Web"
+            }
+         },
+         "My Friends" : {
+            "baseName" : "Friends",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web"
+            }
+         },
+         "My Love" : {
+            "baseName" : "My Love",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFrameFamily" : "Web"
+            }
+         },
+         "Myself" : {
+            "baseName" : "Myself",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Nature" : {
+            "baseName" : "Nature",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Panorama" : {
+            "baseName" : "Panorama",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Portrait" : {
+            "baseName" : "Portrait",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web"
+            }
+         },
+         "Random Things Around Me" : {
+            "baseName" : "Misc",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "San Francisco" : {
+            "baseName" : "San Francisco",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Thailand" : {
+            "baseName" : "Thailand",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Travel" : {
+            "baseName" : "Travel",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         },
+         "Wild Life" : {
+            "baseName" : "Wild Life",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web",
+               "PhotoFramePortfolio" : "Web"
+            }
+         }
+      }
+   }
+}
