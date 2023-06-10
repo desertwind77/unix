@@ -63,7 +63,7 @@ def sanity_check( config_data ):
             print( f'{cur_dir} not found' )
             sys.exit( 1 )
 
-def copy_files( src, dst, prefix=None, verbose=False ):
+def copy_files( src, dst, prefix=None, verbose=False, dry_run=False ):
     '''Copy src to dst'''
     real_src = os.path.join( prefix, src ) if prefix else src
     if not os.path.isdir( real_src ):
@@ -74,7 +74,8 @@ def copy_files( src, dst, prefix=None, verbose=False ):
         sys.exit( 1 )
 
     # We expect the source to be in the format "Artist - Album"
-    obj = re.match( '(.*) - (.*)', src )
+    # Note that we use (.*?) to force non-greedy match the artist.
+    obj = re.match( r'(.*?) - (.*)', src )
     if not obj:
         print( f'Unable to recognize the format of {src}' )
         sys.exit( 1 )
@@ -91,12 +92,13 @@ def copy_files( src, dst, prefix=None, verbose=False ):
         final_target = os.path.join( dst, initial, artist, src )
 
     try:
-        shutil.copytree( real_src, final_target )
+        if verbose or dry_run:
+            print( f'Copying {final_target}' )
+
+        if not dry_run:
+            shutil.copytree( real_src, final_target )
     except FileExistsError:
-        print( f'Skipped {final_target}' )
-    else:
-        if verbose:
-            print( f'Copied {final_target}' )
+        print( f'Skipped {final_target}', file=sys.stderr )
 
 def main():
     '''The main function'''
@@ -105,6 +107,8 @@ def main():
     parser.add_argument( '-t', '--target', action='store', dest='target',
                          default='flac',
                          help='Target directory (cd, dsd, flac, mqa)' )
+    parser.add_argument( '-D', '--dry_run', action='store_true', dest='dry_run',
+                         help='Dry run' )
     parser.add_argument( '-d', '--dir', action='store_true', dest='dir',
                          help='Copy each folder in the source instead' )
     parser.add_argument( '-v', '--verbose', action='store_true',
@@ -133,13 +137,15 @@ def main():
             sys.exit( 1 )
 
         prefix = args.sources[ 0 ]
-        for folder in os.listdir( prefix ):
+        for folder in sorted( os.listdir( prefix ) ):
             if folder in SKIPLIST:
                 continue
-            copy_files( folder, dst, prefix=prefix, verbose=args.verbose )
+            copy_files( folder, dst, prefix=prefix, verbose=args.verbose,
+                        dry_run=args.dry_run )
     else:
-        for src in args.sources:
-            copy_files( src, dst, verbose=args.verbose )
+        for src in sorted( args.sources ):
+            copy_files( src, dst, verbose=args.verbose,
+                        dry_run=args.dry_run )
 
 if __name__ == '__main__':
     main()
