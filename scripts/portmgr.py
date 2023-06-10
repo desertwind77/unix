@@ -16,7 +16,7 @@ import iptcinfo3
 # pylint: disable=import-error
 from PIL import Image
 
-CONFIG = 'config/portMgr.json'
+CONFIG = 'config/portmgr.json'
 
 class DirectoryNotFound( Exception ):
     """Raised when a folder is not found"""
