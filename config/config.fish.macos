@@ -13,6 +13,15 @@ if status is-interactive
       end
    end  # funciton
 
+   function cprint -d "Print a source code file in pdf"
+      for src in $argv
+         echo $src
+         a2ps --columns=1 --portrait --media=Letter --no-header --borders=0 -o $src.ps $src
+         ps2pdf $src.ps $src.pdf
+         rm $src.ps
+      end
+   end
+
    function notify -d "Beep when the last background job finish"
       set -l job ( jobs -l -g )
       # Disabling the following line; otherwise, this function will not work
@@ -58,7 +67,8 @@ if status is-interactive
    # -------------------- Python 3.10 --------------------
    set -gx PYTHON_PATH "/Library/Frameworks/Python.framework/Versions/3.10"
    set -gx PYTHON_PACKAGES_PATH "$PYTHON_PATH/lib/python3.10/site-packages"
-   set -gx PATH "$PYTHON_PATH/bin" "$PATH"
+   # PATH is already set. So the following is not needed.
+   # set -gx PATH "$PYTHON_PATH/bin" "$PATH"
 
    #---------------------- Aliases ---------------------
    # fzf
@@ -83,6 +93,7 @@ if status is-interactive
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
    alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
+   alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
 
    #---------------------- Variables ---------------------
    set -gx PATH "$HOME/Workspace/scripts" $PATH;
