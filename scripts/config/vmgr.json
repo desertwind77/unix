@@ -262,7 +262,7 @@
       "YouCompleteMe" : {
          "Desc" : "Autocomplete for python",
          "URL" : "https://github.com/ycm-core/YouCompleteMe",
-         "Enable" : "False",
+         "Enable" : "True",
          "Comment" : "Need to spend time on this"
       }
    }

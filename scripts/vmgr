@@ -4,6 +4,7 @@ vmgr : vim plugin manager for intsalling, updating
 and uninstalling vim plugins
 '''
 # Install, uninstall, or update vim plugins listed in vim_plugin.json
+# This program must be running outside the .vim direcotry.
 
 from datetime import datetime
 import argparse
