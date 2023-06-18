@@ -18,6 +18,14 @@ from PIL import Image
 
 CONFIG = 'config/portmgr.json'
 
+class SourceFileNotFound( Exception ):
+    """Raised when a source file is missing from one of the config[ 'SourceSubfolders' ]"""
+    def __init__( self, location, src_file ):
+        self.location = location
+        self.src_file = src_file
+        message = f'{self.location} is missing from {self.src_file}'
+        super().__init__( message )
+
 class DirectoryNotFound( Exception ):
     """Raised when a folder is not found"""
     def __init__( self, folder ):
@@ -255,7 +263,7 @@ class Portfolio:
             '''Get the destination filename from the source filename'''
             if basename is not None and index is not None:
                 _, ext = os.path.splitext( src )
-                return f'{basename} {index:03d}{ext}'
+                return f'{basename} {index:04d}{ext}'
             return src
 
         commands = []
@@ -271,7 +279,9 @@ class Portfolio:
                         self.config[ "Portfolio" ][ keyword ][ "Destinations" ].items():
                     if isinstance ( locations, list ):
                         for location in locations:
-                            src = src_file[ location ]
+                            src = src_file.get( location, None )
+                            if not src:
+                                raise SourceFileNotFound( location, src_file )
                             dst_filename = get_dst_filename( src, basename, index )
                             dst = os.path.join( location_dict[ destination ], keyword,
                                                 location, dst_filename )
