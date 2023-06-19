@@ -37,7 +37,12 @@
    - Calibrate black line and white line using the line-follower-calibration script
       + Need to modify the port in the Python script to AD1
 
-> Increase swap space
+> Install OpenCV (new)
+   https://raspberrypi-guide.github.io/programming/install-opencv
+   sudo apt-get install build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfontconfig1-dev libcairo2-dev libgdk-pixbuf2.0-dev libpango1.0-dev libgtk2.0-dev libgtk-3-dev libatlas-base-dev gfortran libhdf5-dev libhdf5-serial-dev libhdf5-103 python3-pyqt5 python3-dev -y
+   sudo apt-get install python-opencv
+
+> Increase swap space (for installing OpenCV the old way)
    - Temporarily stop swap
       sudo dphys-swapfile swapoff
    - Modify the size of the swap
@@ -46,26 +51,6 @@
       sudo dphys-swapfile setup
    - Start swap
       sudo dphys-swapfile swapon
-
-> Install OpenCV
-   # Note we need to increase the swap size on RP3B+ to 2048 and not to use make -j 4
-   # otherwise, RP3B+ wil run out of memory.
-   sudo apt-get install cmake
-   sudo apt-get install libjpeg-dev libpng-dev libtiff-dev
-   sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-   sudo apt-get install libxvidcore-dev libx264-dev
-   sudo apt-get install 'libgtk-3-dev libcanberra-gtk*'
-   sudo apt-get install libatlas-base-dev gfortran
-   mkdir opencv
-   cd opencv
-   git clone https://github.com/opencv/opencv.git
-   git clone https://github.com/opencv/opencv_contrib.git
-   cd opencv
-   mkdir build
-   cd build
-   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=/home/pi/workspace/opencv/opencv_contrib/modules ..
-   make
-   sudo make install
 
 > Trick
    - Detect I2C devices
@@ -89,3 +74,25 @@
       sudo umount /dev/sdb1
       sudo dd bs=4M if=pi.img of=/dev/disk4
       sudo sync
+
+--------------------------- Obsolete ---------------------------
+
+> Install OpenCV
+   # Note we need to increase the swap size on RP3B+ to 2048 and not to use make -j 4
+   # otherwise, RP3B+ wil run out of memory.
+   sudo apt-get install cmake
+   sudo apt-get install libjpeg-dev libpng-dev libtiff-dev
+   sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+   sudo apt-get install libxvidcore-dev libx264-dev
+   sudo apt-get install 'libgtk-3-dev libcanberra-gtk*'
+   sudo apt-get install libatlas-base-dev gfortran
+   mkdir opencv
+   cd opencv
+   git clone https://github.com/opencv/opencv.git
+   git clone https://github.com/opencv/opencv_contrib.git
+   cd opencv
+   mkdir build
+   cd build
+   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=/home/pi/workspace/opencv/opencv_contrib/modules ..
+   make
+   sudo make install
