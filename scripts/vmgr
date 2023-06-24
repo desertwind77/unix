@@ -1,80 +1,52 @@
 #!/usr/bin/env python3
 '''
-vmgr : vim plugin manager for intsalling, updating
-and uninstalling vim plugins
-'''
-# Install, uninstall, or update vim plugins listed in vim_plugin.json
-# This program must be running outside the .vim direcotry.
+vmgr : intsall, update, or uninstall vim plugins
 
+This script must be running outside the .vim directory.
+'''
 from datetime import datetime
 import argparse
-import json
 import os
 import shutil
 import subprocess
-import sys
 # pylint: disable=import-error
 from colorama import Fore, Style
 from tabulate import tabulate
+from genutils import load_config, check_if_folder_exists
 
-GIT_REPO = '.git'
-PLUGIN_FILENAME = 'config/vmgr.json'
-PLUGIN_INFO = None
-PLUGIN_BASE = None
-PLUGIN_DIR = None
+CONFIG_FILENAME = 'config/vmgr.json'
 
-def load_config( verbose=False):
+class PluginConfigInfo:
+    '''Information about vim plugins from the config'''
+    def __init__( self, plugins, vim_dir, plugin_dir, git_repo ):
+        self.plugins = plugins
+        self.vim_dir = vim_dir
+        self.plugin_dir = plugin_dir
+        self.git_repo = git_repo
+
+def load_vmgr_config( filename, verbose=False):
     '''Load the plugin configuration'''
+    config = load_config( filename, verbose=verbose )
+    plugins = config[ 'Plugins']
+    vim_dir = config[ 'InstallInfo' ][ 'VimDir' ]
+    plugin_dir = config[ 'InstallInfo' ][ 'PluginDir' ]
+    git_repo = config[ 'InstallInfo' ][ 'GitRepo' ]
+    return PluginConfigInfo( plugins, vim_dir, plugin_dir, git_repo )
 
-    # __file__ stores the absolute path of the python script
-    # realpath() return the canonical path of the specified
-    # filename by eliminating any symbolic links encountered
-    # in the path
-    script_path = os.path.realpath( os.path.dirname( __file__ ) )
-    plugin_path = os.path.join( script_path, PLUGIN_FILENAME )
-
-    # A formatted string literal or f-string is a string literal
-    # that is prefixed with 'f' or 'F'. These strings may contain
-    # replacement fields, which are expressions delimited by curly
-    # braces {}. While other string literals always have a constant
-    # value, formatted strings are really expressions evaluated
-    # at run time.
-
-    plugin_info = plugin_base = plugin_dir = None
-    try:
-        with open( plugin_path, encoding="utf-8" ) as plugin_file:
-            if verbose:
-                print( f'Loading config file: {plugin_path}' )
-
-            plugin_data = json.load( plugin_file )
-            plugin_info = plugin_data[ 'PluginInfo']
-            plugin_base = plugin_data[ 'InstallInfo' ][ 'PluginBase' ]
-            plugin_dir = plugin_data[ 'InstallInfo' ][ 'PluginDir' ]
-    except FileNotFoundError:
-        # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
-        print( f'{plugin_path} not found' )
-        sys.exit( 1 )
-
-    return plugin_info, plugin_base, plugin_dir
-
-def install_plugin( force=False):
+def install_plugin( pinfo, force=False):
     '''Install all the plugins'''
-
-    assert PLUGIN_BASE and PLUGIN_DIR
-
-    full_plugin_dir = os.path.join( PLUGIN_BASE, PLUGIN_DIR )
+    full_plugin_dir = os.path.join( pinfo.vim_dir, pinfo.plugin_dir )
     if not os.path.isdir( full_plugin_dir ) or force:
         if force:
-            shutil.rmtree( PLUGIN_BASE )
+            shutil.rmtree( pinfo.vim_dir )
         # os.makedirs() create a directory recursively while os.mkdir()
         # does not do recursively
         os.makedirs( full_plugin_dir )
-
     current_dir = os.getcwd()
-    os.chdir( PLUGIN_BASE )
+    os.chdir( pinfo.vim_dir )
 
     # Initalize git repository
-    if not os.path.isdir( GIT_REPO ):
+    if not os.path.isdir( pinfo.git_repo ):
         cmd = [ 'git', 'init' ]
         try:
             subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
@@ -83,10 +55,10 @@ def install_plugin( force=False):
             return
 
     # Install each plugin
-    for name, data in PLUGIN_INFO.items():
+    for name, data in pinfo.plugins.items():
         url = data[ 'URL' ]
         enable = ( data[ 'Enable' ] == 'True' )
-        des = os.path.join( PLUGIN_DIR, name )
+        des = os.path.join( pinfo.plugin_dir, name )
 
         if not enable or os.path.isdir( des ):
             print( f'Skipped {name}' )
@@ -106,26 +78,19 @@ def install_plugin( force=False):
     cmd = [ 'git', 'commit', '-m', 'Vim plugin installation' ]
     try:
         subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
-    except subprocess.CalledProcessError:
-        pass
+    except subprocess.CalledProcessError as exception:
+        print( exception )
 
     os.chdir( current_dir )
 
-def uninstall_plugin( name ):
+def uninstall_plugin( pinfo, name ):
     '''Uninstall a specific plugin'''
-
-    assert PLUGIN_BASE and PLUGIN_DIR
+    check_if_folder_exists( pinfo.vim_dir )
+    check_if_folder_exists( os.path.join( pinfo.vim_dir, pinfo.plugin_dir, name ) )
 
     current_dir = os.getcwd()
-    if not os.path.isdir( PLUGIN_BASE ):
-        print( f'The directory {PLUGIN_BASE} is not found' )
-        return
-    os.chdir( PLUGIN_BASE )
-
-    des = os.path.join( PLUGIN_DIR, name )
-    if not os.path.isdir( des ):
-        print( f'{name} is not installed' )
-        return
+    os.chdir( pinfo.vim_dir )
+    des = os.path.join( pinfo.plugin_dir, name )
 
     cmds = [
             [ 'git', 'submodule', 'deinit', '--force', des ],
@@ -142,21 +107,16 @@ def uninstall_plugin( name ):
             os.chdir( current_dir )
             return
 
-    git_dest = os.path.join ( GIT_REPO, 'modules', des )
+    git_dest = os.path.join ( pinfo.git_repo, 'modules', des )
     shutil.rmtree( git_dest )
 
     os.chdir( current_dir )
 
-def update_plugin():
+def update_plugin( pinfo ):
     '''Update all the plugins'''
-
-    assert PLUGIN_BASE and PLUGIN_DIR
-
+    check_if_folder_exists( pinfo.vim_dir )
     current_dir = os.getcwd()
-    if not os.path.isdir( PLUGIN_BASE ):
-        print( f'The directory {PLUGIN_BASE} is not found' )
-        return
-    os.chdir( PLUGIN_BASE )
+    os.chdir( pinfo.vim_dir )
 
     now = datetime.now()
     datetime_string = now.strftime( "%d/%m/%Y %H:%M:%S" )
@@ -179,19 +139,14 @@ def update_plugin():
     except subprocess.CalledProcessError:
         # Suppressing the exception on purpose because git commit may
         # return a non-zero code when there is nothing to commit.
-        pass
+        os.chdir( current_dir )
 
-    os.chdir( current_dir )
-
-def show_plugin():
+def show_plugin( pinfo ):
     '''Show all the plugins to be installed'''
-
-    assert PLUGIN_BASE and PLUGIN_DIR
-
     tab_header = [ 'Plugin', 'Enable', 'Description' ]
     tab_width = [ None, 6, 40 ]
     tab_data = []
-    for name, data in PLUGIN_INFO.items():
+    for name, data in pinfo.plugins.items():
         desc = data[ 'Desc' ]
         enable = ( data[ 'Enable' ] == 'True' )
         tab_data.append( [ name, enable, desc ] )
@@ -199,7 +154,8 @@ def show_plugin():
     print( tabulate( tab_data, headers=tab_header,tablefmt="rounded_grid",
                      maxcolwidths=tab_width ) )
 
-if __name__ == '__main__':
+def parse_argv():
+    '''Parse the command line arguments'''
     parser = argparse.ArgumentParser( description='vim plugin manager' )
     parser.add_argument( '-v', '--verbose', action='store_true', dest='verbose',
                          help='Print log message' )
@@ -221,17 +177,19 @@ if __name__ == '__main__':
     uninstall_parser.add_argument( 'name', action='store',
                                     help='plugin to be uninstalled' )
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    PLUGIN_INFO, PLUGIN_BASE, PLUGIN_DIR = load_config( verbose=args.verbose )
+if __name__ == '__main__':
+    args = parse_argv()
+    plugin_info = load_vmgr_config( CONFIG_FILENAME, verbose=args.verbose )
 
     if args.command == 'install':
-        install_plugin( args.force )
+        install_plugin( plugin_info, args.force )
     elif args.command == 'uninstall':
-        uninstall_plugin( args.name )
+        uninstall_plugin( plugin_info, args.name )
     elif args.command == 'update':
-        update_plugin()
+        update_plugin( plugin_info )
     elif args.command == 'show':
-        show_plugin()
+        show_plugin( plugin_info )
 
     print( f'{Fore.GREEN}Success{Style.RESET_ALL}' )
