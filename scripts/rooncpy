@@ -19,31 +19,9 @@ import os
 import re
 import shutil
 import sys
+from genutils import load_config
 
-CONFIG = 'config/rooncpy.json'
-SKIPLIST = [ '.DS_Store' ]
-
-def load_config( verbose=False ):
-    '''Load the configuration file'''
-    script_path = os.path.realpath( os.path.dirname( __file__ ) )
-    config_path = os.path.join( script_path, CONFIG )
-
-    config_data = None
-    try:
-        with open( config_path, encoding="utf-8" ) as plugin_file:
-            if verbose:
-                print( f'Loading config file: {config_path}' )
-
-            config_data = json.load( plugin_file ).get( 'config' )
-    except FileNotFoundError:
-        print( f'{config_path} not found' )
-        sys.exit( 1 )
-
-    if not config_data:
-        print( f'Invalid configuration file {config_path}' )
-        sys.exit( 1 )
-
-    return config_data
+CONFIG_FILENAME  = 'config/rooncpy.json'
 
 def sanity_check( config_data ):
     '''Check the directory structure of Roon storage'''
@@ -120,7 +98,7 @@ def main():
         print( 'Nothing to copy' )
         sys.exit( 1 )
 
-    config_data = load_config( args.verbose )
+    config_data = load_config( CONFIG_FILENAME, args.verbose )
     sanity_check( config_data )
 
     destination = config_data.get( 'destination' )
@@ -138,7 +116,7 @@ def main():
 
         prefix = args.sources[ 0 ]
         for folder in sorted( os.listdir( prefix ) ):
-            if folder in SKIPLIST:
+            if folder in config_data[ "skip_dir" ]:
                 continue
             copy_files( folder, dst, prefix=prefix, verbose=args.verbose,
                         dry_run=args.dry_run )
