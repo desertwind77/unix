@@ -1,3 +1,5 @@
 {
-   "filelist" : [ ".DS_Store", ".wdmc", ".fseventsd", ".Spotlight-V100" ]
+   "config" : {
+      "filelist" : [ ".DS_Store", ".wdmc", ".fseventsd", ".Spotlight-V100" ]
+   }
 }

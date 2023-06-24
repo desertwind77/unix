@@ -9,31 +9,11 @@ If need be, we can add this in the future.
 '''
 
 import argparse
-import json
 import os
 import shutil
-import sys
+from genutils import load_config
 
-CONFIG = 'config/cleanjf.json'
-
-def load_config( verbose=False ):
-    '''Load the configuration file'''
-    script_path = os.path.realpath( os.path.dirname( __file__ ) )
-    config_path = os.path.join( script_path, CONFIG )
-
-    junk_file_list = None
-    try:
-        with open( config_path, encoding="utf-8" ) as config_file:
-            if verbose:
-                print( f'Loading config file: {config_path}' )
-            config_data = json.load( config_file )
-            junk_file_list = config_data.get( 'filelist', None )
-    except FileNotFoundError:
-        # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
-        print( f'{config_path} not found' )
-        sys.exit( 1 )
-
-    return junk_file_list
+CONFIG_FILENAME = 'config/cleanjf.json'
 
 def process_file( junk_file_list, filename, verbose=False):
     '''
@@ -64,7 +44,8 @@ def main():
     parser.add_argument( 'folder', action='store', help='Folder to be cleaned' )
 
     args = parser.parse_args()
-    junk_file_list = load_config( args.verbose )
+    config = load_config( CONFIG_FILENAME, args.verbose )
+    junk_file_list = config[ "filelist" ]
 
     # Walk the directory tree. It is actually a tuple of ( root, dirs, files )
     # But we don't use dirs here.
