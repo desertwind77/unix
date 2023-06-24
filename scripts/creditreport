@@ -10,30 +10,9 @@ import json
 import os
 import re
 import sys
+from genutils import load_config
 
-CONFIG = 'config/creditreport.json'
-
-def load_config():
-    '''Load the configuration'''
-    # Obtain the full path of the script from sys.argv[ 0 ]
-    # or __file__
-    command = sys.argv[ 0 ]
-    # Extract the directory from the fullpath
-    dir_name = os.path.dirname( command )
-    # Resolve symbolic links if present
-    dir_name = os.path.realpath( dir_name )
-    default_config = os.path.join( dir_name, CONFIG )
-
-    config_data = None
-    try:
-        with open( default_config, encoding="utf-8" ) as file:
-            config_data = json.load( file )
-    except FileNotFoundError:
-        # Error code : https://tldp.org/LDP/abs/html/exitcodes.html
-        print( f'{default_config} not found' )
-        sys.exit( 1 )
-
-    return config_data
+CONFIG_FILENAME = 'config/creditreport.json'
 
 def adjust_expense( expense_dict, modifier=1 ):
     '''Adjust the expenses. This is because the expenses on some
@@ -187,7 +166,7 @@ def main():
                          help='Chase Sapphire statement' )
     args = parser.parse_args()
 
-    config = load_config()
+    config = load_config( CONFIG_FILENAME )
 
     cards = []
     if args.amex:
