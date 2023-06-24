@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-Copy photo from the working directory to portfolio, photo frame, google drive
+Copy photo from the working directory to portfolio, google drive
 '''
 
 from collections import defaultdict
