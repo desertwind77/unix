@@ -6,7 +6,6 @@ Copy photo from the working directory to portfolio, photo frame, google drive
 from collections import defaultdict
 from pathlib import Path
 import argparse
-import json
 import os
 import re
 import shutil
@@ -15,8 +14,10 @@ import sys
 import iptcinfo3
 # pylint: disable=import-error
 from PIL import Image
+from genutils import ( load_config,
+                       check_if_folder_exists )
 
-CONFIG = 'config/portmgr.json'
+CONFIG_FILE = 'config/portmgr.json'
 
 class SourceFileNotFound( Exception ):
     """Raised when a source file is missing from one of the config[ 'SourceSubfolders' ]"""
@@ -24,13 +25,6 @@ class SourceFileNotFound( Exception ):
         self.location = location
         self.src_file = src_file
         message = f'{self.location} is missing from {self.src_file}'
-        super().__init__( message )
-
-class DirectoryNotFound( Exception ):
-    """Raised when a folder is not found"""
-    def __init__( self, folder ):
-        self.folder = folder
-        message = f'Folder {self.folder} not found'
         super().__init__( message )
 
 class PortfolioMismatchException( Exception ):
@@ -96,11 +90,6 @@ class CopyInfo:
     def __str__( self ):
         return f'{self.src} ---> {self.dst}'
 
-def check_if_folder_exists( folder ):
-    '''Check if the folder exists'''
-    if not os.path.exists( folder ) or not os.path.isdir( folder ):
-        raise DirectoryNotFound( folder )
-
 class FileList:
     '''A list of all files, excluding extension, in a folder.
     We will use this to compare if two folders contain the same file or not.
@@ -127,25 +116,6 @@ class FileList:
     def __str__( self ):
         all_files = ', '.join( self.files )
         return f'{self.folder} : [ {all_files} ]'
-
-def load_config( verbose=False ):
-    '''Load the configuration file'''
-    script_path = os.path.realpath( os.path.dirname( __file__ ) )
-    config_path = os.path.join( script_path, CONFIG )
-
-    config = None
-    with open( config_path, encoding="utf-8" ) as config_file:
-        if verbose:
-            print( f'Loading config file: {config_path}' )
-        config_data = json.load( config_file )
-        config = config_data.get( 'config', None )
-    return config
-
-def check_if_destination_folders_exist( config ):
-    '''Check if all destination folder exists'''
-    destinations = config[ "Destinations" ]
-    for _, folder in destinations.items():
-        check_if_folder_exists( folder )
 
 def check_portfolio_sanity( config ):
     '''Check if all folders in each portfolio have the same content'''
@@ -320,8 +290,7 @@ def main():
     arguments = CommandLineArgument()
 
     try:
-        config = load_config()
-        check_if_destination_folders_exist( config )
+        config = load_config( CONFIG_FILE )
         check_portfolio_sanity( config )
         next_index = get_next_index( config )
 
