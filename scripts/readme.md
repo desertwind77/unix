@@ -6,6 +6,7 @@
 |dashrm|Remove an item for MacOS dashboard (dangerous)|
 |mvx|(TODO)|
 |pdfmrg|Encrypt, decrypt, interleave or merge pdf files|
+|pfrmcpy|Copy photo to the photo frame location on NAS|
 |portMgr|Copy photo to the storage| 
 |rooncpy|Copy files to the roon library |
 |vmgr|Manage vim plugins|
