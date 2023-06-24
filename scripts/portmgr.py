@@ -68,7 +68,7 @@ class CommandLineArgument:
         parser = argparse.ArgumentParser()
         parser.add_argument( "folders", nargs="*" )
         parser.add_argument( "-d", "--dry-run", action="store_true",
-                             help="Just print sources and destinations but do not really copy")
+                             help="Just print sources and destinations but do not really copy" )
         parser.add_argument( "-m", "--keep-source", action="store_true",
                              help="Keep the source folder intact" )
         args = parser.parse_args()
