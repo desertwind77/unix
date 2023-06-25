@@ -95,8 +95,6 @@ def get_file_copy_list( config, dir_copy_list ):
         dst_list.append( dir_copy_info.dst_folder )
     dst_list = list( set( dst_list ) )
 
-    # Create a map of destination folder -> next index
-    next_dst_index = { dst : get_next_index_from_file_list( dst ) for dst in dst_list }
     # Create a map of destination folder -> file list
     dst_file_list = { dst : os.listdir( dst ) for dst in dst_list }
     # Create a map of destination folder -> file list where
@@ -105,6 +103,8 @@ def get_file_copy_list( config, dir_copy_list ):
     for dst, file_list in dst_file_list.items():
         dst_file_list_no_index[ dst ] = \
                 [ get_dst_filename_without_index( f ) for f in file_list ]
+    # Create a map of destination folder -> next index
+    next_dst_index = { dst : get_next_index_from_file_list( file_list ) for dst, file_list in dst_file_list.items() }
 
     file_copy_list = []
     for dir_copy_info in dir_copy_list:

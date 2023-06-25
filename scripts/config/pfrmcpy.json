@@ -10,15 +10,14 @@
          "Destination" : "DestinationPhotoFrame",
          "Frames" : {
             "Family": {
-               "Disabled" : "True",
                "Sources" : {
                   "SourcePortFolio" : {
                      "SelectedDir" : [ "My Family", "My Love", "Myself" ],
                      "SelectedSubDir" : "Web"
                   },
                   "SourcePhotoFrame" : {
-                     "SelectedDir" : [ "2016", "2017", "2018", "2019", "2023", "Family Photoshoot",
-                                       "Gallery", "iphone", "Misc" ]
+                     "SelectedDir" : [ "2016", "2017", "2018", "2019", "2023" ],
+                     "ToBeAdded" : [ "Gallery", "iphone" ]
                   }
                }
             },
