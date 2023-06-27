@@ -14,7 +14,9 @@ import sys
 import iptcinfo3
 # pylint: disable=import-error
 from PIL import Image
-from genutils import ( load_config,
+from genutils import ( FileNotFound,
+                       DirectoryNotFound,
+                       load_config,
                        check_if_folder_exists )
 
 CONFIG_FILE = 'config/portmgr.json'
@@ -304,7 +306,7 @@ def main():
         process_copy_command( commands, arguments.dry_run )
         if not arguments.dry_run and not arguments.keep_source:
             move_source_folders( config, arguments.folder_list )
-    except ( FileNotFoundError,
+    except ( FileNotFound,
              DirectoryNotFound,
              PortfolioMismatchException,
              InvalidFilenameException ) as error:
