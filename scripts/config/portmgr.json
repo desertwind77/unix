@@ -5,28 +5,28 @@
       "ProcessedLocation" : "/Volumes/G-RAID/Photo/Processed",
       "Destinations" : {
          "GoogleDrive" : "/Users/athichart/Google Drive/My Drive/Portfolio",
-         "Portfolio" : "/Volumes/G-RAID/Photo/Portfolio",
+         "Portfolio" : "/Volumes/G-RAID/Photo/Portfolio"
       },
       "Portfolio" : {
          "Abstract" : {
             "baseName" : "Abstract",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Astrophotography" : {
             "baseName" : "Astrophotography",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Black And White" : {
             "baseName" : "Black And White",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Bon Appetit" : {
@@ -38,7 +38,7 @@
          "Buddha" : {
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Digital Painting" : {
@@ -52,21 +52,21 @@
             "baseName" : "Infrared",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Landscape" : {
             "baseName" : "Landscape",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "My Family" : {
             "baseName" : "Family",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "My Friends" : {
@@ -80,28 +80,28 @@
             "baseName" : "My Love",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Myself" : {
             "baseName" : "Myself",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Nature" : {
             "baseName" : "Nature",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Panorama" : {
             "baseName" : "Panorama",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Portrait" : {
@@ -115,35 +115,35 @@
             "baseName" : "Misc",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "San Francisco" : {
             "baseName" : "San Francisco",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Thailand" : {
             "baseName" : "Thailand",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Travel" : {
             "baseName" : "Travel",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          },
          "Wild Life" : {
             "baseName" : "Wild Life",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
-               "GoogleDrive" : "Web",
+               "GoogleDrive" : "Web"
             }
          }
       }
