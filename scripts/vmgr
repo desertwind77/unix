@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+workspace=$HOME/Workspace
+
+# python3 -m venv vmgr
+# source $workspace/python_venv/vmgr/bin/activate
+# python3 -m pip install colorama tabulate
+# deactivate
+
+source $workspace/python_venv/vmgr/bin/activate
+python3 $workspace/scripts/vmgr.py "$@"
+deactivate
