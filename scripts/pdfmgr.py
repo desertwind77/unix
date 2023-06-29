@@ -117,6 +117,20 @@ def merge( sources, dst ):
         print( f'{error.filename} not found' )
         sys.exit( 1 )
 
+def parse( source, dst ):
+    '''Extract text from a pdf file'''
+    reader = PyPDF2.PdfReader( source )
+
+    text = ''
+    for page in reader.pages:
+        text += page.extract_text()
+
+    if not dst:
+        print( text )
+    else:
+        with open( dst, 'w', encoding="utf8" ) as output:
+            print( text, file=output )
+
 def main():
     '''The main function'''
     parser = argparse.ArgumentParser( description='PDF manager' )
@@ -125,40 +139,47 @@ def main():
 
     encrypt_parser = subparsers.add_parser( 'encrypt',
             help='Encrypt a pdf file' )
-    encrypt_parser .add_argument( '-s', '--src', required=True,
+    encrypt_parser.add_argument( '-s', '--src', required=True,
             action='store', dest='src', help='Source file' )
-    encrypt_parser .add_argument( '-d', '--dst',
+    encrypt_parser.add_argument( '-d', '--dst',
             action='store', dest='dst', help='Destination file' )
-    encrypt_parser .add_argument( '-p', '--password', required=True,
+    encrypt_parser.add_argument( '-p', '--password', required=True,
             action='store', dest='passwd', help='Password' )
 
     decrypt_parser = subparsers.add_parser( 'decrypt',
             help='Decrypt a pdf file' )
-    decrypt_parser .add_argument( '-s', '--src', required=True,
+    decrypt_parser.add_argument( '-s', '--src', required=True,
             action='store', dest='src', help='Source file' )
-    decrypt_parser .add_argument( '-d', '--dst',
+    decrypt_parser.add_argument( '-d', '--dst',
             action='store', dest='dst', help='Destination file' )
-    decrypt_parser .add_argument( '-p', '--password', required=True,
+    decrypt_parser.add_argument( '-p', '--password', required=True,
             action='store', dest='passwd', help='Password' )
+
+    parse_parser = subparsers.add_parser( 'parse',
+            help='Parse text from a pdf file' )
+    parse_parser.add_argument( '-s', '--src', required=True,
+            action='store', dest='src', help='Source file' )
+    parse_parser.add_argument( '-d', '--dst', action='store',
+            dest='dst', help='Destination file' )
 
     reverse_parser = subparsers.add_parser( 'reverse',
             help='Reverse a pdf file' )
-    reverse_parser .add_argument( '-s', '--src', action='store', required=True,
+    reverse_parser.add_argument( '-s', '--src', action='store', required=True,
             dest='src', help='Source file' )
-    reverse_parser .add_argument( '-d', '--dst', action='store',
+    reverse_parser.add_argument( '-d', '--dst', action='store',
             dest='dst', help='Destination file' )
 
     interleave_parser = subparsers.add_parser( 'interleave',
             help='Interleave two pdf files which one containing' + \
                  ' odd pages and the other even pages' )
-    interleave_parser .add_argument( '-o', '--odd', action='store',
+    interleave_parser.add_argument( '-o', '--odd', action='store',
             required=True, dest='odd',
             help='Source file containing the odd page' + \
                  ' (assuming the pdf page starting from page 1)' )
-    interleave_parser .add_argument( '-e', '--even', action='store',
+    interleave_parser.add_argument( '-e', '--even', action='store',
             required=True, dest='even',
             help='Source file containing the even page' )
-    interleave_parser .add_argument( '-d', '--dst', action='store', dest='dst',
+    interleave_parser.add_argument( '-d', '--dst', action='store', dest='dst',
             help='Destination file' )
 
     merge_parser = subparsers.add_parser( 'merge', help='Merge pdf files' )
@@ -169,7 +190,7 @@ def main():
     args = parser.parse_args()
 
     dst = args.dst
-    if not dst:
+    if not dst and args.command != 'parse':
         rand_num = random.randrange( 1000, 10000 )
         dst = f'pdfmgr_output_{rand_num}.pdf'
 
@@ -177,6 +198,8 @@ def main():
         encrypt( args.src, dst, args.passwd )
     elif args.command == 'decrypt':
         decrypt( args.src, dst, args.passwd )
+    elif args.command == 'parse':
+        parse( args.src, dst )
     elif args.command == 'reverse':
         reverse( args.src, dst )
     elif args.command == 'interleave':
