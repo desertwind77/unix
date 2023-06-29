@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-workspace=/Users/athichart/Workspace
+workspace=$HOME/Workspace
 
 # python3 -m venv pdfmgr
 # source $workspace/python_venv/pdfmgr/bin/activate
