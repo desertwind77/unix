@@ -59,16 +59,11 @@ if status is-interactive
 
    #---------------------- home brew ---------------------
    set -gx HOMEBREW_PREFIX "/opt/homebrew";
-   set -gx HOMEBREW_CELLAR "$HOMEBREW_PREFIX/Cellar";
-   set -gx PATH "$HOMEBREW_PREFIX/bin" "$HOMEBREW_PREFIX/sbin" "$PATH"
-   set -gx MANPATH "$HOMEBREW_PREFIX/manpages" $MANPATH;
-   set -gx INFOPATH "$HOMEBREW_PREFIX/share/info" $INFOPATH;
-
-   # -------------------- Python 3.10 --------------------
-   set -gx PYTHON_PATH "/Library/Frameworks/Python.framework/Versions/3.10"
-   set -gx PYTHON_PACKAGES_PATH "$PYTHON_PATH/lib/python3.10/site-packages"
-   # PATH is already set. So the following is not needed.
-   # set -gx PATH "$PYTHON_PATH/bin" "$PATH"
+   set -gx HOMEBREW_CELLAR "/opt/homebrew/Cellar";
+   set -gx HOMEBREW_REPOSITORY "/opt/homebrew";
+   set -q PATH; or set PATH ''; set -gx PATH "/opt/homebrew/bin" "/opt/homebrew/sbin" $PATH;
+   set -q MANPATH; or set MANPATH ''; set -gx MANPATH "/opt/homebrew/share/man" $MANPATH;
+   set -q INFOPATH; or set INFOPATH ''; set -gx INFOPATH "/opt/homebrew/share/info" $INFOPATH;
 
    #---------------------- Aliases ---------------------
    # fzf

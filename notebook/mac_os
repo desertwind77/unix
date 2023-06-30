@@ -1,5 +1,6 @@
 > install
    # For MacOS using brew
+   #  cheat       : cheat sheet (better than man)
    #  dos2unix    : to translate dos files to unix files
    #  duf         : du
    #  fd          : find
@@ -13,31 +14,28 @@
    #  vim         : vim with python and python3 support
    #  xrdp        : remote desktop
    #  zoxide
-   ack bat cscope dos2unix duf dust exa fd fish fluid-synth fzf grex gs imageMagick
+   ack bat cheat cscope dos2unix duf dust exa fd fish fluid-synth fzf grex imageMagick
    lilypond lynx mas mc mosh octave procs ranger tmux trash-cli vim wget youtube-dl
    zoxide
 
-   # For vim's YouCompleteMe on Mac
-   cmake go java mono nodejs python vim
-
    # Python using pip3 install --user
-   #  iptcinfo and Pillow  : for my portMgr
    #  enum34               : to enable enum support in python
    #  eyeD3                : for reading/writing mp3 tag
    #  mutagen              : for viewing and editing audio files tag
    #  unidecode            : for translating unicdoe into ascii
-   iptcinfo Pillow Django enum34 eyeD3 mutagen unidecode pylint
+   Django enum34 eyeD3 mutagen unidecode pylint
 
 > Install omf (Oh My Fish!) : https://ostechnix.com/oh-fish-make-shell-beautiful/
+   ln -s /opt/homebrew/bin/python3 /opt/homebrew/bin/python
    ln -s /opt/homebrew/bin/pip3 /opt/homebrew/bin/pip
    curl -L https://get.oh-my.fish | fish
-   omf install powerline
    pip3 install powerline-status
 
-   omf list
-   omf theme
-   omf install agnoster
-   omf theme agnoster
+   Add the following line to .local/share/omf/pkg/powerline/init.fish
+   This is needed because the PATH environment variables set in .config/fish/config.fish
+   takes effects after this file is run.
+
+   set -gx PATH "/opt/homebrew/bin/" "$PATH
 
 > Install Hack Nerd Font for exa --icons to work
    brew tap homebrew/cask-fonts
@@ -47,14 +45,8 @@
    After this, change the font in iterm2 to Hack
 
 > Change the default shell to fish
-  1) Edit .local/share/omf/pkg/powerline/init.fish by setting the python path
-     before running pip. For example,
-
-   # Install from python website
-  set -gx PATH "/Library/Frameworks/Python.framework/Versions/3.10/bin" "$PATH"
-
-  2) Append /opt/homebrew/bin/fish to /etc/shell
-  3) chsh -s /opt/homebrew/bin/fish
+  1) Append /opt/homebrew/bin/fish to /etc/shell
+  2) chsh -s /opt/homebrew/bin/fish
 
 > To enable/disable FTP
    sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist
