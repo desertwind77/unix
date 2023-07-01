@@ -102,7 +102,7 @@ def process_all_folders( dst, folders, preserve_dir_structure=False ):
         elif isinstance( flacs, list ):
             for flac in flacs:
                 copy_info.append( get_copy_info( dst, folder, flac ) )
-        return copy_info
+    return copy_info
 
 def convert( info ):
     '''Convert from flac to mp3'''
