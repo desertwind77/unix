@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 name=flac2mp3
+packages="pydub"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts
@@ -11,7 +12,7 @@ then
    echo "Preparing $venv_dir"
    python3 -m venv $venv_dir
    source $venv_dir/bin/activate
-   python3 -m pip install pydub
+   python3 -m pip install $packages
    deactivate
 fi
 
