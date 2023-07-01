@@ -4,6 +4,7 @@
    #  dos2unix    : to translate dos files to unix files
    #  duf         : du
    #  fd          : find
+   #  ffmpeg      : for the script to convert flac to mp3
    #  fluid-synth : to play midi e.g. from Frescobaldi
    #  fzf         : fuzzy finder
    #  grex        : generate regular expression
@@ -14,7 +15,7 @@
    #  vim         : vim with python and python3 support
    #  xrdp        : remote desktop
    #  zoxide
-   ack bat cheat cscope dos2unix duf dust exa fd fish fluid-synth fzf grex imageMagick
+   ack bat cheat cscope dos2unix duf dust exa fd ffmpeg fish fluid-synth fzf grex imageMagick
    lilypond lynx mas mc mosh octave procs ranger tmux trash-cli vim wget youtube-dl
    zoxide
 
