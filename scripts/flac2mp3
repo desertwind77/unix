@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 name=flac2mp3
-packages="pydub"
+packages="pydub fastprogress"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts

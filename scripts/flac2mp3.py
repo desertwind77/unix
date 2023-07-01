@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+'''Convert from flac to mp3'''
 
-from pprint import pprint
 import argparse
+from concurrent.futures.process import ProcessPoolExecutor
+import concurrent
 import os
 import re
-import sys
 
+# pylint: disable=import-error
+from fastprogress import progress_bar
 from pydub import AudioSegment
 
+# pylint: disable=too-few-public-methods
 class CopyInfo:
     '''Command to copy the source file to the destination file'''
     def __init__( self, src, dst ):
@@ -22,12 +26,16 @@ def process_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument( "dst", action="store", help="Destination foler" )
     parser.add_argument( "folders", nargs="*", help="Folders containing flac files" )
-    parser.add_argument( "-p", "--preserve", action="store_true",
-                         help="Preserve the folder structure" )
     parser.add_argument( "-d", "--dry-run", action="store_true",
                          help="Do not the conversion" )
+    parser.add_argument( "-p", "--preserve", action="store_true",
+                         help="Preserve the folder structure" )
+    parser.add_argument( "-s", "--sequential", action="store_true",
+                         help="Do not use parallel conversion" )
     return parser.parse_args()
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
 def process_all_folders( dst, folders, preserve_dir_structure=False ):
     '''Process all the folders in the arguments and return the list of (src,dst)'''
     def sanity_check( folder ):
@@ -105,7 +113,7 @@ def process_all_folders( dst, folders, preserve_dir_structure=False ):
     return copy_info
 
 def convert( info ):
-    '''Convert from flac to mp3'''
+    '''Convert one flac file to mp3'''
     path = os.path.split( info.dst )[ 0 ]
     if not os.path.exists( path ):
         os.makedirs( path )
@@ -113,7 +121,7 @@ def convert( info ):
     flac = AudioSegment.from_file( info.src, format="flac" )
     flac.export( info.dst, format="mp3" )
 
-def convert_all_files( dst, copy_info, dry_run=False ):
+def convert_all_files( dst, copy_info, dry_run=False, seq_exec=False ):
     '''Convert all the files in copy_info'''
     if not dry_run and not os.path.exists( dst ):
         # Recursively make the directory where os.mkdir() is the
@@ -121,12 +129,23 @@ def convert_all_files( dst, copy_info, dry_run=False ):
         os.makedirs( dst )
 
     size = len( copy_info )
-    digits = len( str( size ) )
-    for count, info in enumerate( copy_info ):
-        count_str = str( count + 1 ).rjust( digits, '0' )
-        print( f'{count_str}/{size}', info )
-        if not dry_run:
-            convert( info )
+    cpu_count = os.cpu_count()
+
+    if seq_exec or size < 2 or cpu_count < 2:
+        digits = len( str( size ) )
+        for count, info in enumerate( copy_info ):
+            count_str = str( count + 1 ).rjust( digits, '0' )
+            print( f'{count_str}/{size}', info )
+            if not dry_run:
+                convert( info )
+    else:
+        # From my experimental result, the parallel execution is 10 times faster
+        # on Mac Studio Ultra M1 with 20 CPU cores.
+        with ProcessPoolExecutor( max_workers=cpu_count ) as executor:
+            tasks = [ executor.submit( convert, i ) for i in copy_info ]
+            for _ in progress_bar( concurrent.futures.as_completed( tasks ), total=size ):
+                pass
+
 def main():
     '''Main program'''
     args = process_arguments()
