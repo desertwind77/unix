@@ -52,13 +52,17 @@ def process_all_folders( dst, folders, flatten=False ):
     def get_copy_info( flac, dst_folder, mp3_folder=None, flatten=False ):
         flac_str = str( flac )
         mp3 = os.path.splitext( flac.name )[ 0 ] + '.mp3'
-        if flatten and ( 'CD' in flac_str or 'Disc' in flac_str ):
-            mp3_folder = mp3_folder.split( '/' )[ 0 ]
 
+        disc_no = None
+        if flatten and 'CD' in flac_str:
+            obj = re.search( r'CD (\d+)\/.*\.flac', flac_str )
+            disc_no = int( obj.group( 1 ) ) if obj else None
+        if flatten and 'Disc' in flac_str:
             obj = re.search( r'Disc (\d+).*\/.*\.flac', flac_str )
-            if not obj:
-                obj = re.search( r'CD (\d+)\/.*\.flac', flac_str )
-            disc_no = int( obj.group( 1 ) )
+            disc_no = int( obj.group( 1 ) ) if obj else None
+
+        if disc_no:
+            mp3_folder = mp3_folder.split( '/' )[ 0 ]
             mp3 = f'{disc_no:02}_{mp3}'
             mp3 = os.path.join( mp3_folder, mp3 )
         else:
