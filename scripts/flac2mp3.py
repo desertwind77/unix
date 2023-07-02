@@ -11,6 +11,7 @@ import re
 # pylint: disable=import-error
 from fastprogress import progress_bar
 from pydub import AudioSegment
+from pydub.utils import mediainfo
 
 # pylint: disable=too-few-public-methods
 class CopyInfo:
@@ -33,6 +34,8 @@ def process_arguments():
                          help="Flattern the subfolder 'CD' and 'Disc'" )
     parser.add_argument( "-s", "--sequential", action="store_true",
                          help="Do not use parallel conversion" )
+    parser.add_argument( "-v", "--verbose", action="store_true",
+                         help="Print source and destination files" )
     return parser.parse_args()
 
 # pylint: disable=too-many-locals
@@ -105,26 +108,32 @@ def convert( info ):
     if not os.path.exists( path ):
         os.makedirs( path )
 
+    tags = mediainfo( str( info.src  ) ).get( 'TAG', {} )
     flac = AudioSegment.from_file( info.src, format="flac" )
-    flac.export( info.dst, format="mp3" )
+    flac.export( info.dst, format="mp3", tags=tags )
 
-def convert_all_files( dst, copy_info, dry_run=False, seq_exec=False ):
+def convert_all_files( dst, copy_info, dry_run=False, seq_exec=False, verbose=False ):
     '''Convert all the files in copy_info'''
-    if not dry_run and not os.path.exists( dst ):
+    if not dry_run:
         # Recursively make the directory where os.mkdir() is the
         # non-recersive counterpart
-        os.makedirs( dst )
+        os.makedirs( dst, exist_ok=True )
 
     size = len( copy_info )
     cpu_count = os.cpu_count()
 
-    if seq_exec or size < 2 or cpu_count < 2:
+    if verbose:
         digits = len( str( size ) )
         for count, info in enumerate( copy_info ):
             count_str = str( count + 1 ).rjust( digits, '0' )
             print( f'{count_str}/{size}', info )
-            if not dry_run:
-                convert( info )
+
+    if dry_run:
+        return
+
+    if seq_exec or size < 2 or cpu_count < 2:
+        for info in copy_info:
+            convert( info )
     else:
         # From my experimental result, the parallel execution is 10 times faster
         # on Mac Studio Ultra M1 with 20 CPU cores.
@@ -138,7 +147,7 @@ def main():
     args = process_arguments()
     copy_info = process_all_folders( args.dst, args.folders, args.flatten )
     convert_all_files( args.dst, copy_info, dry_run=args.dry_run,
-                       seq_exec=args.sequential )
+                       seq_exec=args.sequential, verbose=args.verbose )
 
 if __name__ == '__main__':
     main()

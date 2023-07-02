@@ -21,6 +21,7 @@ if ! which ffmpeg > /dev/null; then
    brew install ffmpeg
 fi
 
+# flac2mp3 -f -d ~/Download/mp3 <src>
 source $venv_dir/bin/activate
 time $script_dir/$name.py "$@"
 deactivate
