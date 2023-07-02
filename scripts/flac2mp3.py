@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 '''Convert from flac to mp3'''
 
-import argparse
 from concurrent.futures.process import ProcessPoolExecutor
+from pathlib import Path
+import argparse
 import concurrent
 import os
 import re
@@ -28,15 +29,15 @@ def process_arguments():
     parser.add_argument( "folders", nargs="*", help="Folders containing flac files" )
     parser.add_argument( "-d", "--dry-run", action="store_true",
                          help="Do not the conversion" )
-    parser.add_argument( "-p", "--preserve", action="store_true",
-                         help="Preserve the folder structure" )
+    parser.add_argument( "-f", "--flatten", action="store_true",
+                         help="Flattern the subfolder 'CD' and 'Disc'" )
     parser.add_argument( "-s", "--sequential", action="store_true",
                          help="Do not use parallel conversion" )
     return parser.parse_args()
 
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
-def process_all_folders( dst, folders, preserve_dir_structure=False ):
+def process_all_folders( dst, folders, flatten=False ):
     '''Process all the folders in the arguments and return the list of (src,dst)'''
     def sanity_check( folder ):
         contents = os.listdir( folder )
@@ -48,68 +49,50 @@ def process_all_folders( dst, folders, preserve_dir_structure=False ):
         assert not ( ( keyword_cd or keyword_disc ) and keyword_flac ), \
                 "CD/Disc and .flac are mutually exclusive"
 
-    def contain_subfolder( folder ):
-        contents = os.listdir( folder )
-        return any( 'cd' in c.lower() for c in contents ) or \
-                any( 'disc' in c.lower() for c in contents )
+    def get_copy_info( flac, dst_folder, mp3_folder=None, flatten=False ):
+        flac_str = str( flac )
+        mp3 = os.path.splitext( flac.name )[ 0 ] + '.mp3'
+        if flatten and ( 'CD' in flac_str or 'Disc' in flac_str ):
+            mp3_folder = mp3_folder.split( '/' )[ 0 ]
 
-    def list_flacs( folder ):
-        flacs = [ f for f in os.listdir( folder ) if f.endswith( '.flac' ) ]
-        return sorted( flacs )
+            obj = re.search( r'Disc (\d+).*\/.*\.flac', flac_str )
+            if not obj:
+                obj = re.search( r'CD (\d+)\/.*\.flac', flac_str )
+            disc_no = int( obj.group( 1 ) )
+            mp3 = f'{disc_no:02}_{mp3}'
+            mp3 = os.path.join( mp3_folder, mp3 )
+        else:
+            if mp3_folder:
+                mp3 = os.path.join( dst_folder, mp3_folder, mp3 )
+            else:
+                mp3 = os.path.join( dst_folder, mp3 )
+        return CopyInfo( flac, mp3 )
 
     for folder in folders:
         sanity_check( folder )
 
     copy_info = []
+    current_dir = Path.cwd()
     for folder in folders:
-        flacs = None
-        if contain_subfolder( folder ):
-            subfolders = [ d for d in os.listdir( folder ) \
-                           if os.path.isdir( os.path.join( folder, d ) ) and 'Disc' in d ]
-            if not subfolders:
-                subfolders = [ d for d in os.listdir( folder ) \
-                           if os.path.isdir( os.path.join( folder, d ) ) and 'CD' in d ]
-
-            flacs = {}
-            for subfolder in subfolders:
-                flacs[ subfolder ] = list_flacs( os.path.join( folder, subfolder ) )
-        else:
-            flacs = list_flacs( folder )
-
+        folder_path = Path( folder )
+        flacs = list( folder_path.glob( '**/*.flac' ) )
         if not flacs:
             continue
 
-        def get_copy_info( dst, folder, flac, subfolder=None, prefix=None ):
-            mp3 = os.path.splitext( flac )[ 0 ] + '.mp3'
-            if subfolder and prefix:
-                # We don't dont have any CD collections with more than 99 CDs.
-                # So a two-digit prefix is OK.
-                mp3 = f'{prefix:02}_{mp3}'
-                mp3 = os.path.join( dst, folder, mp3 )
-                flac = os.path.join( folder, subfolder, flac )
+        for flac in flacs:
+            parent = flac.parent.absolute()
+            if current_dir == parent:
+                # The flac files are in the current directory.
+                copy_info.append( get_copy_info( flac, dst ) )
             else:
-                mp3 = os.path.join( dst, folder, mp3 )
-                flac = os.path.join( folder, flac )
-
-            return CopyInfo( flac, mp3 )
-
-        if isinstance( flacs, dict ):
-            for subfolder, filelist in flacs.items():
-                if preserve_dir_structure:
-                    for flac in filelist:
-                        all_folder = os.path.join( folder, subfolder )
-                        copy_info.append( get_copy_info( dst, all_folder, flac ) )
+                parent_str = str( parent ).split( '/' )
+                if 'CD' in str( parent ) or 'Disc' in str( parent ):
+                    mp3_folder = parent_str[ -2: ]
                 else:
-                    obj = re.search( r'Disc (\d+)', subfolder )
-                    if not obj:
-                        obj = re.search( r'CD (\d+)', subfolder )
-                    disc_no = int( obj.group( 1 ) )
-                    for flac in filelist:
-                        copy_info.append( get_copy_info( dst, folder, flac,
-                                                         subfolder=subfolder, prefix=disc_no ) )
-        elif isinstance( flacs, list ):
-            for flac in flacs:
-                copy_info.append( get_copy_info( dst, folder, flac ) )
+                    mp3_folder = parent_str[ -1: ]
+                mp3_folder = os.path.join( *mp3_folder )
+                copy_info.append(
+                        get_copy_info( flac, dst, mp3_folder=mp3_folder, flatten=flatten ) )
     return copy_info
 
 def convert( info ):
@@ -149,8 +132,9 @@ def convert_all_files( dst, copy_info, dry_run=False, seq_exec=False ):
 def main():
     '''Main program'''
     args = process_arguments()
-    copy_info = process_all_folders( args.dst, args.folders, args.preserve )
-    convert_all_files( args.dst, copy_info, args.dry_run )
+    copy_info = process_all_folders( args.dst, args.folders, args.flatten )
+    convert_all_files( args.dst, copy_info, dry_run=args.dry_run,
+                       seq_exec=args.sequential )
 
 if __name__ == '__main__':
     main()
