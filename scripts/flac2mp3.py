@@ -64,7 +64,7 @@ def process_all_folders( dst, folders, flatten=False ):
         if disc_no:
             mp3_folder = mp3_folder.split( '/' )[ 0 ]
             mp3 = f'{disc_no:02}_{mp3}'
-            mp3 = os.path.join( mp3_folder, mp3 )
+            mp3 = os.path.join( dst_folder, mp3_folder, mp3 )
         else:
             if mp3_folder:
                 mp3 = os.path.join( dst_folder, mp3_folder, mp3 )
