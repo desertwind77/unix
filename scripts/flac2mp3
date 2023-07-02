@@ -22,5 +22,5 @@ if ! which ffmpeg > /dev/null; then
 fi
 
 source $venv_dir/bin/activate
-$script_dir/$name.py "$@"
+time $script_dir/$name.py "$@"
 deactivate
