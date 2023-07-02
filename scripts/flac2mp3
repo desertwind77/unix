@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 name=flac2mp3
-packages="pydub fastprogress"
+packages="pydub fastprogress mutagen"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts
@@ -21,7 +21,8 @@ if ! which ffmpeg > /dev/null; then
    brew install ffmpeg
 fi
 
-# flac2mp3 -f -d ~/Download/mp3 <src>
+# To convert the whole CD library:
+#     flac2mp3 -f -d ~/Download/mp3 /Volumes/Public/Music/cd
 source $venv_dir/bin/activate
 time $script_dir/$name.py "$@"
 deactivate

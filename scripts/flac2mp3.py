@@ -10,6 +10,9 @@ import re
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from mutagen.id3 import APIC
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 
@@ -108,9 +111,28 @@ def convert( info ):
     if not os.path.exists( path ):
         os.makedirs( path )
 
+    # Copy tags from flac
     tags = mediainfo( str( info.src  ) ).get( 'TAG', {} )
+
+    # Export from flac to mp3
     flac = AudioSegment.from_file( info.src, format="flac" )
     flac.export( info.dst, format="mp3", tags=tags )
+
+    # Copy the album arts from flac to mp3
+    flac_tags = FLAC( info.src )
+    mp3_tags = MP3( info.dst )
+    for pic in flac_tags.pictures:
+        if pic.type != 3:
+            continue
+
+        apic = APIC(
+                encoding=3,           # 3 is for UTF-8
+                mime=pic.mime,        # image/jpeg or image/png
+                type=pic.type,        # 3 is for the cover image
+                desc=pic.desc,
+                data=pic.data )
+        mp3_tags.tags.add( apic )
+    mp3_tags.save()
 
 def convert_all_files( dst, copy_info, dry_run=False, seq_exec=False, verbose=False ):
     '''Convert all the files in copy_info'''
