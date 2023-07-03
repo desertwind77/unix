@@ -85,7 +85,7 @@ def process_all_folders( dst, folders, flatten=False ):
     current_dir = Path.cwd()
     for folder in folders:
         folder_path = Path( folder )
-        flacs = list( folder_path.glob( '**/*.flac' ) )
+        flacs = sorted( list( folder_path.glob( '**/*.flac' ) ) )
         if not flacs:
             continue
 

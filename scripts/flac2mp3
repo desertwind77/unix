@@ -22,7 +22,7 @@ if ! which ffmpeg > /dev/null; then
 fi
 
 # To convert the whole CD library:
-#     flac2mp3 -f -d ~/Download/mp3 /Volumes/Public/Music/cd
+#     flac2mp3 -f ~/Downloads/mp3 /Volumes/Public/Music/cd
 source $venv_dir/bin/activate
 time $script_dir/$name.py "$@"
 deactivate
