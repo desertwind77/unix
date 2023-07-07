@@ -8,8 +8,9 @@ import csv
 import os
 import re
 
+# tabulate doc : https://pypi.org/project/tabulate/
 # pylint: disable=import-error
-from tabulate import tabulate
+from tabulate import tabulate, SEPARATING_LINE
 import PyPDF2
 
 from genutils import load_config
@@ -235,15 +236,18 @@ class CreditReport:
     def print_expense_summary( self ):
         table = []
         header = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-                   'Oct', 'Nov', 'Dec' ]
+                   'Oct', 'Nov', 'Dec', 'Total' ]
         for category in sorted( self.expense_by_category.keys() ):
             if category in [ 'Payment' ]:
                 continue
             expenses = self.expense_by_category[ category ]
-            row = [ category ] + [ round( expenses.get( i, 0 ) ) for i in range( 1, 13 ) ]
+            row = [ round( expenses.get( i, 0 ) ) for i in range( 1, 13 ) ]
+            total = sum( row )
+            row = [ category ] + row + [ total ]
             table.append( row )
+        table.append( SEPARATING_LINE )
 
-        total_row = [ 'Total' ]
+        total_row = []
         for month in range( 1, 13 ):
             monthly_expenses = 0
             for category, expenses in self.expense_by_category.items():
@@ -251,9 +255,11 @@ class CreditReport:
                     continue
                 monthly_expenses += self.expense_by_category[ category ].get( month, 0 )
             total_row.append( round( monthly_expenses ) )
+        total = sum( total_row )
+        total_row = [ 'Subtotal' ] + total_row + [ total ]
         table.append( total_row )
 
-        print( tabulate( table, header, tablefmt="presto" ) )
+        print( tabulate( table, header, tablefmt="simple", intfmt="," ) )
 
     def run( self ):
         self.load_credit_card_config()
