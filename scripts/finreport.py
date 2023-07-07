@@ -73,16 +73,16 @@ class Statement:
             result = result.replace( src, dst )
         return result
 
-    def load_transactions( self ):
+    def load_transactions( self, verbose=False ):
         '''Read and categorize all transactions from a statement'''
         if self.filename.endswith( 'pdf' ):
-            self.load_pdf_file()
+            self.load_pdf_file( verbose=verbose )
         elif self.filename.endswith( 'csv' ):
-            self.load_csv_file()
+            self.load_csv_file( verbose=verbose )
         else:
             pass
 
-    def load_csv_file( self ):
+    def load_csv_file( self, verbose=False ):
         '''Read and categorize all transactions from a .csv file'''
         field_date = self.credit_card.fields[ 'Transaction Date' ]
         field_desc = self.credit_card.fields[ 'Description' ]
@@ -103,16 +103,19 @@ class Statement:
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )
 
-    def load_pdf_file( self ):
+    def load_pdf_file( self, verbose=False ):
         '''Read and categorize all transactions from a .pdf file'''
         field_date = self.credit_card.fields[ 'Transaction Date' ]
         field_desc = self.credit_card.fields[ 'Description' ]
         field_amount = self.credit_card.fields[ 'Amount' ]
 
-        # HACK: get the year from filename
-        year = str( Path( self.filename ).name )[ :4 ] \
+        # Get the year from filename for credit card statement in which
+        # no year in the transaction date
+        file_path = Path( self.filename )
+        year = str( file_path.name )[ :4 ] \
                 if not self.credit_card.has_year_in_date else None
 
+        count = 0
         reader = PyPDF2.PdfReader( self.filename )
         for page in reader.pages:
             text = page.extract_text()
@@ -131,6 +134,9 @@ class Statement:
                 category = self.get_category( description )
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )
+                count += 1
+        if verbose:
+            print( f'{str( file_path.name )} : transactions = {count}' )
 
 class MonthlyExpenses:
     def __init__( self, month ):
@@ -211,10 +217,10 @@ class CreditReport:
         '''Update the Expense google spreadsheet'''
         pass
 
-    def load_all_transactions( self ):
+    def load_all_transactions( self, verbose=False ):
         '''Load all transactions in all statements and add them to the right categories'''
         for statement in self.statements:
-            statement.load_transactions()
+            statement.load_transactions( verbose=verbose )
 
         # See if there are any transactions without category
         unknown_transactions = []
@@ -261,11 +267,11 @@ class CreditReport:
 
         print( tabulate( table, header, tablefmt="simple", intfmt="," ) )
 
-    def run( self ):
+    def run( self, verbose=False ):
         self.load_credit_card_config()
         self.load_category_config()
         self.generate_statements_from_files()
-        self.load_all_transactions()
+        self.load_all_transactions( verbose=verbose )
         self.print_expense_summary()
         self.update_spreadsheet()
 
@@ -273,12 +279,14 @@ def process_command_line_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument( "-l", "--location", required=True, action='store', dest='location',
                          help="Locaiton of the statement files" )
+    parser.add_argument( "-v", "--verbose", action="store_true",
+                         help="Print more information" )
     return parser.parse_args()
 
 def main():
     args = process_command_line_arguments()
     reporter = CreditReport( CONFIG_FILENAME, args.location )
-    reporter.run()
+    reporter.run( args.verbose )
 
 if __name__ == '__main__':
     main()
