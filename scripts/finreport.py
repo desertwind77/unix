@@ -125,7 +125,8 @@ class Statement:
                 date = f'{date}/{year}' if year else date
                 date = datetime.strptime( date, '%m/%d/%Y' )
                 description = self.cleanup_description( obj.group( field_desc ) )
-                amount = round( float( obj.group( field_amount ) ), 2 )
+                amount = obj.group( field_amount ).replace( ',', '' )
+                amount = round( float( amount ), 2 )
                 category = self.get_category( description )
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )

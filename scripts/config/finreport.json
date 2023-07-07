@@ -45,7 +45,7 @@
          },
          "Wellsfargo Autograph" : {
             "Filename" : "(\\d{4})_(\\d{2})_autograph.pdf",
-            "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.]+)$",
+            "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.,]+)$",
             "Fields" : {
                "Transaction Date" : 1,
                "Description" : 2,
