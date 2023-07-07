@@ -219,7 +219,7 @@ class CreditReport:
 
     def load_all_transactions( self, verbose=False ):
         '''Load all transactions in all statements and add them to the right categories'''
-        for statement in self.statements:
+        for statement in sorted( self.statements, key=lambda x: x.filename, reverse=False ):
             statement.load_transactions( verbose=verbose )
 
         # See if there are any transactions without category
