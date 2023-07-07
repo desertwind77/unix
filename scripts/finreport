@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 name=finreport
-packages="tabulate"
+packages="PyPDF2 tabulate"
+statements="/Users/athichart/Google Drive/My Drive/Document/Statements/2023"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts
 venv_dir=$workspace/python_venv/$name
-statements="$workspace/credit_card_statements"
 
 if [ ! -d "$venv_dir" ]
 then
@@ -18,5 +18,5 @@ then
 fi
 
 source $venv_dir/bin/activate
-$script_dir/$name.py -l $statements
+$script_dir/$name.py -l "$statements"
 deactivate

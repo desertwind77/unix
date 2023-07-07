@@ -2,8 +2,8 @@
    "config" : {
       "Credit Card" : {
          "American Express" : {
-            "Filename" : "(\\d{4})_(\\d{2})_amex",
-            "Format" : "csv",
+            "Filename" : "(\\d{4})_(\\d{2})_amex.csv",
+            "Transaction Year" : "True",
             "Header" : "True",
             "Fields" : {
                "Transaction Date" : 0,
@@ -14,8 +14,8 @@
             }
          },
          "Chase Freedom" : {
-            "Filename" : "(\\d{4})_(\\d{2})_freedom",
-            "Format" : "csv",
+            "Filename" : "(\\d{4})_(\\d{2})_freedom.csv",
+            "Transaction Year" : "True",
             "Negative Amount" : "True",
             "Header" : "True",
             "Fields" : {
@@ -29,8 +29,8 @@
             }
          },
          "Chase Sapphire" : {
-            "Filename" : "(\\d{4})_(\\d{2})_sapphire",
-            "Format" : "csv",
+            "Filename" : "(\\d{4})_(\\d{2})_sapphire.csv",
+            "Transaction Year" : "True",
             "Negative Amount" : "True",
             "Header" : "True",
             "Fields" : {
@@ -44,12 +44,9 @@
             }
          },
          "Wellsfargo Autograph" : {
-            "Filename" : "(\\d{4})_(\\d{2})_autograph",
-            "Format" : "pdf",
-            "Fields" : "",
-            "Command" : "pdfmgr parse -s {filename} | egrep '^\\d{2}\/\\d{2} \\d{2}\/\\d{2} \\w{17} .*'",
+            "Filename" : "(\\d{4})_(\\d{2})_autograph.pdf",
             "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.]+)$",
-            "Groups" : {
+            "Fields" : {
                "Transaction Date" : 1,
                "Description" : 2,
                "Amount" : 3
@@ -126,6 +123,7 @@
             "Cam Hung",
             "Cafe Lattea",
             "Cheesecake CStar",
+            "Chick-Fil-A",
             "Chicken Meets Rice",
             "Chipotle",
             "Cocohodo",
@@ -139,6 +137,7 @@
             "Epic Dumpling",
             "Eureka",
             "Fantasia Coffee",
+            "Fantuan Delivery",
             "Farmhouse Menlo Park",
             "Five Guys",
             "Fu Lam Mum",
@@ -169,6 +168,8 @@
             "Liangs Village",
             "Locale",
             "Ludwigs",
+            "Marugame Udon",
+            "Matcha Cafe Maiko",
             "McDonald",
             "Meet Fresh",
             "Mochi Waffle",
@@ -263,6 +264,7 @@
             "Sprouts Farmer",
             "Target",
             "The K Market",
+            "Trader Joe",
             "Tree Farms",
             "Walmart",
             "WHOLEFDS"
@@ -319,7 +321,7 @@
             "Happy Hollow Web Sales",
             "Headway Store",
             "HumbleBundle.com",
-            "GoFndMe",
+            "GoFundMe",
             "Google",
             { "IMG Insurance" : "Travel Insurance" },
             "Indiegogo",
@@ -361,6 +363,7 @@
             "SouthernHonda",
             "Stockx",
             "Sunnyvale Christian",
+            { "The New Stand" : "Convenient Store in SFO" },
             "The Rare Wine",
             "The UPS Store",
             "TourboxTech",
@@ -368,6 +371,7 @@
             "Turbotax",
             "Udemy",
             "U-Haul",
+            "UPS",
             "USPS",
             "US Embassy",
             "USA for UNHCR",
@@ -381,20 +385,26 @@
             "State of Calif DMV",
             "Chevron",
             "City of Burlingame-Park",
+            "Diamond Gas & Mart",
             "Fastrak",
+            "FoxRentACar",
             "Geico",
             "Oak Tree Mazda",
             "SFO Parking",
+            "Stevens Creek Mazda",
             { "Stevens Creek Alliance G" : "Gas Station" },
             "Sunnyvale Smog Test",
+            "Toyota Sunnyvale",
             "Uber",
             "Yellow Taxi Cab"
          ],
          "Subscription" : [
             "Adobe Photogphy Plan",
+            "Adobe   Photogphy Plan",
             { "Annual Membership Fee" : "Chase Sapphire Annual fee" },
             "Apple.com/Bill",
             "AT&T",
+            "ATT BILL",
             "Audible",
             { "B&amp;N Membership Renewal" : "BN membership fee" },
             "Blinkist",
@@ -402,6 +412,7 @@
             "CuriosityStream",
             "Evernote",
             "MEDIUM CORPORATSAN",
+            "A MEDIUM CORPORATION",
             "Mega Limited",
             "MICROSOFT",
             "Netflix",
