@@ -279,13 +279,21 @@ def process_command_line_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument( "-l", "--location", required=True, action='store', dest='location',
                          help="Locaiton of the statement files" )
+    parser.add_argument( "-y", "--year", action='store',
+                         help="Locaiton of the statement files" )
     parser.add_argument( "-v", "--verbose", action="store_true",
                          help="Print more information" )
     return parser.parse_args()
 
 def main():
     args = process_command_line_arguments()
-    reporter = CreditReport( CONFIG_FILENAME, args.location )
+    year = args.year if args.year else datetime.now().year
+    location = str( Path( args.location )/str( year ) )
+    if not os.path.exists( location ):
+        print( f'{location} does not exist' )
+        return
+
+    reporter = CreditReport( CONFIG_FILENAME, location )
     reporter.run( args.verbose )
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 
 name=finreport
 packages="PyPDF2 tabulate"
-statements="/Users/athichart/Google Drive/My Drive/Document/Statements/2023"
+statements="/Users/athichart/Google Drive/My Drive/Document/Statements"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts
