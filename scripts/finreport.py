@@ -50,6 +50,9 @@ class Transaction:
         self.category = category
         self.amount = amount
 
+    def __str__( self ):
+        return f'{self.date.strftime( "%m/%d/%Y")}   {self.amount}   {self.description}'
+
 class Statement:
     def __init__( self, filename, credit_card, category_info, replace_info ):
         self.filename = filename
@@ -152,6 +155,7 @@ class CreditReport:
         self.replace_info = {}
         self.category_info = {}
         self.statements = []
+        # expense_by_category[ category ][ month ] -> amount
         self.expense_by_category = {}
 
     def load_credit_card_config( self ):
@@ -213,10 +217,6 @@ class CreditReport:
                 amount = round( amount, 2 )
                 self.expense_by_category[ transaction.category ][ transaction.date.month ] = amount
 
-    def update_spreadsheet( self ):
-        '''Update the Expense google spreadsheet'''
-        pass
-
     def load_all_transactions( self, verbose=False ):
         '''Load all transactions in all statements and add them to the right categories'''
         for statement in sorted( self.statements, key=lambda x: x.filename, reverse=False ):
@@ -232,14 +232,17 @@ class CreditReport:
                 else:
                     known_categories.append( transaction.category )
         if unknown_transactions:
+            print( 'Unknown transactions:' )
             for transaction in unknown_transactions:
-                print( Path( transaction.statement.filename ).name, transaction.date, transaction.description )
+                print( Path( transaction.statement.filename ).name,
+                       transaction.date, transaction.description )
             raise UnknownTransactionsException
         known_categories = list( set( known_categories ) )
 
         self.calculate_expenses_by_category( known_categories )
 
     def print_expense_summary( self ):
+        '''Print the financial report'''
         table = []
         header = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
                    'Oct', 'Nov', 'Dec', 'Total' ]
@@ -259,7 +262,7 @@ class CreditReport:
             for category, expenses in self.expense_by_category.items():
                 if category in [ 'Payment' ]:
                     continue
-                monthly_expenses += self.expense_by_category[ category ].get( month, 0 )
+                monthly_expenses += expenses.get( month, 0 )
             total_row.append( round( monthly_expenses ) )
         total = sum( total_row )
         total_row = [ 'Subtotal' ] + total_row + [ total ]
@@ -267,34 +270,94 @@ class CreditReport:
 
         print( tabulate( table, header, tablefmt="simple", intfmt="," ) )
 
-    def run( self, verbose=False ):
+    def query( self, card=None, month=None, category=None, groupByCreditCard=False, verbose=False ):
+        if verbose:
+            query_str = 'Query: '
+            if card:
+                query_str += f'card = {card}, '
+            if month:
+                query_str += f'month = {month}, '
+            if category:
+                query_str += f'category = {category}'
+            print( query_str )
+            print()
+
+        result = defaultdict( list ) if groupByCreditCard else []
+
+        for statement in self.statements:
+            for transaction in statement.transactions:
+                if card and transaction.statement.credit_card.name != card:
+                    continue
+                if month and transaction.date.month != month:
+                    continue
+                if category and transaction.category != category:
+                    continue
+                if isinstance( result, list ):
+                    result.append( transaction )
+                else:
+                    credit_card = transaction.statement.credit_card.name
+                    result[ credit_card ].append( transaction )
+
+        if isinstance( result, list ):
+            result = sorted( result, key=lambda x: x.date )
+            list( map( print, result ) )
+        elif isinstance( result, defaultdict ):
+            for card, expenses in result.items():
+                print( card )
+                expenses = sorted( expenses, key=lambda x: x.date )
+                list( map( print, expenses ) )
+                print()
+
+    def run( self, card=None, month=None, category=None,
+             groupByCreditCard=False, verbose=False ):
+        '''Generate the financial report'''
         self.load_credit_card_config()
         self.load_category_config()
         self.generate_statements_from_files()
         self.load_all_transactions( verbose=verbose )
-        self.print_expense_summary()
-        self.update_spreadsheet()
+        if not any( [ card, month, category ] ):
+            self.print_expense_summary()
+        else:
+            self.query( card=card, month=month, category=category,
+                        groupByCreditCard=groupByCreditCard,
+                        verbose=verbose )
 
 def process_command_line_arguments():
+    '''Process command line arguments'''
     parser = argparse.ArgumentParser()
-    parser.add_argument( "-l", "--location", required=True, action='store', dest='location',
-                         help="Locaiton of the statement files" )
+    parser.add_argument( "-l", "--location", required=True, action='store',
+                         dest='location', help="Locaiton of the statement files" )
+    parser.add_argument( "-C", "--card", action='store',
+                         help="Credit card of interest" )
+    parser.add_argument( "-c", "--category", action='store',
+                         help="Category of interest" )
+    parser.add_argument( "-g", "--group", action='store_true',
+                         help="Group transactions by card" )
+    parser.add_argument( "-m", "--month", action='store',
+                         help="Month of interest" )
     parser.add_argument( "-y", "--year", action='store',
-                         help="Locaiton of the statement files" )
+                         help="Year of interest" )
     parser.add_argument( "-v", "--verbose", action="store_true",
                          help="Print more information" )
     return parser.parse_args()
 
 def main():
+    '''Main program'''
     args = process_command_line_arguments()
+    card = args.card
+    category = args.category
+    group = args.group
+    month = int( args.month )
     year = args.year if args.year else datetime.now().year
+    verbose = args.verbose
     location = str( Path( args.location )/str( year ) )
     if not os.path.exists( location ):
         print( f'{location} does not exist' )
         return
 
     reporter = CreditReport( CONFIG_FILENAME, location )
-    reporter.run( args.verbose )
+    reporter.run( card=card, month=month, category=category,
+                  groupByCreditCard=group, verbose=verbose )
 
 if __name__ == '__main__':
     main()
