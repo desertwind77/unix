@@ -347,7 +347,7 @@ def main():
     card = args.card
     category = args.category
     group = args.group
-    month = int( args.month )
+    month = int( args.month ) if args.month else None
     year = args.year if args.year else datetime.now().year
     verbose = args.verbose
     location = str( Path( args.location )/str( year ) )
