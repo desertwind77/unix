@@ -76,19 +76,19 @@ class Statement:
             result = result.replace( src, dst )
         return result
 
-    def load_transactions( self, verbose=False ):
+    def load_transactions( self, ignored_categories, verbose=False ):
         '''Read and categorize all transactions from a statement'''
         if self.filename.endswith( 'pdf' ):
-            self.load_pdf_file( verbose=verbose )
+            self.load_pdf_file( ignored_categories, verbose=verbose )
         elif self.filename.endswith( 'csv' ):
-            self.load_csv_file( verbose=verbose )
+            self.load_csv_file( ignored_categories, verbose=verbose )
         else:
             pass
 
-    def load_csv_file( self, verbose=False ):
+    def load_csv_file( self, ignored_categories, verbose=False ):
         '''Read and categorize all transactions from a .csv file'''
         field_date = self.credit_card.fields[ 'Transaction Date' ]
-        field_desc = self.credit_card.fields[ 'Description' ]
+        field_desc = self.credit_card.fields[ 'SEARCH' ]
         field_amount = self.credit_card.fields[ 'Amount' ]
 
         skip_header = self.credit_card.has_header
@@ -98,15 +98,25 @@ class Statement:
                 if skip_header:
                     skip_header = False
                     continue
+                if not row:
+                    continue
                 date = datetime.strptime( row[ field_date ], '%m/%d/%Y' )
                 description = self.cleanup_description( row[ field_desc ] )
-                amount = round( float( row[ field_amount ] ), 2 )
+                amount = row[ field_amount ].replace( '$', '' )
+                modifier = 1
+                obj = re.match( r'\(([0-9.]+)\)', amount )
+                if obj:
+                    amount = obj.group( 1 )
+                    modifier = -1
+                amount = modifier * round( float( amount ), 2 )
                 amount = -1 * amount if self.credit_card.has_negative_amount else amount
                 category = self.get_category( description )
+                if category in ignored_categories:
+                    continue
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )
 
-    def load_pdf_file( self, verbose=False ):
+    def load_pdf_file( self, ignored_categories, verbose=False ):
         '''Read and categorize all transactions from a .pdf file'''
         field_date = self.credit_card.fields[ 'Transaction Date' ]
         field_desc = self.credit_card.fields[ 'Description' ]
@@ -135,6 +145,8 @@ class Statement:
                 amount = obj.group( field_amount ).replace( ',', '' )
                 amount = round( float( amount ), 2 )
                 category = self.get_category( description )
+                if category in ignored_categories:
+                    continue
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )
                 count += 1
@@ -153,6 +165,7 @@ class CreditReport:
         self.statement_location = statement_location
         self.creditcard_info = {}
         self.replace_info = {}
+        self.ignored_categories = None
         self.category_info = {}
         self.statements = []
         # expense_by_category[ category ][ month ] -> amount
@@ -174,6 +187,7 @@ class CreditReport:
                                                        has_header, fields )
 
         self.replace_info = self.config[ 'Replace' ]
+        self.ignored_categories = self.config[ 'Ignored Categories' ]
 
     def load_category_config( self ):
         '''Create a dictionary from 'expense' to category'''
@@ -220,7 +234,7 @@ class CreditReport:
     def load_all_transactions( self, verbose=False ):
         '''Load all transactions in all statements and add them to the right categories'''
         for statement in sorted( self.statements, key=lambda x: x.filename, reverse=False ):
-            statement.load_transactions( verbose=verbose )
+            statement.load_transactions( ignored_categories=self.ignored_categories, verbose=verbose )
 
         # See if there are any transactions without category
         unknown_transactions = []
@@ -247,8 +261,6 @@ class CreditReport:
         header = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
                    'Oct', 'Nov', 'Dec', 'Total' ]
         for category in sorted( self.expense_by_category.keys() ):
-            if category in [ 'Payment' ]:
-                continue
             expenses = self.expense_by_category[ category ]
             row = [ round( expenses.get( i, 0 ) ) for i in range( 1, 13 ) ]
             total = sum( row )
@@ -260,8 +272,6 @@ class CreditReport:
         for month in range( 1, 13 ):
             monthly_expenses = 0
             for category, expenses in self.expense_by_category.items():
-                if category in [ 'Payment' ]:
-                    continue
                 monthly_expenses += expenses.get( month, 0 )
             total_row.append( round( monthly_expenses ) )
         total = sum( total_row )
@@ -301,11 +311,15 @@ class CreditReport:
         if isinstance( result, list ):
             result = sorted( result, key=lambda x: x.date )
             list( map( print, result ) )
+            total = round( sum( t.amount for t in result ), 2 )
+            print( f'Total = {total}' )
         elif isinstance( result, defaultdict ):
             for card, expenses in result.items():
                 print( card )
                 expenses = sorted( expenses, key=lambda x: x.date )
                 list( map( print, expenses ) )
+                total = round( sum( t.amount for t in expenses ), 2 )
+                print( f'Total = {total}' )
                 print()
 
     def run( self, card=None, month=None, category=None,

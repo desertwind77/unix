@@ -10,7 +10,8 @@
                "Description" : 1,
                "Card Member" : 2,
                "Account #" : 3,
-               "Amount" : 4
+               "Amount" : 4,
+               "SEARCH" : 1
             }
          },
          "Chase Freedom" : {
@@ -21,11 +22,12 @@
             "Fields" : {
                "Transaction Date" : 0,
                "Post Date" : 1,
-                "Description" : 2,
-                "Category" : 3,
-                "Type" : 4,
-                "Amount" : 5,
-                "Memo" : 6
+               "Description" : 2,
+               "Category" : 3,
+               "Type" : 4,
+               "Amount" : 5,
+               "Memo" : 6,
+               "SEARCH" : 2
             }
          },
          "Chase Sapphire" : {
@@ -40,7 +42,28 @@
                "Category" : 3,
                "Type" : 4,
                "Amount" : 5,
-               "Memo" : 6
+               "Memo" : 6,
+               "SEARCH" : 2
+            }
+         },
+         "Target Redcard" : {
+            "Filename" : "(\\d{4})_(\\d{2})_target.csv",
+            "Transaction Year" : "True",
+            "Header" : "True",
+            "Fields" : {
+               "Account Number" : 0,
+               "Post Date" : 1,
+               "Transaction Date" : 2,
+               "Type" : 3,
+               "Category" : 4,
+               "Merchant Name" : 5,
+               "Merchant City" : 6,
+               "Merchant State" : 7,
+               "Description" : 8,
+               "Transaction Type" : 9,
+               "Amount" : 10,
+               "Reference Number" : 11,
+               "SEARCH" : 5
             }
          },
          "Wellsfargo Autograph" : {
@@ -49,7 +72,18 @@
             "Fields" : {
                "Transaction Date" : 1,
                "Description" : 2,
-               "Amount" : 3
+               "Amount" : 3,
+               "SEARCH" : 2
+            }
+         },
+         "Wellsfargo Bilt" : {
+            "Filename" : "(\\d{4})_(\\d{2})_bilt.pdf",
+            "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\d{9} \\w{17} (.*) \\$([0-9.,]+)$",
+            "Fields" : {
+               "Transaction Date" : 1,
+               "Description" : 2,
+               "Amount" : 3,
+               "SEARCH" : 2
             }
          }
       },
@@ -59,9 +93,13 @@
          "&amp;" : ""
       },
 
+      "Ignored Categories" : [ "Payment" ],
+
       "Category" : {
          "Payment" : [
+            { "Auto Payment" : "Target Redcard payment" },
             { "Autopay Payment" : "Amex payment" },
+            { "Bilt Rent Ach Credit" : "Rent paid via Bilt" },
             { "Online Payment" : "Freedom payment" },
             { "Payment Thank You" : "Sapphire payment" },
             { "Redemption Credit" : "Chase Sapphire Redemption Credit" }
@@ -381,6 +419,9 @@
             "Wayfair",
             "Western Digital",
             "Zendure"
+         ],
+         "Rent" : [
+            "Bilt Rewards"
          ],
          "Transportation" : [
             { "64100 - South Hall" : "Parking" },
