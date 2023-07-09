@@ -18,5 +18,5 @@ then
 fi
 
 source $venv_dir/bin/activate
-$script_dir/$name.py -l "$statements" "$@"
+$script_dir/$name.py -l "$statements" "$@" 2>&1 | grep -v "Multiple definitions in dictionary"
 deactivate
