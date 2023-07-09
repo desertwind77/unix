@@ -18,5 +18,6 @@ then
 fi
 
 source $venv_dir/bin/activate
+# Ignore the output from PyPDF. I believe this is a bug in the package
 $script_dir/$name.py -l "$statements" "$@" 2>&1 | grep -v "Multiple definitions in dictionary"
 deactivate
