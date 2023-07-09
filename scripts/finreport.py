@@ -317,7 +317,7 @@ class CreditReport:
             self.print_expense_summary_by_account_type( account_type )
             print()
 
-    def query( self, account=None, month=None, category=None, groupByAccount=False, verbose=False ):
+    def query( self, account=None, month=None, category=None, group_by_account=False, verbose=False ):
         if verbose:
             query_str = 'Query: '
             if account:
@@ -325,11 +325,13 @@ class CreditReport:
             if month:
                 query_str += f'month = {month}, '
             if category:
-                query_str += f'category = {category}'
+                query_str += f'category = {category}, '
+            if group_by_account:
+                query_str += 'grouping = True'
             print( query_str )
             print()
 
-        result = defaultdict( list ) if groupByAccount else []
+        result = defaultdict( list ) if group_by_account else []
 
         for statement in self.statements:
             for transaction in statement.transactions:
@@ -339,11 +341,11 @@ class CreditReport:
                     continue
                 if category and transaction.category != category:
                     continue
+
                 if isinstance( result, list ):
                     result.append( transaction )
                 else:
-                    account = transaction.statement.account.name
-                    result[ account ].append( transaction )
+                    result[ transaction.statement.account.name ].append( transaction )
 
         if isinstance( result, list ):
             result = sorted( result, key=lambda x: x.date )
@@ -351,8 +353,8 @@ class CreditReport:
             total = round( sum( t.amount for t in result ), 2 )
             print( f'Total = {total}' )
         elif isinstance( result, defaultdict ):
-            for account, expenses in result.items():
-                print( account )
+            for account_name, expenses in result.items():
+                print( account_name )
                 expenses = sorted( expenses, key=lambda x: x.date )
                 list( map( print, expenses ) )
                 total = round( sum( t.amount for t in expenses ), 2 )
@@ -360,7 +362,7 @@ class CreditReport:
                 print()
 
     def run( self, account=None, month=None, category=None,
-             groupByAccount=False, verbose=False ):
+             group_by_account=False, verbose=False ):
         '''Generate the financial report'''
         self.load_account_config()
         self.load_category_config()
@@ -370,7 +372,7 @@ class CreditReport:
             self.print_expense_summary()
         else:
             self.query( account=account, month=month, category=category,
-                        groupByAccount=groupByAccount,
+                        group_by_account=group_by_account,
                         verbose=verbose )
 
 def process_command_line_arguments():
@@ -408,7 +410,7 @@ def main():
 
     reporter = CreditReport( CONFIG_FILENAME, location )
     reporter.run( account=account, month=month, category=category,
-                  groupByAccount=group, verbose=verbose )
+                  group_by_account=group, verbose=verbose )
 
 if __name__ == '__main__':
     main()
