@@ -97,7 +97,12 @@
             "Type" : "Credit Card",
             "Has Transaction Year" : "False",
             "Has Postive Expenses" : "True",
-            "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.,]+)$",
+            "Check Regex" : "^\\d{2}\/\\d{2} \\d{2}\/\\d{2} \\w{17}",
+            "Regex" : [
+               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.,]+)$",
+               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17}.*\\n.*\\n.{17}(.*)\\n.*\\n.*X    0\\.\\d{8}([0-9.,]+)$",
+               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17}.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.{15}(.*)\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\nUNKNOWN LOCATION     UNKNOWN LOCATION([0-9.,]+)$"
+            ],
             "Fields" : {
                "Transaction Date" : 1,
                "Description" : 2,
@@ -111,7 +116,7 @@
             "Type" : "Credit Card",
             "Has Transaction Year" : "False",
             "Has Postive Expenses" : "True",
-            "Regex" : "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\d{9} \\w{17} (.*) \\$([0-9.,]+)$",
+            "Regex" : [ "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\d{9} \\w{17} (.*) \\$([0-9.,]+)$" ],
             "Fields" : {
                "Transaction Date" : 1,
                "Description" : 2,
@@ -181,6 +186,7 @@
                "7-Eleven",
                "10 Butchers Korea BBQ",
                "A Slice of NY",
+               "After You",
                "Armadillo Willys BBQ",
                "Asian Street Eat",
                "Azuma Japanese",
@@ -253,6 +259,7 @@
                "Ludwigs",
                "Marugame Udon",
                "Matcha Cafe Maiko",
+               { "MC-00280 SVB Airport" : "McDonald in BKK airpot" },
                "McDonald",
                "Meet Fresh",
                "Mochi Waffle",
@@ -420,6 +427,7 @@
                "MI Shop The Mall",
                { "Modular Robotic" : "GoPiGo Robot" },
                "Mountain View Florist",
+               { "Music Arms-Mall 6" : "Music Arms The Mall Ngamvongwarn" },
                "Ngan Dee Promotion",
                "GHD NorthAmericalLc",
                "Oakland Zoo",

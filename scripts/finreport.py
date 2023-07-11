@@ -30,18 +30,22 @@ class UnknownDataTypeInConfigException( Exception ):
 class UnknownTransactionCategoryException( Exception ):
     '''Transactions with unknown categories exists'''
 
+class  MissingTransactionException( Exception ):
+    '''Some transactions in a PDF file were not recognized'''
+
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
 class Account:
     '''Represent an account'''
     # pylint: disable=too-many-arguments
-    def __init__( self, name, enabled, filename, account_type, regex,
-                  has_year_in_date, has_positive_expenses, has_header,
-                  fields ):
+    def __init__( self, name, enabled, filename, account_type,
+                  check_regex, regex, has_year_in_date,
+                  has_positive_expenses, has_header, fields ):
         self.name = name
         self.enabled = enabled
         self.filename = filename
         self.account_type = account_type
+        self.check_regex = check_regex
         self.regex = regex
         self.has_year_in_date = has_year_in_date
         self.has_positive_expenses = has_positive_expenses
@@ -154,29 +158,41 @@ class Statement:
 
         count = 0
         reader = PyPDF2.PdfReader( self.filename, strict=False )
+        text = ''
         for page in reader.pages:
-            text = page.extract_text()
-            for line in text.splitlines():
-                obj = re.match( self.account.regex, line )
-                if not obj:
-                    continue
-                date = obj.group( field_date )
+            text += page.extract_text()
+
+        for regex in self.account.regex:
+            matches = re.compile( regex, re.MULTILINE )
+            for match in matches.finditer( text ):
+                count += 1
+                date = match.group( field_date )
                 # pylint: disable=fixme
                 # FIXME: assuming the date is in the format mm/dd
                 date = f'{date}/{year}' if year else date
                 date = datetime.strptime( date, '%m/%d/%Y' )
-                description = self.cleanup_description( obj.group( field_desc ) )
-                amount = obj.group( field_amount ).replace( ',', '' )
+
+                description = self.cleanup_description( match.group( field_desc ) )
+
+                amount = match.group( field_amount ).replace( ',', '' )
                 amount = round( float( amount ), 2 )
                 amount = -1 * amount if self.account.has_positive_expenses else amount
+
                 category = self.get_category( description )
                 if category in ignored_categories:
                     continue
+
                 transaction = Transaction( self, date, description, category, amount )
                 self.transactions.append( transaction )
-                count += 1
-        if verbose:
-            print( f'{str( file_path.name )} : transactions = {count}' )
+
+        # Double check to make sure that we process all the transactions
+        if self.account.check_regex:
+            check_count = 0
+            for line in text.splitlines():
+                if re.match( self.account.check_regex, line ):
+                    check_count += 1
+            if count != check_count:
+                raise MissingTransactionException( str( file_path.name ), count, check_count )
 
 class CreditReport:
     def __init__( self, config_filename, statement_location ):
@@ -194,13 +210,14 @@ class CreditReport:
             enabled = info[ 'Enabled' ] == 'True'
             filename = info[ 'Filename' ]
             account_type = info[ 'Type' ]
+            check_regex = info.get( 'Check Regex', None )
             regex = info.get( 'Regex', None )
             has_year_in_date = info[ 'Has Transaction Year' ] == 'True'
             has_positive_expenses = info['Has Postive Expenses' ] == 'True'
             has_header = info.get( 'Header', False )
             fields = info[ 'Fields' ]
             self.account_info[ name ] = Account( name, enabled, filename, account_type,
-                                                 regex, has_year_in_date,
+                                                 check_regex, regex, has_year_in_date,
                                                  has_positive_expenses,
                                                  has_header, fields )
 
