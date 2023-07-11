@@ -128,7 +128,7 @@
 
       "Category" : {
          "Ignored" : {
-            "Bank Account" : [ "Amazon Payments", "Transfer" ],
+            "Bank Account" : [ "Amazon Payments" ],
             "Credit Card" : [ "Payment" ]
          },
          "Replace" : {
