@@ -12,7 +12,7 @@
             "Family": {
                "Sources" : {
                   "SourcePortFolio" : {
-                     "SelectedDir" : [ "My Family", "My Love", "Myself" ],
+                     "SelectedDir" : [ "Family Photo", "My Family", "My Love", "Myself" ],
                      "SelectedSubDir" : "Web"
                   },
                   "SourcePhotoFrame" : {
