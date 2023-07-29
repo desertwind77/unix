@@ -63,14 +63,14 @@
             }
          },
          "My Family" : {
-            "baseName" : "Family",
+            "baseName" : "My Family",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
                "GoogleDrive" : "Web"
             }
          },
          "My Friends" : {
-            "baseName" : "Friends",
+            "baseName" : "My Friends",
             "Destinations" : {
                "Portfolio" : [ "Full", "PSD", "Web" ],
                "GoogleDrive" : "Web"
