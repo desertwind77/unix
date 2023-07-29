@@ -1,5 +1,6 @@
 > install
    # For MacOS using brew
+   #  btop        : top
    #  cheat       : cheat sheet (better than man)
    #  dos2unix    : to translate dos files to unix files
    #  duf         : du
@@ -8,6 +9,7 @@
    #  fluid-synth : to play midi e.g. from Frescobaldi
    #  fzf         : fuzzy finder
    #  grex        : generate regular expression
+   #  htop        : top
    #  imageMagick : to convert image from one format to another
    #  mas         : to query software update in Mac App Store
    #  ranger      : file manager
@@ -15,7 +17,7 @@
    #  vim         : vim with python and python3 support
    #  xrdp        : remote desktop
    #  zoxide
-   ack bat cheat cscope dos2unix duf dust exa fd ffmpeg fish fluid-synth fzf grex imageMagick
+   ack bat btop cheat cscope dos2unix duf dust exa fd ffmpeg fish fluid-synth fzf grex htop imageMagick
    lilypond lynx mas mc mosh octave procs ranger tmux trash-cli vim wget youtube-dl
    zoxide
 
