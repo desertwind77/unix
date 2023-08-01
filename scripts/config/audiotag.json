@@ -1,0 +1,18 @@
+{
+   "config" : {
+      "Extract" : {
+         "Archive Format" : [ ".7z", ".rar", ".zip" ],
+         "Convert Format" : [ ".wav" ]
+      },
+      "Cleanup" : {
+         "Allowed Formats" : [ ".flac", ".pdf", ".jpg", ".png" ],
+         "DSD Format" : [ ".dsf" ],
+         "Replaced Chars" : [
+            {
+               "src" : [ "_" ],
+               "dst" : " "
+            }
+         ]
+      }
+   }
+}
