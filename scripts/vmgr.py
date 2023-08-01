@@ -165,8 +165,8 @@ def parse_argv():
 
     subparser.add_parser( 'show', help='Show all vim plugins to be installed' )
 
-    install_parser= subparser.add_parser( 'install',
-                                          help='Install all vim plugins' )
+    install_parser = subparser.add_parser( 'install',
+                                           help='Install all vim plugins' )
     install_parser.add_argument( '-f', '--force',
                                  action='store_true', dest='force' )
 
