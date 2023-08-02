@@ -53,9 +53,9 @@ class FileBase:
     def __init__( self, config ):
         self.config = config
 
-    def sanitize_text( self, txt ):
+    def sanitize_text( self, txt, charset ):
         '''Change the text to conform with what is expected'''
-        for replacement in self.config[ 'Cleanup' ][ 'Replaced Chars' ]:
+        for replacement in self.config[ 'Cleanup' ][ charset ]:
             dst = replacement[ "dst"]
             for src in replacement[ "src" ]:
                 txt = txt.replace( src, dst )
@@ -63,6 +63,12 @@ class FileBase:
         # FIXME: capwords is not good
         #return string.capwords( txt )
         return txt
+
+    def sanitize_text_display( self, txt ):
+        return self.sanitize_text( txt, 'Display Chars' )
+
+    def sanitize_text_filesystem( self, txt ):
+        return self.sanitize_text( txt, 'Filesystem Chars' )
 
     def sanitize_number( self, txt ):
         '''
@@ -227,7 +233,9 @@ class Album( FileBase ):
 
         # Rename this folder
         parent = str( self.path.parent )
-        dst = os.path.join( parent, f'{self.album_artist()} -{self.album_name()}' )
+        album_artist = self.sanitize_text_filesystem( self.album_artist() )
+        album_name = self.sanitize_text_filesystem( self.album_name() )
+        dst = os.path.join( parent, f'{album_artist} - {album_name}' )
         os.rename( str( self.path ), dst )
 
         # Re-add all files in this folders
@@ -303,7 +311,7 @@ class FlacFile( FileBase ):
     def get_metadata_str( self, field ):
         '''Get a sanitized string tag'''
         result = self.get_metadata( field )
-        return self.sanitize_text( result ) if result else None
+        return self.sanitize_text_display( result ) if result else None
 
     def get_track_number( self ):
         '''
@@ -314,7 +322,7 @@ class FlacFile( FileBase ):
         if track:
             return track
 
-        filename = self.sanitize_text( str( self.path.name ) )
+        filename = self.sanitize_text_display( str( self.path.name ) )
         obj = re.match( r'^(\d+) *(.*)', filename )
         if obj:
             return obj.group( 1 )
@@ -326,7 +334,7 @@ class FlacFile( FileBase ):
         if title:
             return title
 
-        filename = self.sanitize_text( str( self.path.name ) )
+        filename = self.sanitize_text_display( str( self.path.name ) )
         obj = re.match( r'^(\d+) *(.*)', filename )
         if obj:
             return obj.group( 2 )
@@ -516,6 +524,7 @@ class CleanupCmd( BaseCmd ):
         self.unknown = []
 
     def load_flac_files( self ):
+        '''Load all flac files'''
         cwd = Path( self.location )
         for filename in list( cwd.glob( '**/*.flac' ) ):
             flac = FlacFile( self.config, filename )
@@ -527,7 +536,8 @@ class CleanupCmd( BaseCmd ):
                         Album( self.config, flac.album_path() )
             self.albums[ flac.album_path() ].add_track( flac )
 
-    def interactive_cleanup( self ):
+    def command_shell( self ):
+        '''Temporary interactive command'''
         for album in self.albums.values():
             album.show_content()
             print()
@@ -538,6 +548,7 @@ class CleanupCmd( BaseCmd ):
                 if cmd == 'c': # continue
                     album.save()
                     album.remove_unwanted_files()
+                    album.rename()
                     break
                 if cmd == 'show':
                     album.show_content()
@@ -585,7 +596,7 @@ class CleanupCmd( BaseCmd ):
     def run( self ):
         '''Run the command'''
         self.load_flac_files()
-        self.interactive_cleanup()
+        self.command_shell()
         self.show_summary()
 
 def execute( cmd ):
