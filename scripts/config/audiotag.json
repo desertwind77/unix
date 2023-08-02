@@ -7,7 +7,7 @@
       "Cleanup" : {
          "Allowed Formats" : [ ".flac", ".pdf", ".jpg", ".png" ],
          "DSD Format" : [ ".dsf" ],
-         "Replaced Chars" : [
+         "Display Chars" : [
             {
                "src" : [ "_" ],
                "dst" : " "
@@ -15,6 +15,12 @@
             {
                "src" : [ "/" ],
                "dst" : "-"
+            }
+         ],
+         "Filesystem Chars" : [
+            {
+               "src" : [ ":" ],
+               "dst" : ""
             }
          ]
       }
