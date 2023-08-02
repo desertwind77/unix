@@ -220,6 +220,23 @@ class Album( FileBase ):
                 flac.album_artist = album_artist
                 flac.save()
 
+    def rename( self ):
+        '''Rename all the files in the folder and this folder'''
+        for flac in self.contents:
+            flac.rename()
+
+        # Rename this folder
+        parent = str( self.path.parent )
+        dst = os.path.join( parent, f'{self.album_artist()} -{self.album_name()}' )
+        os.rename( str( self.path ), dst )
+
+        # Re-add all files in this folders
+        self.path = Path( dst )
+        self.disc = defaultdict( list )
+        self.contents = []
+        for filename in self.path.glob( '**/*.flac' ):
+            self.add_track( FlacFile( self.config, filename ) )
+
     def show_content( self ):
         '''Show the contents of this album'''
         print( f'Album Artist : {self.album_artist()}' )
@@ -243,6 +260,18 @@ class FlacFile( FileBase ):
     def __init__( self, config, path ):
         super().__init__( config )
         self.path = path
+        self.metadata = None
+        self.track = None
+        self.title = None
+        self.artist = None
+        self.album = None
+        self.album_artist = None
+        self.discno = None
+        self.has_album_art = None
+        self.load_metadata()
+
+    def load_metadata( self ):
+        '''Load the metadata from the disk'''
         self.metadata = FLAC( self.path )
         self.track = self.get_track_number()
         self.title = self.get_title()
@@ -251,6 +280,15 @@ class FlacFile( FileBase ):
         self.album_artist = self.get_metadata_str( 'albumartist' )
         self.discno = self.get_disc_number()
         self.has_album_art = self.check_album_art()
+
+    def rename( self ):
+        '''Rename this file to <track> <title>.flac'''
+        parent = str( self.path.parent )
+        # It is unlikely that there will be more than 99 tracks in an album.
+        dst = os.path.join( parent, f'{self.track:2} {self.title}.flac' )
+        os.rename( str( self.path ), dst )
+        self.path = Path( dst )
+        self.load_metadata()
 
     def get_metadata( self, field ):
         '''Get a tag'''
@@ -499,9 +537,12 @@ class CleanupCmd( BaseCmd ):
                     return
                 if cmd == 'c': # continue
                     album.save()
+                    album.remove_unwanted_files()
                     break
-                elif cmd == 'show':
+                if cmd == 'show':
                     album.show_content()
+                elif cmd == 'rename':
+                    album.rename()
                 elif cmd.startswith( 'ml '): # ml <album>
                     album_name = cmd[ len( 'ml ' ): ]
                     for flac in album.contents:
@@ -528,8 +569,6 @@ class CleanupCmd( BaseCmd ):
                     # moda <track> <artist>
                     # moda <disc> <trac> <artist>
                     pass
-                elif cmd == 'rem':
-                    album.remove_unwanted_files()
                 cmd = input( 'Enter command: ' )
 
     def show_summary( self ):
