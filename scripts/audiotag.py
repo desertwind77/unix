@@ -17,7 +17,6 @@ import errno
 import os
 import re
 import shutil
-import string
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
@@ -26,6 +25,7 @@ from mutagen.id3 import PictureType
 from mutagen.wave import WAVE
 from pydub import AudioSegment
 from pydub.utils import mediainfo
+from tabulate import tabulate
 import pyunpack
 
 from genutils import load_config
@@ -49,6 +49,7 @@ class Parameters:
     archive_dst : str
 
 class FileBase:
+    '''The base clase for Album and FlacFile'''
     def __init__( self, config ):
         self.config = config
 
@@ -63,7 +64,19 @@ class FileBase:
         #return string.capwords( txt )
         return txt
 
+    def sanitize_number( self, txt ):
+        '''
+        Clean up the number tag.
+        1) If the number in the format of <num> / <total_num>, retain only <num>
+        2) Convet from the string <num> to integer
+        '''
+        if '/' in txt:
+            txt = txt.split( '/' )
+            return int( txt[ 0 ] )
+        return int( txt )
+
 class Album( FileBase ):
+    '''The class representing a folder containing an album'''
     def __init__( self, config, path ):
         super().__init__( config )
         self.path = path
@@ -71,14 +84,42 @@ class Album( FileBase ):
         self.contents = []
 
     def add_track( self, flac ):
+        '''Add a track to the album'''
         self.contents.append( flac )
         if flac.discno:
             self.disc[ flac.discno ].append( flac )
 
+    def get_album_artist_from_path( self ):
+        '''
+        Get the album artist from the folder name.
+        Assuming the folder name is in the format of <Album Artist> - <Album>
+        '''
+        obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
+        if obj:
+            return obj.group( 1 )
+        return None
+
+    def get_album_name_from_path( self ):
+        '''
+        Get the album name from the folder name.
+        Assuming the folder name is in the format of <Album Artist> - <Album>
+        '''
+        obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
+        if obj:
+            return obj.group( 2 )
+        return None
+
     def album_name( self ):
-        # All flac files in this album should have the same album name
+        '''
+        Return the album name.
+        1) If all flac files in this album has the same album name and
+           that album name is not empty, use that one.
+        2) If there are more than one album name, use the longest common
+           string in the album names.
+        3) Try to get the album name from the folder name
+        '''
         result = list( set( f.album for f in self.contents ) )
-        if len( result ) == 1:
+        if len( result ) == 1 and result[ 0 ] is not None:
             return result[ 0 ]
 
         # Flac files have different album name. Usually, this is because
@@ -94,41 +135,109 @@ class Album( FileBase ):
         if stop != 0:
             return result[ 0 ][ : stop + 1 ]
 
-        # If no album is present, try to get one from the
-        # folder name.
-        obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
-        if obj:
-            return obj.group( 2 )
-        return None
+        return self.get_album_name_from_path()
 
     def album_artist( self ):
-        # All flac files in this album should have the same
-        # album artist
+        '''
+        Return the album artist.
+        1) If all flac files in this album has the same album name and
+           that album name is not empty, use that one.
+        2) Try to get the album name from the folder name
+        '''
         result = set( f.album_artist for f in self.contents )
+        # All flac files in this album should have the same album artist
         assert len( result ) == 1
         result = list( result )[ 0 ]
         if result:
             return result
+        return self.get_album_artist_from_path()
 
-        # If no album artist is present, try to get one from the
-        # folder name.
-        obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
-        if obj:
-            return obj.group( 1 )
-        return None
+    def has_all_tags( self ):
+        '''Check if all flac files have all the required tags'''
+        check_discno = bool( self.disc )
+        return all( f.has_all_tags( check_discno=check_discno )
+                    for f in self.contents )
+
+    def has_album_art( self ):
+        '''Check if all flac files have an album art'''
+        return all( f.has_album_art for f in self.contents )
+
+    def get_format( self, filename ):
+        '''Determine the file format from the filename'''
+        filename = str( filename.name )
+        return os.path.splitext( filename )[ -1 ].lower()
+
+    def get_unwanted_files( self ):
+        '''Get the list of unwanted files'''
+        unwanted = []
+        filenames = [ f for f in self.path.glob( '**/*' ) if os.path.isfile( f ) ]
+        for filename in filenames:
+            fmt = self.get_format( filename )
+            if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ]:
+                unwanted.append( filename )
+        return unwanted
+
+    def has_unwanted_files( self ):
+        '''Check if this album contains unwanted files'''
+        return bool( self.get_unwanted_files() )
+
+    def remove_unwanted_files( self ):
+        '''Remove files of which format is not in the allowed list'''
+        deletes = self.get_unwanted_files()
+        if not deletes:
+            return
+
+        for filename in deletes:
+            print( f'Removing {filename}' )
+        confirm = input( 'Are you sure? [y] ' )
+        if confirm != 'y':
+            return
+
+        # Remove unwanted files
+        for filename in deletes:
+            os.remove( filename )
+        # Remove empty folders
+        folders = [ str( f ) for f in self.path.glob( '**/*' )
+                    if os.path.isdir( f ) ]
+        for folder in sorted( folders, key=len, reverse=True ):
+            if not list( os.listdir( folder ) ):
+                os.rmdir( folder )
+
+    def save( self ):
+        '''Save all tag changes to disck'''
+        album_name = self.album_name()
+        album_artist = self.album_artist()
+        if self.disc:
+            for disc, flacs in self.disc.items():
+                for flac in flacs:
+                    flac.album = album_name
+                    flac.album_artist = album_artist
+                    flac.discno = disc
+                    flac.save()
+        else:
+            for flac in self.contents:
+                flac.album = album_name
+                flac.album_artist = album_artist
+                flac.save()
 
     def show_content( self ):
+        '''Show the contents of this album'''
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
+        print( f'Album Art: {self.has_album_art()}' )
 
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
                 print( f'Disc {disc}' )
+                tab_data = []
                 for flac in flacs:
-                    print( f'   {flac.track:03} {flac.title}' )
+                    tab_data.append( [ flac.track, flac.artist, flac.title ] )
+                print( tabulate( tab_data, tablefmt="plain" ) )
         else:
+            tab_data = []
             for flac in self.contents:
-                print( f'{flac.track:03} {flac.title}' )
+                tab_data.append( [ flac.track, flac.artist, flac.title ] )
+            print( tabulate( tab_data, tablefmt="plain" ) )
 
 class FlacFile( FileBase ):
     def __init__( self, config, path ):
@@ -141,27 +250,28 @@ class FlacFile( FileBase ):
         self.album = self.get_metadata_str( 'album' )
         self.album_artist = self.get_metadata_str( 'albumartist' )
         self.discno = self.get_disc_number()
-        self.has_album_art = False
-
-    def sanitize_number( self, txt ):
-        if '/' in txt:
-            txt = txt.split( '/' )
-            return int( txt[ 0 ] )
-        return int( txt )
+        self.has_album_art = self.check_album_art()
 
     def get_metadata( self, field ):
+        '''Get a tag'''
         title = self.metadata.get( field )
         return title[ 0 ] if title else None
 
     def get_metadata_num( self, field ):
+        '''Get a sanitized numeric tag'''
         result = self.get_metadata( field )
         return self.sanitize_number( result ) if result else None
 
     def get_metadata_str( self, field ):
+        '''Get a sanitized string tag'''
         result = self.get_metadata( field )
         return self.sanitize_text( result ) if result else None
 
     def get_track_number( self ):
+        '''
+        Get the track number from ID3 tag first.
+        If that fails, then the filename
+        '''
         track = self.get_metadata_num( 'tracknumber' )
         if track:
             return track
@@ -173,6 +283,7 @@ class FlacFile( FileBase ):
         return None
 
     def get_title( self ):
+        '''Get the title from ID3 tag first.  If that fails, then the filename'''
         title = self.get_metadata_str( 'title' )
         if title:
             return title
@@ -184,10 +295,12 @@ class FlacFile( FileBase ):
         return None
 
     def get_disc_number_from_metadata( self ):
+        '''Retrieve the disc number from the metadata in the file'''
         discno = self.get_metadata_num( 'discnumber' )
         return discno if discno else None
 
     def get_disc_number_from_path( self ):
+        '''Retrieve the disc number from the file path'''
         discno = None
         parent = self.path.absolute().parent.name
         obj = re.match( r'cd.*(\d+)', parent.lower() )
@@ -200,31 +313,52 @@ class FlacFile( FileBase ):
         return discno
 
     def get_disc_number( self ):
-        # For Disc No, we trust the information from the path
+        '''
+        Get the disc number of this file. For Disc No,
+        we trust the information from the path first.
+        '''
         discno = self.get_disc_number_from_path()
         if not discno:
             discno = self.get_disc_number_from_metadata()
         return discno
 
-    def get_album_art( self ):
+    def check_album_art( self ):
+        '''Check if this file contains an album art'''
         metadata = FLAC( self.path )
         for pic in metadata.pictures:
             if pic.type == 3:
-                self.album_art = True
-                break
+                return True
+        return False
 
-    def has_required_tag( self ):
-        return all( self.track, self.title, self.artist, self.album,
-                    self.album_artist, self.discno, self.has_album_art )
+    def has_all_tags( self, check_discno=False):
+        '''Check if this file has all required tags'''
+        if not check_discno:
+            return all( [ self.track, self.title, self.artist, self.album,
+                          self.album_artist ] )
+        return all( [ self.track, self.title, self.artist, self.album,
+                      self.album_artist, self.discno ] )
 
     def album_path( self ):
+        '''Get the path containing this album'''
         parent = self.path.absolute().parent
         if re.search( r'cd.*(\d+)', str( parent ).lower() ) or \
                 re.search( r'disc.*(\d+)', str( parent ).lower() ):
             parent = parent.parent
         return parent
 
+    def save( self ):
+        '''Save all ID3 tag changes to disk'''
+        self.metadata[ 'tracknumber' ] = [ str( self.track ) ]
+        self.metadata[ 'title' ] = [ self.title ]
+        self.metadata[ 'artist' ] = [ self.artist ]
+        self.metadata[ 'album' ] = [ self.album ]
+        self.metadata[ 'albumartist' ] = [ self.album_artist ]
+        if self.discno:
+            self.metadata[ 'discnumber' ] = [ str( self.discno ) ]
+        self.metadata.save()
+
     def dump_metadata( self ):
+        '''Dump all ID3 tags'''
         for tag, value in self.metadata.items():
             print( f'{tag} = {value}' )
 
@@ -343,23 +477,6 @@ class CleanupCmd( BaseCmd ):
         self.albums = {}
         self.unknown = []
 
-    # def get_format( self, filename ):
-    #     '''Determine the file format from the filename'''
-    #     filename = str( filename.name )
-    #     return os.path.splitext( filename )[ -1 ].lower()
-
-    # def remove_unwanted_files( self ):
-    #     '''Remove files of which format is not in the allowed list'''
-    #     path = Path( self.folder )
-    #     filenames = [ f for f in path.glob( '**/*' ) if os.path.isfile( f ) ]
-    #     for filename in filenames:
-    #         fmt = self.get_format( filename )
-    #         if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ]:
-    #             if self.verbose:
-    #                 print( f'Removing {filename}' )
-    #             if not self.dry_run:
-    #                 os.remove( filenames )
-
     def load_flac_files( self ):
         cwd = Path( self.location )
         for filename in list( cwd.glob( '**/*.flac' ) ):
@@ -372,14 +489,65 @@ class CleanupCmd( BaseCmd ):
                         Album( self.config, flac.album_path() )
             self.albums[ flac.album_path() ].add_track( flac )
 
-    def show_albums( self ):
+    def interactive_cleanup( self ):
         for album in self.albums.values():
             album.show_content()
             print()
+            cmd = input( 'Enter command: ' )
+            while True:
+                if cmd == 'q': # quit
+                    return
+                if cmd == 'c': # continue
+                    album.save()
+                    break
+                elif cmd == 'show':
+                    album.show_content()
+                elif cmd.startswith( 'ml '): # ml <album>
+                    album_name = cmd[ len( 'ml ' ): ]
+                    for flac in album.contents:
+                        flac.album = album_name
+                elif cmd.startswith( 'ma '): # ma <album artist>
+                    album_artist = cmd[ len( 'ma ' ): ]
+                    for flac in album.contents:
+                        flac.album_artist = album_artist
+                elif cmd.startswith( 'ca'): # copy album artist to album
+                    album_artist = album.album_artist()
+                    for flac in album.contents:
+                        flac.artist = album_artist
+                elif cmd.startswith( 'fa'): # copy album artist and album from file
+                    album_artist = album.get_album_artist_from_path()
+                    album_name = album.get_album_name_from_path()
+                    for flac in album.contents:
+                        flac.album_artist = album_artist
+                        flac.album = album_name
+                elif cmd.startswith( 'modt'):
+                    # modt <track> <title>
+                    # modt <disc> <trac> <title>
+                    pass
+                elif cmd.startswith( 'moda'):
+                    # moda <track> <artist>
+                    # moda <disc> <trac> <artist>
+                    pass
+                elif cmd == 'rem':
+                    album.remove_unwanted_files()
+                cmd = input( 'Enter command: ' )
+
+    def show_summary( self ):
+        '''Show the summary of all albums'''
+        tab_header = [ 'Album Artist', 'Album', 'Has All Tags', 'Has Album Art',
+                       'No Unwanted Files' ]
+        tab_data = []
+        for album in self.albums.values():
+            tab_data.append( [ album.album_artist(), album.album_name(),
+                               album.has_all_tags(), album.has_album_art(),
+                               not album.has_unwanted_files() ] )
+        print( tabulate( tab_data, headers=tab_header, tablefmt="plain" ) )
 
     def run( self ):
+        '''Run the command'''
         self.load_flac_files()
-        self.show_albums()
+        self.interactive_cleanup()
+        self.show_summary()
 
 def execute( cmd ):
     '''Execute a command'''
