@@ -236,6 +236,8 @@ class Album( FileBase ):
         album_artist = self.sanitize_text_filesystem( self.album_artist() )
         album_name = self.sanitize_text_filesystem( self.album_name() )
         dst = os.path.join( parent, f'{album_artist} - {album_name}' )
+        if str( self.path ) == dst:
+            return
         os.rename( str( self.path ), dst )
 
         # Re-add all files in this folders
@@ -293,7 +295,9 @@ class FlacFile( FileBase ):
         '''Rename this file to <track> <title>.flac'''
         parent = str( self.path.parent )
         # It is unlikely that there will be more than 99 tracks in an album.
-        dst = os.path.join( parent, f'{self.track:2} {self.title}.flac' )
+        dst = os.path.join( parent, f'{self.track:02} {self.title}.flac' )
+        if str( self.path ) == dst:
+            return
         os.rename( str( self.path ), dst )
         self.path = Path( dst )
         self.load_metadata()
