@@ -46,9 +46,9 @@ class Parameters:
     dry_run : bool
     seq_exec : bool
     verbose : bool
-    uncompressed_dst : str
     archive_dst : str
     copied_dst : str
+    extract_dst : str
     roon_target : str
 
 class FileBase:
@@ -444,8 +444,8 @@ class ExtractCmd( BaseCmd ):
     '''The command to extract a compressed file'''
     def __init__( self, filename, params ):
         self.filename = filename
-        self.uncompressed_dst = params.uncompressed_dst
         self.archive_dst = params.archive_dst
+        self.extract_dst = params.extract_dst
         self.verbose = params.verbose
         self.dry_run = params.dry_run
 
@@ -463,7 +463,7 @@ class ExtractCmd( BaseCmd ):
                 print( f'Extracting {self.filename}' )
             if self.dry_run:
                 return
-            pyunpack.Archive( self.filename ).extractall( self.uncompressed_dst )
+            pyunpack.Archive( self.filename ).extractall( self.extract_dst )
             shutil.move( self.filename, self.archive_dst )
         except ( pyunpack.PatoolError, FileNotFoundError ) as exception:
             print( exception )
@@ -736,7 +736,7 @@ class AudioTag:
         for fmt in self.config[ "Extract" ][ "Archive Format" ]:
             cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
         if cmds  and not params.dry_run:
-            os.makedirs( 'archives', exist_ok=True )
+            os.makedirs( params.archive_dst, exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec )
 
     def convert_audio( self, params ):
@@ -784,10 +784,10 @@ def process_arguments():
     subparser.required = True
 
     extract_parser = subparser.add_parser( 'extract', help='Extract compressed archives' )
+    extract_parser.add_argument( '-a', '--archive-dst', default='archive_files',
+                                 help='Move the uncompressed archives to this location' )
     extract_parser.add_argument( '-e', '--extract-dst', default='.',
                                  help='Extract the archives at this location' )
-    extract_parser.add_argument( '-u', '--uncompressed-dst', default='uncompressed_files',
-                                 help='Move the uncompressed archives to this location' )
 
     subparser.add_parser( 'convert', help='Convert audio files to .flac' )
     subparser.add_parser( 'cleanup', help='Do various data cleanup' )
@@ -803,12 +803,11 @@ def process_arguments():
     args = parser.parse_args()
     seq_exec = False if args.command == 'cleanup' else args.seq_exec
     archive_dst = getattr( args, 'archive_dst', None )
-    uncompressed_dst = getattr( args, 'uncompressed_dst', None )
     copied_dst = getattr( args, 'copied_dst', None )
+    extract_dst = getattr( args, 'extract_dst', None )
     roon_target = getattr( args, 'roon_target', None )
     return Parameters( args.command, args.dry_run, seq_exec, args.verbose,
-                       uncompressed_dst, archive_dst, copied_dst,
-                       roon_target )
+                       archive_dst, copied_dst, extract_dst, roon_target )
 
 def main():
     '''The main function'''
