@@ -39,17 +39,42 @@ class UnsupportedFormat( Exception ):
 class UnsupportedCommand( Exception ):
     '''Unsupport Command'''
 
-@dataclass
 class Parameters:
     '''Commandline parameters'''
-    command : str
-    dry_run : bool
-    seq_exec : bool
-    verbose : bool
-    archive_dst : str
-    copied_dst : str
-    extract_dst : str
-    roon_target : str
+    def __init__( self, params ):
+        self.params = params
+
+    def command( self ):
+        '''Return the command argument'''
+        return self.params.get( 'command' )
+
+    def dry_run( self ):
+        '''Return the dry_run argument'''
+        return self.params.get( 'dry_run' )
+
+    def seq_exec( self ):
+        '''Return the seq_exec argument'''
+        return self.params.get( 'seq_exec' )
+
+    def verbose( self ):
+        '''Return the verbose argument'''
+        return self.params.get( 'verbose' )
+
+    def archive_dst ( self ):
+        '''Return the archive_dst argument'''
+        return self.params.get( 'archive_dst ' )
+
+    def copied_dst ( self ):
+        '''Return the copied_dst argument'''
+        return self.params.get( 'copied_dst ' )
+
+    def extract_dst ( self ):
+        '''Return the extract_dst argument'''
+        return self.params.get( 'extract_dst ' )
+
+    def roon_target ( self ):
+        '''Return the roon_target argument'''
+        return self.params.get( 'roon_target ' )
 
 class FileBase:
     '''The base clase for Album and FlacFile'''
@@ -70,9 +95,11 @@ class FileBase:
         return txt
 
     def sanitize_text_display( self, txt ):
+        '''Change the text to display on screen'''
         return self.sanitize_text( txt, 'Display Chars' )
 
     def sanitize_text_filesystem( self, txt ):
+        '''Change the text for a filename'''
         return self.sanitize_text( txt, 'Filesystem Chars' )
 
     def sanitize_number( self, txt ):
@@ -288,7 +315,9 @@ class Album( FileBase ):
                 tab_data.append( [ track, artist, title, str( flac.path.name ) ] )
             print( tabulate( tab_data, tablefmt="plain" ) )
 
+# pylint: disable=too-many-instance-attributes
 class FlacFile( FileBase ):
+    '''The class representing a flac file'''
     def __init__( self, config, path ):
         super().__init__( config )
         self.path = path
@@ -452,10 +481,10 @@ class ExtractCmd( BaseCmd ):
     '''The command to extract a compressed file'''
     def __init__( self, filename, params ):
         self.filename = filename
-        self.archive_dst = params.archive_dst
-        self.extract_dst = params.extract_dst
-        self.verbose = params.verbose
-        self.dry_run = params.dry_run
+        self.archive_dst = params.archive_dst()
+        self.extract_dst = params.extract_dst()
+        self.verbose = params.verbose()
+        self.dry_run = params.dry_run()
 
     def __str__( self ):
         return f'Extracting {self.filename}'
@@ -480,8 +509,8 @@ class ConvertCmd( BaseCmd ):
     '''Convert an audio file into .flac'''
     def __init__( self, filename, params ):
         self.filename = filename
-        self.verbose = params.verbose
-        self.dry_run = params.dry_run
+        self.verbose = params.verbose()
+        self.dry_run = params.dry_run()
 
         self.format = self.get_format()
         self.tags = self.get_tags()
@@ -549,8 +578,8 @@ class CleanupCmd( BaseCmd ):
     def __init__( self, location, config, params ):
         self.location = location
         self.config = config
-        self.verbose = params.verbose
-        self.dry_run = params.dry_run
+        self.verbose = params.verbose()
+        self.dry_run = params.dry_run()
         self.albums = {}
 
     def load_flac_files( self ):
@@ -675,8 +704,8 @@ class RoonCopyCmd( CleanupCmd ):
     '''The command to copy complete albums to Roon library'''
     def __init__( self, location, config, params ):
         super().__init__( location, config, params )
-        self.copied_dst = params.copied_dst
-        self.roon_target = params.roon_target
+        self.copied_dst = params.copied_dst()
+        self.roon_target = params.roon_target()
 
     def roon_copy( self ):
         '''Copy all complete albums to Roon library'''
@@ -742,9 +771,9 @@ class AudioTag:
         cmds = []
         for fmt in self.config[ "Extract" ][ "Archive Format" ]:
             cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
-        if cmds  and not params.dry_run:
-            os.makedirs( params.archive_dst, exist_ok=True )
-        self.execute_commands( execute, cmds, seq_exec=params.seq_exec )
+        if cmds  and not params.dry_run():
+            os.makedirs( params.archive_dst(), exist_ok=True )
+        self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
     def convert_audio( self, params ):
         '''Convert the autio files to .flac'''
@@ -752,7 +781,7 @@ class AudioTag:
         cmds = []
         for fmt in self.config[ "Extract" ][ "Convert Format" ]:
             cmds += [ ConvertCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
-        self.execute_commands( execute, cmds, seq_exec=params.seq_exec )
+        self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
     def cleanup( self, params ):
         '''Do various data cleanup on all folders in the current folder'''
@@ -766,16 +795,16 @@ class AudioTag:
 
     def run( self, params ):
         '''Run the autio tag process'''
-        if params.command == 'extract':
+        if params.command() == 'extract':
             self.extract_archives( params )
-        elif params.command == 'convert':
+        elif params.command() == 'convert':
             self.convert_audio( params )
-        elif params.command == 'cleanup':
+        elif params.command() == 'cleanup':
             self.cleanup( params )
-        elif params.command == 'copy':
+        elif params.command() == 'copy':
             self.roon_copy( params )
         else:
-            raise UnsupportedCommand( params.command )
+            raise UnsupportedCommand( params.command() )
 
 def process_arguments():
     '''Process commandline arguments'''
@@ -808,13 +837,17 @@ def process_arguments():
                               help="Move the copied albums to this location" )
 
     args = parser.parse_args()
-    seq_exec = False if args.command == 'cleanup' else args.seq_exec
-    archive_dst = getattr( args, 'archive_dst', None )
-    copied_dst = getattr( args, 'copied_dst', None )
-    extract_dst = getattr( args, 'extract_dst', None )
-    roon_target = getattr( args, 'roon_target', None )
-    return Parameters( args.command, args.dry_run, seq_exec, args.verbose,
-                       archive_dst, copied_dst, extract_dst, roon_target )
+    params_dict = {
+        "command" : args.command,
+        "dry_run" : args.dry_run,
+        "verbose" : args.verbose,
+        "seq_exec" : False if args.command == 'cleanup' else args.seq_exec,
+        "archive_dst" : getattr( args, 'archive_dst', None ),
+        "copied_dst" : getattr( args, 'copied_dst', None ),
+        "extract_dst" : getattr( args, 'extract_dst', None ),
+        "roon_target" : getattr( args, 'roon_target', None ),
+    }
+    return Parameters( params_dict )
 
 def main():
     '''The main function'''
