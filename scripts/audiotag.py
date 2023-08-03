@@ -698,9 +698,9 @@ class RoonCopyCmd( CleanupCmd ):
                     subprocess.check_output( cmd, shell=True, text=True )
 
                 if self.verbose:
-                    print( f'shutil.move( {album_path}, {self.copied_dst} )' )
+                    print( f'shutil.move( {album.path.absolute()}, {self.copied_dst} )' )
                 if not self.dry_run:
-                    shutil.move( album_path, self.copied_dst )
+                    shutil.move( album.path.absolute(), self.copied_dst )
             except subprocess.CalledProcessError as exception:
                 print( exception )
 
