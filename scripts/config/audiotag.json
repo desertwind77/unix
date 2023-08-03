@@ -1,5 +1,10 @@
 {
    "config" : {
+      "Default Folders" : {
+         "Archive" : "archive_files",
+         "Extract" : ".",
+         "Roon" : "roon_library_files"
+      },
       "Extract" : {
          "Archive Format" : [ ".7z", ".rar", ".zip" ],
          "Convert Format" : [ ".wav" ]

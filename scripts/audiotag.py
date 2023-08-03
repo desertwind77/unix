@@ -9,7 +9,6 @@ https://mutagen.readthedocs.io/en/latest/
 
 from collections import defaultdict
 from concurrent.futures.process import ProcessPoolExecutor
-from dataclasses import dataclass
 from pathlib import Path
 import argparse
 import concurrent
@@ -62,19 +61,24 @@ class Parameters:
 
     def archive_dst ( self ):
         '''Return the archive_dst argument'''
-        return self.params.get( 'archive_dst ' )
+        return self.params.get( 'archive_dst' )
 
-    def copied_dst ( self ):
-        '''Return the copied_dst argument'''
-        return self.params.get( 'copied_dst ' )
+
+    def skip_complete( self ):
+        '''Return the skip_complete argument'''
+        return self.params.get( 'skip_complete' )
+
+    def roon_dst ( self ):
+        '''Return the roon_dst argument'''
+        return self.params.get( 'roon_dst' )
 
     def extract_dst ( self ):
         '''Return the extract_dst argument'''
-        return self.params.get( 'extract_dst ' )
+        return self.params.get( 'extract_dst' )
 
     def roon_target ( self ):
         '''Return the roon_target argument'''
-        return self.params.get( 'roon_target ' )
+        return self.params.get( 'roon_target' )
 
 class FileBase:
     '''The base clase for Album and FlacFile'''
@@ -580,12 +584,17 @@ class CleanupCmd( BaseCmd ):
         self.config = config
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
+        self.roon_dst = params.roon_dst()
+        self.skip_complete = params.skip_complete()
         self.albums = {}
 
     def load_flac_files( self ):
         '''Load all flac files'''
         cwd = Path( self.location )
-        for filename in list( cwd.glob( '**/*.flac' ) ):
+        filenames = [ f for f in cwd.glob( '**/*.flac' )
+                      if self.roon_dst and \
+                              self.roon_dst not in str( f.absolute() ) ]
+        for filename in filenames:
             flac = FlacFile( self.config, filename )
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
@@ -595,6 +604,11 @@ class CleanupCmd( BaseCmd ):
     def command_prompt( self ):
         '''Temporary interactive command'''
         for album in self.albums.values():
+            if self.skip_complete and all( [ album.has_all_tags(),
+                                             album.has_album_art(),
+                                             album.no_unwanted_files() ] ):
+                continue
+
             album.show_content()
             print()
             cmd = input( 'Enter command: ' )
@@ -704,7 +718,7 @@ class RoonCopyCmd( CleanupCmd ):
     '''The command to copy complete albums to Roon library'''
     def __init__( self, location, config, params ):
         super().__init__( location, config, params )
-        self.copied_dst = params.copied_dst()
+        self.roon_dst = params.roon_dst()
         self.roon_target = params.roon_target()
 
     def roon_copy( self ):
@@ -717,6 +731,9 @@ class RoonCopyCmd( CleanupCmd ):
             if all( [ has_all_tags, has_album_art, no_unwanted_file ] ):
                 complete_albums.append( album )
 
+        if not self.dry_run and complete_albums:
+            os.makedirs( self.roon_dst, exist_ok=True )
+
         for album in complete_albums:
             album_path = str( album.path.name )
             cmd = f'rooncpy -t {self.roon_target} "{album_path}"'
@@ -727,9 +744,9 @@ class RoonCopyCmd( CleanupCmd ):
                     subprocess.check_output( cmd, shell=True, text=True )
 
                 if self.verbose:
-                    print( f'shutil.move( {album.path.absolute()}, {self.copied_dst} )' )
+                    print( f'shutil.move( {album.path.absolute()}, {self.roon_dst} )' )
                 if not self.dry_run:
-                    shutil.move( album.path.absolute(), self.copied_dst )
+                    shutil.move( album.path.absolute(), self.roon_dst )
             except subprocess.CalledProcessError as exception:
                 print( exception )
 
@@ -743,8 +760,8 @@ def execute( cmd ):
 
 class AudioTag:
     '''The main class for our Audio file tagging program'''
-    def __init__( self, config_filename ):
-        self.config = load_config( config_filename )
+    def __init__( self, config ):
+        self.config = config
 
     def execute_commands( self, func, cmds, seq_exec=False ):
         '''Execute the command in the command list'''
@@ -770,7 +787,9 @@ class AudioTag:
         cwd = Path( os.getcwd() )
         cmds = []
         for fmt in self.config[ "Extract" ][ "Archive Format" ]:
-            cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
+            cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' )
+                      if params.archive_dst() and \
+                              params.archive_dst() not in str( f.absolute() ) ]
         if cmds  and not params.dry_run():
             os.makedirs( params.archive_dst(), exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
@@ -806,8 +825,12 @@ class AudioTag:
         else:
             raise UnsupportedCommand( params.command() )
 
-def process_arguments():
+def process_arguments( config ):
     '''Process commandline arguments'''
+    archive_dst = config[ 'Default Folders' ][ 'Archive' ]
+    extract_dst = config[ 'Default Folders' ][ 'Extract' ]
+    roon_dst = config[ 'Default Folders' ][ 'Roon' ]
+
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
                          help='Dry run' )
@@ -820,18 +843,21 @@ def process_arguments():
     subparser.required = True
 
     extract_parser = subparser.add_parser( 'extract', help='Extract compressed archives' )
-    extract_parser.add_argument( '-a', '--archive-dst', default='archive_files',
+    extract_parser.add_argument( '-a', '--archive-dst', default=archive_dst,
                                  help='Move the uncompressed archives to this location' )
-    extract_parser.add_argument( '-e', '--extract-dst', default='.',
+    extract_parser.add_argument( '-e', '--extract-dst', default=extract_dst,
                                  help='Extract the archives at this location' )
 
     subparser.add_parser( 'convert', help='Convert audio files to .flac' )
-    subparser.add_parser( 'cleanup', help='Do various data cleanup' )
+
+    cleanup_parser = subparser.add_parser( 'cleanup', help='Do various data cleanup' )
+    cleanup_parser.add_argument( '-k', '--skip-complete', action='store_true',
+                                 help='Skip the cleaned album' )
 
     copy_parser = subparser.add_parser( 'copy', help='Copy complete albums to Roon library' )
-    copy_parser.add_argument( '-c', '--copied-dst', default='copied_files',
+    copy_parser.add_argument( '-r', '--roon-dst', default=roon_dst,
                               help="Move the copied albums to this location" )
-    copy_parser.add_argument( '-r', '--root-target', action='store',
+    copy_parser.add_argument( '-t', '--roon-target', action='store',
                               dest='roon_target', default='flac',
                               choices=[ 'cd', 'dsd', 'flac', 'mqa' ],
                               help="Move the copied albums to this location" )
@@ -841,18 +867,21 @@ def process_arguments():
         "command" : args.command,
         "dry_run" : args.dry_run,
         "verbose" : args.verbose,
-        "seq_exec" : False if args.command == 'cleanup' else args.seq_exec,
-        "archive_dst" : getattr( args, 'archive_dst', None ),
-        "copied_dst" : getattr( args, 'copied_dst', None ),
-        "extract_dst" : getattr( args, 'extract_dst', None ),
+        "seq_exec" : False if args.command in [ 'cleanup', 'copy' ] \
+                     else args.seq_exec,
+        "skip_complete" : getattr( args, 'skip_complete', None ),
+        "archive_dst" : getattr( args, 'archive_dst', archive_dst ),
+        "extract_dst" : getattr( args, 'extract_dst', extract_dst ),
+        "roon_dst" : getattr( args, 'roon_dst', roon_dst ),
         "roon_target" : getattr( args, 'roon_target', None ),
     }
     return Parameters( params_dict )
 
 def main():
     '''The main function'''
-    audiotag = AudioTag( CONFIG_FILENAME )
-    params = process_arguments()
+    config = load_config( CONFIG_FILENAME )
+    params = process_arguments( config )
+    audiotag = AudioTag( config )
     audiotag.run( params )
 
 if __name__ == '__main__':
