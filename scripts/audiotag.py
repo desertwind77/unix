@@ -138,8 +138,10 @@ class Album( FileBase ):
         3) Try to get the album name from the folder name
         '''
         result = list( set( f.album for f in self.contents ) )
-        if len( result ) == 1 and result[ 0 ] is not None:
-            return result[ 0 ]
+        if len( result ) == 1:
+            if result[ 0 ] is not None:
+                return result[ 0 ]
+            return self.get_album_name_from_path()
 
         # Flac files have different album name. Usually, this is because
         # the disc number is a part of the album name. # Assume that the
@@ -153,7 +155,6 @@ class Album( FileBase ):
                 break
         if stop != 0:
             return result[ 0 ][ : stop + 1 ]
-
         return self.get_album_name_from_path()
 
     def album_artist( self ):
@@ -266,18 +267,25 @@ class Album( FileBase ):
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
         print( f'Album Art: {self.has_album_art()}' )
+        print( f'No Unwanted Files : {self.no_unwanted_files()}' )
 
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
                 print( f'Disc {disc}' )
                 tab_data = []
                 for flac in flacs:
-                    tab_data.append( [ flac.track, flac.artist, flac.title, str( flac.path.name ) ] )
+                    track = flac.track if flac.track else 'None'
+                    artist = flac.artist if flac.artist else 'None'
+                    title = flac.title if flac.title else 'None'
+                    tab_data.append( [ track, artist, title, str( flac.path.name ) ] )
                 print( tabulate( tab_data, tablefmt="plain" ) )
         else:
             tab_data = []
             for flac in self.contents:
-                tab_data.append( [ flac.track, flac.artist, flac.title, str( flac.path.name ) ] )
+                track = flac.track if flac.track else 'None'
+                artist = flac.artist if flac.artist else 'None'
+                title = flac.title if flac.title else 'None'
+                tab_data.append( [ track, artist, title, str( flac.path.name ) ] )
             print( tabulate( tab_data, tablefmt="plain" ) )
 
 class FlacFile( FileBase ):
@@ -544,16 +552,12 @@ class CleanupCmd( BaseCmd ):
         self.verbose = params.verbose
         self.dry_run = params.dry_run
         self.albums = {}
-        self.unknown = []
 
     def load_flac_files( self ):
         '''Load all flac files'''
         cwd = Path( self.location )
         for filename in list( cwd.glob( '**/*.flac' ) ):
             flac = FlacFile( self.config, filename )
-            if not flac.album:
-                self.unknown.append( flac )
-                continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
                         Album( self.config, flac.album_path() )
@@ -574,7 +578,6 @@ class CleanupCmd( BaseCmd ):
                     album.save()
                     album.remove_unwanted_files()
                     album.rename()
-                    break
                 if cmd == 'show':
                     album.show_content()
                 elif cmd == 'rename':
@@ -659,6 +662,7 @@ class CleanupCmd( BaseCmd ):
         tab_header = [ 'Album Artist', 'Album', 'Has All Tags', 'Has Album Art',
                        'No Unwanted Files' ]
         print( tabulate( incomplete_albums, headers=tab_header ) )
+        print()
 
     def run( self ):
         '''Run the command'''
@@ -687,15 +691,18 @@ class RoonCopyCmd( CleanupCmd ):
         for album in complete_albums:
             album_path = str( album.path.name )
             cmd = f'rooncpy -t {self.roon_target} "{album_path}"'
-            if self.verbose:
-                print( cmd )
-            if not self.dry_run:
-                try:
-                    #subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+            try:
+                if self.verbose:
+                    print( cmd )
+                if not self.dry_run:
                     subprocess.check_output( cmd, shell=True, text=True )
+
+                if self.verbose:
+                    print( f'shutil.move( {album_path}, {self.copied_dst} )' )
+                if not self.dry_run:
                     shutil.move( album_path, self.copied_dst )
-                except subprocess.CalledProcessError as exception:
-                    print( exception )
+            except subprocess.CalledProcessError as exception:
+                print( exception )
 
     def run( self ):
         self.load_flac_files()
