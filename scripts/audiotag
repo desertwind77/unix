@@ -2,6 +2,7 @@
 
 name=audiotag
 packages="fastprogress mutagen patool pydub pyunpack tabulate"
+archive_dir="/Volumes/G-RAID/archives"
 
 workspace=$HOME/Workspace
 script_dir=$workspace/scripts

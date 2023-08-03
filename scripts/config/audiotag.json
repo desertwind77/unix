@@ -5,7 +5,7 @@
          "Convert Format" : [ ".wav" ]
       },
       "Cleanup" : {
-         "Allowed Formats" : [ ".flac", ".pdf", ".jpg", ".png" ],
+         "Allowed Formats" : [ ".flac", ".pdf", ".jpeg", ".jpg", ".png" ],
          "DSD Format" : [ ".dsf" ],
          "Display Chars" : [
             {

@@ -17,6 +17,7 @@ import errno
 import os
 import re
 import shutil
+import subprocess
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
@@ -45,8 +46,10 @@ class Parameters:
     dry_run : bool
     seq_exec : bool
     verbose : bool
-    extract_dst : str
+    uncompressed_dst : str
     archive_dst : str
+    copied_dst : str
+    roon_target : str
 
 class FileBase:
     '''The base clase for Album and FlacFile'''
@@ -59,6 +62,8 @@ class FileBase:
             dst = replacement[ "dst"]
             for src in replacement[ "src" ]:
                 txt = txt.replace( src, dst )
+        # Removing leading and tailing whitespaces
+        txt = txt.strip()
         # FIXME: skip Roman numbers
         # FIXME: capwords is not good
         #return string.capwords( txt )
@@ -88,12 +93,20 @@ class Album( FileBase ):
         self.path = path
         self.disc = defaultdict( list )
         self.contents = []
+        self.track_map = {}
 
     def add_track( self, flac ):
         '''Add a track to the album'''
         self.contents.append( flac )
         if flac.discno:
             self.disc[ flac.discno ].append( flac )
+            self.track_map[ ( flac.discno, flac.track ) ] = flac
+        else:
+            self.track_map[ ( 1, flac.track ) ] = flac
+
+    def get_track( self, disc_and_track ):
+        '''Get the flac file with this ( disc, track ) number'''
+        return self.track_map.get( disc_and_track )
 
     def get_album_artist_from_path( self ):
         '''
@@ -183,9 +196,9 @@ class Album( FileBase ):
                 unwanted.append( filename )
         return unwanted
 
-    def has_unwanted_files( self ):
+    def no_unwanted_files( self ):
         '''Check if this album contains unwanted files'''
-        return bool( self.get_unwanted_files() )
+        return not bool( self.get_unwanted_files() )
 
     def remove_unwanted_files( self ):
         '''Remove files of which format is not in the allowed list'''
@@ -244,6 +257,7 @@ class Album( FileBase ):
         self.path = Path( dst )
         self.disc = defaultdict( list )
         self.contents = []
+        self.track_map = {}
         for filename in self.path.glob( '**/*.flac' ):
             self.add_track( FlacFile( self.config, filename ) )
 
@@ -258,12 +272,12 @@ class Album( FileBase ):
                 print( f'Disc {disc}' )
                 tab_data = []
                 for flac in flacs:
-                    tab_data.append( [ flac.track, flac.artist, flac.title ] )
+                    tab_data.append( [ flac.track, flac.artist, flac.title, str( flac.path.name ) ] )
                 print( tabulate( tab_data, tablefmt="plain" ) )
         else:
             tab_data = []
             for flac in self.contents:
-                tab_data.append( [ flac.track, flac.artist, flac.title ] )
+                tab_data.append( [ flac.track, flac.artist, flac.title, str( flac.path.name ) ] )
             print( tabulate( tab_data, tablefmt="plain" ) )
 
 class FlacFile( FileBase ):
@@ -398,6 +412,8 @@ class FlacFile( FileBase ):
 
     def save( self ):
         '''Save all ID3 tag changes to disk'''
+        for key in self.metadata.keys():
+            del self.metadata[ key ]
         self.metadata[ 'tracknumber' ] = [ str( self.track ) ]
         self.metadata[ 'title' ] = [ self.title ]
         self.metadata[ 'artist' ] = [ self.artist ]
@@ -428,10 +444,13 @@ class ExtractCmd( BaseCmd ):
     '''The command to extract a compressed file'''
     def __init__( self, filename, params ):
         self.filename = filename
-        self.extract_dst = params.extract_dst
+        self.uncompressed_dst = params.uncompressed_dst
         self.archive_dst = params.archive_dst
         self.verbose = params.verbose
         self.dry_run = params.dry_run
+
+    def __str__( self ):
+        return f'Extracting {self.filename}'
 
     def run( self ):
         '''
@@ -444,7 +463,7 @@ class ExtractCmd( BaseCmd ):
                 print( f'Extracting {self.filename}' )
             if self.dry_run:
                 return
-            pyunpack.Archive( self.filename ).extractall( self.extract_dst )
+            pyunpack.Archive( self.filename ).extractall( self.uncompressed_dst )
             shutil.move( self.filename, self.archive_dst )
         except ( pyunpack.PatoolError, FileNotFoundError ) as exception:
             print( exception )
@@ -540,7 +559,7 @@ class CleanupCmd( BaseCmd ):
                         Album( self.config, flac.album_path() )
             self.albums[ flac.album_path() ].add_track( flac )
 
-    def command_shell( self ):
+    def command_prompt( self ):
         '''Temporary interactive command'''
         for album in self.albums.values():
             album.show_content()
@@ -550,6 +569,8 @@ class CleanupCmd( BaseCmd ):
                 if cmd == 'q': # quit
                     return
                 if cmd == 'c': # continue
+                    break
+                if cmd == 'save': # continue
                     album.save()
                     album.remove_unwanted_files()
                     album.rename()
@@ -576,32 +597,109 @@ class CleanupCmd( BaseCmd ):
                     for flac in album.contents:
                         flac.album_artist = album_artist
                         flac.album = album_name
-                elif cmd.startswith( 'modt'):
+                elif cmd.startswith( 'modtt'):
                     # modt <track> <title>
+                    obj = re.match( r'^modtt (\d+) (.*)$', cmd )
+                    if obj:
+                        track = int( obj.group( 1 ) )
+                        title = obj.group( 2 )
+                        flac = album.get_track( ( 1, track ) )
+                        flac.title = title
+                elif cmd.startswith( 'modtd'):
                     # modt <disc> <trac> <title>
-                    pass
-                elif cmd.startswith( 'moda'):
+                    obj = re.match( r'^modtd (\d+) (\d+) (.*)$', cmd )
+                    if obj:
+                        disc = int( obj.group( 1 ) )
+                        track = int( obj.group( 2 ) )
+                        title = obj.group( 3 )
+                        flac = album.get_track( ( disc, track ) )
+                        flac.title = title
+                elif cmd.startswith( 'modat'):
                     # moda <track> <artist>
+                    obj = re.match( r'^modat (\d+) (.*)$', cmd )
+                    if obj:
+                        track = int( obj.group( 1 ) )
+                        artist = obj.group( 2 )
+                        flac = album.get_track( ( 1, track ) )
+                        flac.artist = artist
+                elif cmd.startswith( 'modad'):
                     # moda <disc> <trac> <artist>
-                    pass
+                    obj = re.match( r'^modad (\d+) (\d+) (.*)$', cmd )
+                    if obj:
+                        disc = int( obj.group( 1 ) )
+                        track = int( obj.group( 2 ) )
+                        artist = obj.group( 3 )
+                        flac = album.get_track( ( disc, track ) )
+                        flac.artist = artist
                 cmd = input( 'Enter command: ' )
 
     def show_summary( self ):
         '''Show the summary of all albums'''
+        complete_albums = []
+        incomplete_albums = []
+        for album in self.albums.values():
+            album_artist = album.album_artist()
+            album_name = album.album_name()
+            has_all_tags = album.has_all_tags()
+            has_album_art = album.has_album_art()
+            no_unwanted_file = album.no_unwanted_files()
+            complete = all( [ has_all_tags, has_album_art, no_unwanted_file ] )
+
+            if complete:
+                complete_albums.append( [ album_artist, album_name ] )
+            else:
+                incomplete_albums.append( [ album_artist, album_name,
+                                            has_all_tags, has_album_art,
+                                            no_unwanted_file ] )
+
+        complete_header = [ 'Album Artist', 'Album' ]
+        print( tabulate( complete_albums, headers=complete_header ) )
+        print()
+
         tab_header = [ 'Album Artist', 'Album', 'Has All Tags', 'Has Album Art',
                        'No Unwanted Files' ]
-        tab_data = []
-        for album in self.albums.values():
-            tab_data.append( [ album.album_artist(), album.album_name(),
-                               album.has_all_tags(), album.has_album_art(),
-                               not album.has_unwanted_files() ] )
-        print( tabulate( tab_data, headers=tab_header, tablefmt="plain" ) )
+        print( tabulate( incomplete_albums, headers=tab_header ) )
 
     def run( self ):
         '''Run the command'''
         self.load_flac_files()
-        self.command_shell()
         self.show_summary()
+        self.command_prompt()
+        self.show_summary()
+
+class RoonCopyCmd( CleanupCmd ):
+    '''The command to copy complete albums to Roon library'''
+    def __init__( self, location, config, params ):
+        super().__init__( location, config, params )
+        self.copied_dst = params.copied_dst
+        self.roon_target = params.roon_target
+
+    def roon_copy( self ):
+        '''Copy all complete albums to Roon library'''
+        complete_albums = []
+        for album in self.albums.values():
+            has_all_tags = album.has_all_tags()
+            has_album_art = album.has_album_art()
+            no_unwanted_file = album.no_unwanted_files()
+            if all( [ has_all_tags, has_album_art, no_unwanted_file ] ):
+                complete_albums.append( album )
+
+        for album in complete_albums:
+            album_path = str( album.path.name )
+            cmd = f'rooncpy -t {self.roon_target} "{album_path}"'
+            if self.verbose:
+                print( cmd )
+            if not self.dry_run:
+                try:
+                    #subprocess.run( cmd, stdout=subprocess.DEVNULL, check=True )
+                    subprocess.check_output( cmd, shell=True, text=True )
+                    shutil.move( album_path, self.copied_dst )
+                except subprocess.CalledProcessError as exception:
+                    print( exception )
+
+    def run( self ):
+        self.load_flac_files()
+        self.roon_copy()
 
 def execute( cmd ):
     '''Execute a command'''
@@ -623,10 +721,11 @@ class AudioTag:
                 func( cmd )
         else:
             # Turning the verbose flag off cause it does not play well with progress bar
-            new_cmds = [ cmd._replace( verbose=False ) for cmd in cmds ]
-            print( *( cmd for cmd in new_cmds ), sep='\n' )
+            for cmd in cmds:
+                cmd.verbose = False
+            print( *( cmd for cmd in cmds ), sep='\n' )
             with ProcessPoolExecutor( max_workers=cpu_count ) as executor:
-                tasks = [ executor.submit( func, c ) for c in new_cmds]
+                tasks = [ executor.submit( func, c ) for c in cmds]
                 for _ in progress_bar( concurrent.futures.as_completed( tasks ), total=size ):
                     pass
 
@@ -637,7 +736,7 @@ class AudioTag:
         for fmt in self.config[ "Extract" ][ "Archive Format" ]:
             cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
         if cmds  and not params.dry_run:
-            os.makedirs( 'archives' )
+            os.makedirs( 'archives', exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec )
 
     def convert_audio( self, params ):
@@ -651,7 +750,12 @@ class AudioTag:
     def cleanup( self, params ):
         '''Do various data cleanup on all folders in the current folder'''
         cmds = [ CleanupCmd( os.getcwd(), self.config, params ) ]
-        self.execute_commands( execute, cmds, seq_exec=params.seq_exec )
+        self.execute_commands( execute, cmds )
+
+    def roon_copy( self, params ):
+        '''Do various data cleanup on all folders in the current folder'''
+        cmds = [ RoonCopyCmd( os.getcwd(), self.config, params ) ]
+        self.execute_commands( execute, cmds )
 
     def run( self, params ):
         '''Run the autio tag process'''
@@ -661,6 +765,8 @@ class AudioTag:
             self.convert_audio( params )
         elif params.command == 'cleanup':
             self.cleanup( params )
+        elif params.command == 'copy':
+            self.roon_copy( params )
         else:
             raise UnsupportedCommand( params.command )
 
@@ -678,20 +784,31 @@ def process_arguments():
     subparser.required = True
 
     extract_parser = subparser.add_parser( 'extract', help='Extract compressed archives' )
-    extract_parser.add_argument( '-a', '--archive-dst', default='archives',
-                                 help='Move the uncompressed archives to this location' )
     extract_parser.add_argument( '-e', '--extract-dst', default='.',
                                  help='Extract the archives at this location' )
+    extract_parser.add_argument( '-u', '--uncompressed-dst', default='uncompressed_files',
+                                 help='Move the uncompressed archives to this location' )
 
     subparser.add_parser( 'convert', help='Convert audio files to .flac' )
     subparser.add_parser( 'cleanup', help='Do various data cleanup' )
 
+    copy_parser = subparser.add_parser( 'copy', help='Copy complete albums to Roon library' )
+    copy_parser.add_argument( '-c', '--copied-dst', default='copied_files',
+                              help="Move the copied albums to this location" )
+    copy_parser.add_argument( '-r', '--root-target', action='store',
+                              dest='roon_target', default='flac',
+                              choices=[ 'cd', 'dsd', 'flac', 'mqa' ],
+                              help="Move the copied albums to this location" )
+
     args = parser.parse_args()
     seq_exec = False if args.command == 'cleanup' else args.seq_exec
     archive_dst = getattr( args, 'archive_dst', None )
-    extract_dst = getattr( args, 'extract_dst', None )
+    uncompressed_dst = getattr( args, 'uncompressed_dst', None )
+    copied_dst = getattr( args, 'copied_dst', None )
+    roon_target = getattr( args, 'roon_target', None )
     return Parameters( args.command, args.dry_run, seq_exec, args.verbose,
-                       archive_dst, extract_dst )
+                       uncompressed_dst, archive_dst, copied_dst,
+                       roon_target )
 
 def main():
     '''The main function'''
