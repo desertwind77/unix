@@ -128,6 +128,9 @@ class Album( FileBase ):
 
     def not_found_in_roon_library( self ):
         '''Check if this album already exists in the Roon library'''
+        if not self.album_artist() or not self.album_name():
+            return False
+
         roon_library = self.config[ 'Roon Library' ][ 'Location']
         roon_target = self.config[ 'Roon Library' ][ 'Default Target' ]
         folder = f'{self.album_artist()} - {self.album_name()}'
@@ -213,12 +216,11 @@ class Album( FileBase ):
            that album name is not empty, use that one.
         2) Try to get the album name from the folder name
         '''
-        result = set( f.album_artist for f in self.contents )
+        result = list( set( f.album_artist for f in self.contents ) )
         # All flac files in this album should have the same album artist
-        assert len( result ) == 1
-        result = list( result )[ 0 ]
-        if result:
-            return result
+        # But sometimes mistake happens.
+        if len( result ) == 1 and result[ 0 ]:
+            return result[ 0 ]
         return self.get_album_artist_from_path()
 
     def has_all_tags( self ):
@@ -313,6 +315,7 @@ class Album( FileBase ):
             self.add_track( FlacFile( self.config, filename ) )
 
     def ready_to_copy( self ):
+        '''This album is ready to be copied to the Roon library'''
         return all( [ self.has_all_tags(),
                       self.has_album_art(),
                       self.no_unwanted_files(),
@@ -385,7 +388,9 @@ class FlacFile( FileBase ):
         '''Rename this file to <track> <title>.flac'''
         parent = str( self.path.parent )
         # It is unlikely that there will be more than 99 tracks in an album.
-        dst = os.path.join( parent, f'{self.track:02} {self.title}.flac' )
+        filename = f'{self.track:02} {self.title}.flac'
+        filename = self.sanitize_text_filesystem( filename )
+        dst = os.path.join( parent, filename )
         if str( self.path ) == dst:
             return
         os.rename( str( self.path ), dst )
@@ -647,40 +652,45 @@ class CleanupCmd( BaseCmd ):
 
             album.show_content()
             print()
-            cmd = input( 'Enter command: ' )
+            cmd = input( 'Enter command[q/c/sa/sh/cp/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
             while True:
                 if cmd in [ 'q', 'quit' ]:
                     return
                 if cmd in [ 'c', 'cont' ]:
                     break
-                if cmd in [ 's', 'save' ]:
+                if cmd in [ 'sa', 'save' ]:
                     album.save()
                     album.remove_unwanted_files()
                     album.rename()
+                    album.show_content()
+                elif cmd in [ 'sh', 'show' ]:
                     album.show_content()
                 elif cmd in [ 'cp', 'copy' ]:
                     # copy album artist to each file
                     for flac in album.contents:
                         flac.artist = artist.album_artist
-                elif cmd in [ 'f', 'folder' ]:
+                elif cmd in [ 'fo', 'folder' ]:
                     # copy album artist and album from album folder
                     album_artist = album.get_album_artist_from_path()
                     album_name = album.get_album_name_from_path()
                     for flac in album.contents:
                         flac.album_artist = album_artist
                         flac.album = album_name
-                elif cmd.startswith( 'ab '):
+                    album.show_content()
+                elif cmd.startswith( 'album '):
                     # Change the album name
                     # ab <album>
-                    album = cmd[ len( 'ab ' ) ]
+                    album_name = cmd[ len( 'album ' ): ]
                     for flac in album.contents:
-                        flac.album = cmd[ len( 'ab ' ) ]
-                elif cmd.startswith( 'at '):
+                        flac.album = album_name
+                    album.show_content()
+                elif cmd.startswith( 'artist '):
                     # Change the album artist
                     # at <album artist>
-                    album_artist = cmd[ len( 'at ' ): ]
+                    album_artist = cmd[ len( 'artist ' ): ]
                     for flac in album.contents:
                         flac.album_artist = album_artist
+                    album.show_content()
                 elif cmd.startswith( 'tt' ):
                     # Change the track titile
                     # tt <track> <title>
@@ -690,6 +700,7 @@ class CleanupCmd( BaseCmd ):
                         title = obj.group( 2 )
                         flac = album.get_track( ( 1, track ) )
                         flac.title = title
+                        album.show_content()
                 elif cmd.startswith( 'ta'):
                     # Change the track artist
                     # ta <track> <title>
@@ -699,6 +710,7 @@ class CleanupCmd( BaseCmd ):
                         artist = obj.group( 2 )
                         flac = album.get_track( ( 1, track ) )
                         flac.artist = artist
+                        album.show_content()
                 elif cmd.startswith( 'dtt'):
                     # Change ( disc, track ) title
                     # dtt <disc> <trac> <title>
@@ -709,6 +721,7 @@ class CleanupCmd( BaseCmd ):
                         title = obj.group( 3 )
                         flac = album.get_track( ( disc, track ) )
                         flac.title = title
+                        album.show_content()
                 elif cmd.startswith( 'dta'):
                     # Change ( disc, track ) artist
                     # dta <disc> <trac> <title>
@@ -719,7 +732,32 @@ class CleanupCmd( BaseCmd ):
                         artist = obj.group( 3 )
                         flac = album.get_track( ( disc, track ) )
                         flac.artist = artist
-                cmd = input( 'Enter command: ' )
+                        album.show_content()
+                elif cmd.startswith( 'tre' ):
+                    # re <regular expression>
+                    regex = cmd[ len( 'tre ' ): ]
+                    dirty = False
+                    for flac in album.contents:
+                        obj = re.match( regex, flac.title )
+                        if obj:
+                            dirty = True
+                            flac.title = obj.group( 1 )
+                    if dirty:
+                        album.show_content()
+                elif cmd.startswith( 'are' ):
+                    # re <regular expression>
+                    regex = cmd[ len( 'are ' ): ]
+                    dirty = False
+                    for flac in album.contents:
+                        obj = re.match( regex, flac.artist )
+                        if obj:
+                            dirty = True
+                            flac.artist = obj.group( 1 )
+                    if dirty:
+                        album.show_content()
+
+
+                cmd = input( 'Enter command[q/c/sa/sh/cp/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
                 print()
 
     def show_summary( self ):
