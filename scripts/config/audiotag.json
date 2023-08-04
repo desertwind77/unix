@@ -1,5 +1,10 @@
 {
    "config" : {
+      "Roon Library" : {
+         "Location" : "/Volumes/Public/Music",
+         "Targets" : [ "cd", "dsd", "flac", "mqa" ],
+         "Default Target" : "flac"
+      },
       "Default Folders" : {
          "Archive" : "archive_files",
          "Extract" : ".",

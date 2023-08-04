@@ -126,6 +126,10 @@ class Album( FileBase ):
         self.contents = []
         self.track_map = {}
 
+    def exists_in_roon_library( self ):
+        roon_library = self.config[ 'Roon Library' ][ 'Location']
+        roon_target = self.config[ 'Roon Library' ][ 'Default Target' ]
+
     def add_track( self, flac ):
         '''Add a track to the album'''
         self.contents.append( flac )
@@ -174,6 +178,10 @@ class Album( FileBase ):
                 return result[ 0 ]
             return self.get_album_name_from_path()
 
+        name = self.get_album_name_from_path()
+        if name:
+            return name
+
         # Flac files have different album name. Usually, this is because
         # the disc number is a part of the album name. # Assume that the
         # longest common string is the album name
@@ -185,8 +193,8 @@ class Album( FileBase ):
             if len( cur_char ) != 1:
                 break
         if stop != 0:
-            return result[ 0 ][ : stop + 1 ]
-        return self.get_album_name_from_path()
+            return result[ 0 ][ : stop ]
+        return None
 
     def album_artist( self ):
         '''
@@ -241,6 +249,7 @@ class Album( FileBase ):
         for filename in deletes:
             print( f'Removing {filename}' )
         confirm = input( 'Are you sure? [y] ' )
+        print()
         if confirm != 'y':
             return
 
@@ -790,7 +799,7 @@ class AudioTag:
             cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' )
                       if params.archive_dst() and \
                               params.archive_dst() not in str( f.absolute() ) ]
-        if cmds  and not params.dry_run():
+        if cmds and not params.dry_run():
             os.makedirs( params.archive_dst(), exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
@@ -830,6 +839,7 @@ def process_arguments( config ):
     archive_dst = config[ 'Default Folders' ][ 'Archive' ]
     extract_dst = config[ 'Default Folders' ][ 'Extract' ]
     roon_dst = config[ 'Default Folders' ][ 'Roon' ]
+    roon_target = config[ 'Roon Library' ][ 'Default Target' ]
 
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
@@ -858,7 +868,7 @@ def process_arguments( config ):
     copy_parser.add_argument( '-r', '--roon-dst', default=roon_dst,
                               help="Move the copied albums to this location" )
     copy_parser.add_argument( '-t', '--roon-target', action='store',
-                              dest='roon_target', default='flac',
+                              dest='roon_target', default=roon_target,
                               choices=[ 'cd', 'dsd', 'flac', 'mqa' ],
                               help="Move the copied albums to this location" )
 
@@ -869,11 +879,11 @@ def process_arguments( config ):
         "verbose" : args.verbose,
         "seq_exec" : False if args.command in [ 'cleanup', 'copy' ] \
                      else args.seq_exec,
-        "skip_complete" : getattr( args, 'skip_complete', None ),
+        "skip_complete" : getattr( args, 'skip_complete', False ),
         "archive_dst" : getattr( args, 'archive_dst', archive_dst ),
         "extract_dst" : getattr( args, 'extract_dst', extract_dst ),
         "roon_dst" : getattr( args, 'roon_dst', roon_dst ),
-        "roon_target" : getattr( args, 'roon_target', None ),
+        "roon_target" : getattr( args, 'roon_target', roon_target ),
     }
     return Parameters( params_dict )
 
