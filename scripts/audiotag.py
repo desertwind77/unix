@@ -555,6 +555,9 @@ class ConvertCmd( BaseCmd ):
         self.tags = self.get_tags()
         self.album_art = self.get_album_art()
 
+    def __str__( self ):
+        return f'Converting {self.filename}'
+
     def get_format( self ):
         '''Determine the file format from the filename'''
         filename = str( self.filename.name )
@@ -646,64 +649,70 @@ class CleanupCmd( BaseCmd ):
             print()
             cmd = input( 'Enter command: ' )
             while True:
-                if cmd == 'q': # quit
+                if cmd in [ 'q', 'quit' ]:
                     return
-                if cmd == 'c': # continue
+                if cmd in [ 'c', 'cont' ]:
                     break
-                if cmd == 'save': # continue
+                if cmd in [ 's', 'save' ]:
                     album.save()
                     album.remove_unwanted_files()
                     album.rename()
-                if cmd == 'show':
                     album.show_content()
-                elif cmd == 'rename':
-                    album.rename()
-                elif cmd.startswith( 'ml '): # ml <album>
-                    album_name = cmd[ len( 'ml ' ): ]
+                elif cmd in [ 'cp', 'copy' ]:
+                    # copy album artist to each file
                     for flac in album.contents:
-                        flac.album = album_name
-                elif cmd.startswith( 'ma '): # ma <album artist>
-                    album_artist = cmd[ len( 'ma ' ): ]
-                    for flac in album.contents:
-                        flac.album_artist = album_artist
-                elif cmd.startswith( 'ca'): # copy album artist to album
-                    album_artist = album.album_artist()
-                    for flac in album.contents:
-                        flac.artist = album_artist
-                elif cmd.startswith( 'fa'): # copy album artist and album from file
+                        flac.artist = artist.album_artist
+                elif cmd in [ 'f', 'folder' ]:
+                    # copy album artist and album from album folder
                     album_artist = album.get_album_artist_from_path()
                     album_name = album.get_album_name_from_path()
                     for flac in album.contents:
                         flac.album_artist = album_artist
                         flac.album = album_name
-                elif cmd.startswith( 'modtt'):
-                    # modt <track> <title>
-                    obj = re.match( r'^modtt (\d+) (.*)$', cmd )
+                elif cmd.startswith( 'ab '):
+                    # Change the album name
+                    # ab <album>
+                    album = cmd[ len( 'ab ' ) ]
+                    for flac in album.contents:
+                        flac.album = cmd[ len( 'ab ' ) ]
+                elif cmd.startswith( 'at '):
+                    # Change the album artist
+                    # at <album artist>
+                    album_artist = cmd[ len( 'at ' ): ]
+                    for flac in album.contents:
+                        flac.album_artist = album_artist
+                elif cmd.startswith( 'tt' ):
+                    # Change the track titile
+                    # tt <track> <title>
+                    obj = re.match( r'^tt (\d+) (.*)$', cmd )
                     if obj:
                         track = int( obj.group( 1 ) )
                         title = obj.group( 2 )
                         flac = album.get_track( ( 1, track ) )
                         flac.title = title
-                elif cmd.startswith( 'modtd'):
-                    # modt <disc> <trac> <title>
-                    obj = re.match( r'^modtd (\d+) (\d+) (.*)$', cmd )
+                elif cmd.startswith( 'ta'):
+                    # Change the track artist
+                    # ta <track> <title>
+                    obj = re.match( r'^ta (\d+) (.*)$', cmd )
+                    if obj:
+                        track = int( obj.group( 1 ) )
+                        artist = obj.group( 2 )
+                        flac = album.get_track( ( 1, track ) )
+                        flac.artist = artist
+                elif cmd.startswith( 'dtt'):
+                    # Change ( disc, track ) title
+                    # dtt <disc> <trac> <title>
+                    obj = re.match( r'^dtt (\d+) (\d+) (.*)$', cmd )
                     if obj:
                         disc = int( obj.group( 1 ) )
                         track = int( obj.group( 2 ) )
                         title = obj.group( 3 )
                         flac = album.get_track( ( disc, track ) )
                         flac.title = title
-                elif cmd.startswith( 'modat'):
-                    # moda <track> <artist>
-                    obj = re.match( r'^modat (\d+) (.*)$', cmd )
-                    if obj:
-                        track = int( obj.group( 1 ) )
-                        artist = obj.group( 2 )
-                        flac = album.get_track( ( 1, track ) )
-                        flac.artist = artist
-                elif cmd.startswith( 'modad'):
-                    # moda <disc> <trac> <artist>
-                    obj = re.match( r'^modad (\d+) (\d+) (.*)$', cmd )
+                elif cmd.startswith( 'dta'):
+                    # Change ( disc, track ) artist
+                    # dta <disc> <trac> <title>
+                    obj = re.match( r'^dta (\d+) (\d+) (.*)$', cmd )
                     if obj:
                         disc = int( obj.group( 1 ) )
                         track = int( obj.group( 2 ) )
@@ -711,6 +720,7 @@ class CleanupCmd( BaseCmd ):
                         flac = album.get_track( ( disc, track ) )
                         flac.artist = artist
                 cmd = input( 'Enter command: ' )
+                print()
 
     def show_summary( self ):
         '''Show the summary of all albums'''
