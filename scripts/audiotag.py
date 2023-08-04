@@ -577,10 +577,14 @@ class ConvertCmd( BaseCmd ):
 
     def get_album_art( self ):
         '''Return the album art stored in the file'''
+        metadata = None
         if self.format == 'wav':
             metadata = WAVE( self.filename )
         else:
             raise UnsupportedFormat( self.filename )
+
+        if not metadata:
+            return None
 
         apic = metadata.tags.get( 'APIC:' )
         if not apic:
@@ -652,8 +656,9 @@ class CleanupCmd( BaseCmd ):
 
             album.show_content()
             print()
-            cmd = input( 'Enter command[q/c/sa/sh/cp/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
+            cmd = input( 'Enter command[q/c/sa/sh/cp/fi/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
             while True:
+                show = False
                 if cmd in [ 'q', 'quit' ]:
                     return
                 if cmd in [ 'c', 'cont' ]:
@@ -662,13 +667,14 @@ class CleanupCmd( BaseCmd ):
                     album.save()
                     album.remove_unwanted_files()
                     album.rename()
-                    album.show_content()
+                    show = True
                 elif cmd in [ 'sh', 'show' ]:
-                    album.show_content()
+                    show = True
                 elif cmd in [ 'cp', 'copy' ]:
                     # copy album artist to each file
                     for flac in album.contents:
-                        flac.artist = artist.album_artist
+                        flac.artist = album.album_artist()
+                    show = True
                 elif cmd in [ 'fo', 'folder' ]:
                     # copy album artist and album from album folder
                     album_artist = album.get_album_artist_from_path()
@@ -676,21 +682,25 @@ class CleanupCmd( BaseCmd ):
                     for flac in album.contents:
                         flac.album_artist = album_artist
                         flac.album = album_name
-                    album.show_content()
+                    show = True
+                elif cmd in [ 'fi', 'file' ]:
+                    for flac in album.contents:
+                        flac.title = str( flac.path.name )
+                    show = True
                 elif cmd.startswith( 'album '):
                     # Change the album name
                     # ab <album>
                     album_name = cmd[ len( 'album ' ): ]
                     for flac in album.contents:
                         flac.album = album_name
-                    album.show_content()
+                    show = True
                 elif cmd.startswith( 'artist '):
                     # Change the album artist
                     # at <album artist>
                     album_artist = cmd[ len( 'artist ' ): ]
                     for flac in album.contents:
                         flac.album_artist = album_artist
-                    album.show_content()
+                    show = True
                 elif cmd.startswith( 'tt' ):
                     # Change the track titile
                     # tt <track> <title>
@@ -700,7 +710,7 @@ class CleanupCmd( BaseCmd ):
                         title = obj.group( 2 )
                         flac = album.get_track( ( 1, track ) )
                         flac.title = title
-                        album.show_content()
+                        show = True
                 elif cmd.startswith( 'ta'):
                     # Change the track artist
                     # ta <track> <title>
@@ -710,7 +720,7 @@ class CleanupCmd( BaseCmd ):
                         artist = obj.group( 2 )
                         flac = album.get_track( ( 1, track ) )
                         flac.artist = artist
-                        album.show_content()
+                        show = True
                 elif cmd.startswith( 'dtt'):
                     # Change ( disc, track ) title
                     # dtt <disc> <trac> <title>
@@ -721,7 +731,7 @@ class CleanupCmd( BaseCmd ):
                         title = obj.group( 3 )
                         flac = album.get_track( ( disc, track ) )
                         flac.title = title
-                        album.show_content()
+                        show = True
                 elif cmd.startswith( 'dta'):
                     # Change ( disc, track ) artist
                     # dta <disc> <trac> <title>
@@ -732,32 +742,29 @@ class CleanupCmd( BaseCmd ):
                         artist = obj.group( 3 )
                         flac = album.get_track( ( disc, track ) )
                         flac.artist = artist
-                        album.show_content()
+                        show = True
                 elif cmd.startswith( 'tre' ):
                     # re <regular expression>
                     regex = cmd[ len( 'tre ' ): ]
-                    dirty = False
+                    print( regex )
                     for flac in album.contents:
                         obj = re.match( regex, flac.title )
                         if obj:
-                            dirty = True
+                            show = True
                             flac.title = obj.group( 1 )
-                    if dirty:
-                        album.show_content()
                 elif cmd.startswith( 'are' ):
                     # re <regular expression>
                     regex = cmd[ len( 'are ' ): ]
-                    dirty = False
                     for flac in album.contents:
                         obj = re.match( regex, flac.artist )
                         if obj:
-                            dirty = True
+                            show = True
                             flac.artist = obj.group( 1 )
-                    if dirty:
-                        album.show_content()
+                if show:
+                    album.show_content()
 
 
-                cmd = input( 'Enter command[q/c/sa/sh/cp/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
+                cmd = input( 'Enter command[q/c/sa/sh/cp/fi/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
                 print()
 
     def show_summary( self ):
