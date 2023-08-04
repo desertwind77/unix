@@ -126,9 +126,19 @@ class Album( FileBase ):
         self.contents = []
         self.track_map = {}
 
-    def exists_in_roon_library( self ):
+    def not_found_in_roon_library( self ):
+        '''Check if this album already exists in the Roon library'''
         roon_library = self.config[ 'Roon Library' ][ 'Location']
         roon_target = self.config[ 'Roon Library' ][ 'Default Target' ]
+        folder = f'{self.album_artist()} - {self.album_name()}'
+        if self.album_artist() == 'Various Artists':
+            roon_path = os.path.join( roon_library, roon_target,
+                                      self.album_artist(), folder )
+        else:
+            subdir = folder[ 0 ]
+            roon_path = os.path.join( roon_library, roon_target, subdir,
+                                      self.album_artist(), folder )
+        return not os.path.exists( roon_path )
 
     def add_track( self, flac ):
         '''Add a track to the album'''
@@ -302,18 +312,34 @@ class Album( FileBase ):
         for filename in self.path.glob( '**/*.flac' ):
             self.add_track( FlacFile( self.config, filename ) )
 
+    def ready_to_copy( self ):
+        return all( [ self.has_all_tags(),
+                      self.has_album_art(),
+                      self.no_unwanted_files(),
+                      self.not_found_in_roon_library()  ])
+
     def show_content( self ):
         '''Show the contents of this album'''
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
-        print( f'Album Art: {self.has_album_art()}' )
-        print( f'No Unwanted Files : {self.no_unwanted_files()}' )
+        #print( f'Album Art: {self.has_album_art()}' )
+
+        warning = ''
+        if not self.no_unwanted_files():
+            warning += '"Unwanted files are found."'
+        if not self.not_found_in_roon_library():
+            warning = warning + ', ' if warning else warning
+            warning += '"Found in Roon"'
+        if warning:
+            print( f'Warning : {warning}' )
+        # print( f'No Unwanted Files : {self.no_unwanted_files()}' )
+        # print( f'Not found in Roon library : {self.not_found_in_roon_library()}' )
 
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
                 print( f'Disc {disc}' )
                 tab_data = []
-                for flac in flacs:
+                for flac in sorted( flacs, key=lambda x: x.track ):
                     track = flac.track if flac.track else 'None'
                     artist = flac.artist if flac.artist else 'None'
                     title = flac.title if flac.title else 'None'
@@ -321,7 +347,7 @@ class Album( FileBase ):
                 print( tabulate( tab_data, tablefmt="plain" ) )
         else:
             tab_data = []
-            for flac in self.contents:
+            for flac in sorted( self.contents, key=lambda x: x.track ):
                 track = flac.track if flac.track else 'None'
                 artist = flac.artist if flac.artist else 'None'
                 title = flac.title if flac.title else 'None'
@@ -613,9 +639,7 @@ class CleanupCmd( BaseCmd ):
     def command_prompt( self ):
         '''Temporary interactive command'''
         for album in self.albums.values():
-            if self.skip_complete and all( [ album.has_all_tags(),
-                                             album.has_album_art(),
-                                             album.no_unwanted_files() ] ):
+            if self.skip_complete and album.ready_to_copy():
                 continue
 
             album.show_content()
@@ -695,24 +719,24 @@ class CleanupCmd( BaseCmd ):
         for album in self.albums.values():
             album_artist = album.album_artist()
             album_name = album.album_name()
-            has_all_tags = album.has_all_tags()
-            has_album_art = album.has_album_art()
-            no_unwanted_file = album.no_unwanted_files()
-            complete = all( [ has_all_tags, has_album_art, no_unwanted_file ] )
 
-            if complete:
+            if album.ready_to_copy():
                 complete_albums.append( [ album_artist, album_name ] )
             else:
                 incomplete_albums.append( [ album_artist, album_name,
-                                            has_all_tags, has_album_art,
-                                            no_unwanted_file ] )
+                                            album.has_all_tags(),
+                                            album.has_album_art(),
+                                            album.no_unwanted_files(),
+                                            album.not_found_in_roon_library() ] )
 
         complete_header = [ 'Album Artist', 'Album' ]
         print( tabulate( complete_albums, headers=complete_header ) )
         print()
 
+        if not incomplete_albums:
+            return
         tab_header = [ 'Album Artist', 'Album', 'Has All Tags', 'Has Album Art',
-                       'No Unwanted Files' ]
+                       'No Unwanted Files', 'Not Found in Roon' ]
         print( tabulate( incomplete_albums, headers=tab_header ) )
         print()
 
@@ -732,18 +756,11 @@ class RoonCopyCmd( CleanupCmd ):
 
     def roon_copy( self ):
         '''Copy all complete albums to Roon library'''
-        complete_albums = []
-        for album in self.albums.values():
-            has_all_tags = album.has_all_tags()
-            has_album_art = album.has_album_art()
-            no_unwanted_file = album.no_unwanted_files()
-            if all( [ has_all_tags, has_album_art, no_unwanted_file ] ):
-                complete_albums.append( album )
-
-        if not self.dry_run and complete_albums:
+        copy_albums = [ a for a in self.albums.values() if a.ready_to_copy() ]
+        if not self.dry_run and copy_albums:
             os.makedirs( self.roon_dst, exist_ok=True )
 
-        for album in complete_albums:
+        for album in copy_albums:
             album_path = str( album.path.name )
             cmd = f'rooncpy -t {self.roon_target} "{album_path}"'
             try:
