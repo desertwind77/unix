@@ -418,6 +418,7 @@
                "Interviewing.io",
                "KeyMeLocksmiths",
                "L2G SCC Parks and Rec",
+               "Lancome",
                "Leawo",
                "Leighs Favorite Books",
                "Lego",
@@ -538,6 +539,7 @@
             "Credit Cards" : [
                "American Express Ach Pmt",
                "Applecard GSBank Payment",
+               { "Bilt World Elite Mastercard" : "Bilt credit card payment" },
                { "BILTPYMTS Rent PMT" : "Rent via Bilt" },
                { "Chase Credit Crd Epay" : "Chase Freedom and Sapphire" },
                "Wells Fargo Autograph Visa Card",
