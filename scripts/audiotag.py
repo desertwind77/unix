@@ -126,20 +126,21 @@ class Album( FileBase ):
         self.contents = []
         self.track_map = {}
 
-    def not_found_in_roon_library( self ):
+    def not_found_in_roon_library( self, target=None ):
         '''Check if this album already exists in the Roon library'''
         if not self.album_artist() or not self.album_name():
             return True
 
-        roon_library = self.config[ 'Roon Library' ][ 'Location']
-        roon_target = self.config[ 'Roon Library' ][ 'Default Target' ]
+        roon_config = self.config[ 'Roon Library' ]
+        roon_library = roon_config[ 'Location']
+        target = target if target else roon_config[ 'Default Target' ]
         folder = f'{self.album_artist()} - {self.album_name()}'
         if self.album_artist() == 'Various Artists':
-            roon_path = os.path.join( roon_library, roon_target,
+            roon_path = os.path.join( roon_library, target,
                                       self.album_artist(), folder )
         else:
             subdir = folder[ 0 ]
-            roon_path = os.path.join( roon_library, roon_target, subdir,
+            roon_path = os.path.join( roon_library, target, subdir,
                                       self.album_artist(), folder )
         return not os.path.exists( roon_path )
 
@@ -316,12 +317,12 @@ class Album( FileBase ):
         self.path = Path( dst )
         self.refresh()
 
-    def ready_to_copy( self ):
+    def ready_to_copy( self, target=None ):
         '''This album is ready to be copied to the Roon library'''
         return all( [ self.has_all_tags(),
                       self.has_album_art(),
                       self.no_unwanted_files(),
-                      self.not_found_in_roon_library()  ])
+                      self.not_found_in_roon_library( target=target )  ])
 
     def show_content( self ):
         '''Show the contents of this album'''
@@ -651,9 +652,11 @@ class CleanupCmd( BaseCmd ):
     def command_prompt( self ):
         '''Temporary interactive command'''
         def cmd_save( album ):
+            del self.albums[ album.path ]
             album.save()
             album.remove_unwanted_files()
             album.rename()
+            self.albums[ album.path ] = album
             return True
 
         def cmd_refresh( album ):
@@ -848,6 +851,10 @@ class CleanupCmd( BaseCmd ):
                 if cmd in [ '', 'c', 'cont', 'n', 'next' ]:
                     if cmd in [ 'n', 'next' ]:
                         cmd_save( album )
+                        if album.ready_to_copy():
+                            del self.albums[ album.path ]
+                            os.makedirs( self.roon_dst, exist_ok=True )
+                            shutil.move( album.path.absolute(), self.roon_dst )
                     break
                 if cmd in [ 'h', 'help' ]:
                     cmd_help( func_map )
@@ -896,25 +903,47 @@ class RoonCopyCmd( CleanupCmd ):
         self.roon_dst = params.roon_dst()
         self.roon_target = params.roon_target()
 
+    def load_flac_files( self ):
+        '''Load all flac files'''
+        cwd = Path( self.location )
+        for filename in list( cwd.glob( '**/*.flac' ) ):
+            flac = FlacFile( self.config, filename )
+            if flac.album_path() not in self.albums:
+                self.albums[ flac.album_path() ] = \
+                        Album( self.config, flac.album_path() )
+            self.albums[ flac.album_path() ].add_track( flac )
+
+        self.albums = { path : album for path, album in self.albums.items()
+                        if album.ready_to_copy( target=self.roon_target ) }
+
     def roon_copy( self ):
         '''Copy all complete albums to Roon library'''
-        copy_albums = [ a for a in self.albums.values() if a.ready_to_copy() ]
-        if not self.dry_run and copy_albums:
-            os.makedirs( self.roon_dst, exist_ok=True )
+        for album in self.albums.values():
+            various_artists = 'Various Artists'
+            folder_name = f'{album.album_artist()} - {album.album_name()}'
+            src = album.path.absolute()
 
-        for album in copy_albums:
-            album_path = str( album.path.name )
-            cmd = f'rooncpy -t {self.roon_target} "{album_path}"'
+            dst = self.config[ 'Roon Library' ][ 'Location']
+            dst = os.path.join( dst, self.roon_target )
+            if self.roon_target in [ 'cd', 'flac', 'mqa' ]:
+                if album.album_artist() == various_artists:
+                    dst = os.path.join( dst, various_artists )
+                else:
+                    initial = album.album_artist()[ 0 ]
+                    dst = os.path.join( dst, initial, album.album_artist() )
+            elif self.roon_target == 'Thai':
+                if album.album_artist() == various_artists:
+                    dst = os.path.join( dst, various_artists )
+                else:
+                    dst = os.path.join( dst, album.album_artist() )
+            dst = os.path.join( dst, folder_name )
+
+            if self.verbose or self.dry_run:
+                print( f'Copy "{src}" to "{dst}"' )
+
             try:
-                if self.verbose:
-                    print( cmd )
                 if not self.dry_run:
-                    subprocess.check_output( cmd, shell=True, text=True )
-
-                if self.verbose:
-                    print( f'shutil.move( {album.path.absolute()}, {self.roon_dst} )' )
-                if not self.dry_run:
-                    shutil.move( album.path.absolute(), self.roon_dst )
+                    shutil.copytree( src, dst )
             except subprocess.CalledProcessError as exception:
                 print( exception )
 
@@ -1028,7 +1057,7 @@ def process_arguments( config ):
                               help="Move the copied albums to this location" )
     copy_parser.add_argument( '-t', '--roon-target', action='store',
                               dest='roon_target', default=roon_target,
-                              choices=[ 'cd', 'dsd', 'flac', 'mqa' ],
+                              choices=[ 'cd', 'dsd', 'flac', 'mqa', 'Thai' ],
                               help="Move the copied albums to this location" )
 
     args = parser.parse_args()

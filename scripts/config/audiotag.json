@@ -2,7 +2,7 @@
    "config" : {
       "Roon Library" : {
          "Location" : "/Volumes/Public/Music",
-         "Targets" : [ "cd", "dsd", "flac", "mqa" ],
+         "Targets" : [ "cd", "dsd", "flac", "mqa", "Thai" ],
          "Default Target" : "flac"
       },
       "Default Folders" : {
