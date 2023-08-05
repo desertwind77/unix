@@ -85,6 +85,10 @@ if status is-interactive
    alias ta='tmux attach -dt'
 
    # misc
+   alias aex='audiotag extract'
+   alias acv='audiotag convert'
+   alias acu='audiotag cleanup'
+   alias acp='audiotag -v copy'
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
    alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
