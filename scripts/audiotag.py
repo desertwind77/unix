@@ -129,7 +129,7 @@ class Album( FileBase ):
     def not_found_in_roon_library( self ):
         '''Check if this album already exists in the Roon library'''
         if not self.album_artist() or not self.album_name():
-            return False
+            return True
 
         roon_library = self.config[ 'Roon Library' ][ 'Location']
         roon_target = self.config[ 'Roon Library' ][ 'Default Target' ]
@@ -260,9 +260,9 @@ class Album( FileBase ):
 
         for filename in deletes:
             print( f'Removing {filename}' )
-        confirm = input( 'Are you sure? [y] ' )
+        confirm = input( 'Are you sure? [Y/n] ' )
         print()
-        if confirm != 'y':
+        if confirm not in ( '', 'y', 'Y' ):
             return
 
         # Remove unwanted files
@@ -292,6 +292,14 @@ class Album( FileBase ):
                 flac.album_artist = album_artist
                 flac.save()
 
+    def refresh( self ):
+        '''Re-add all files in this folders'''
+        self.disc = defaultdict( list )
+        self.contents = []
+        self.track_map = {}
+        for filename in self.path.glob( '**/*.flac' ):
+            self.add_track( FlacFile( self.config, filename ) )
+
     def rename( self ):
         '''Rename all the files in the folder and this folder'''
         for flac in self.contents:
@@ -305,14 +313,8 @@ class Album( FileBase ):
         if str( self.path ) == dst:
             return
         os.rename( str( self.path ), dst )
-
-        # Re-add all files in this folders
         self.path = Path( dst )
-        self.disc = defaultdict( list )
-        self.contents = []
-        self.track_map = {}
-        for filename in self.path.glob( '**/*.flac' ):
-            self.add_track( FlacFile( self.config, filename ) )
+        self.refresh()
 
     def ready_to_copy( self ):
         '''This album is ready to be copied to the Roon library'''
@@ -325,7 +327,6 @@ class Album( FileBase ):
         '''Show the contents of this album'''
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
-        #print( f'Album Art: {self.has_album_art()}' )
 
         warning = ''
         if not self.no_unwanted_files():
@@ -335,14 +336,12 @@ class Album( FileBase ):
             warning += '"Found in Roon"'
         if warning:
             print( f'Warning : {warning}' )
-        # print( f'No Unwanted Files : {self.no_unwanted_files()}' )
-        # print( f'Not found in Roon library : {self.not_found_in_roon_library()}' )
 
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
                 print( f'Disc {disc}' )
                 tab_data = []
-                for flac in sorted( flacs, key=lambda x: x.track ):
+                for flac in sorted( flacs, key=lambda x: int( x.track ) ):
                     track = flac.track if flac.track else 'None'
                     artist = flac.artist if flac.artist else 'None'
                     title = flac.title if flac.title else 'None'
@@ -425,7 +424,8 @@ class FlacFile( FileBase ):
         obj = re.match( r'^(\d+) *(.*)', filename )
         if obj:
             return obj.group( 1 )
-        return None
+        # Track 0 means invalid
+        return 0
 
     def get_title( self ):
         '''Get the title from ID3 tag first.  If that fails, then the filename'''
@@ -650,122 +650,209 @@ class CleanupCmd( BaseCmd ):
 
     def command_prompt( self ):
         '''Temporary interactive command'''
-        for album in self.albums.values():
+        def cmd_save( album ):
+            album.save()
+            album.remove_unwanted_files()
+            album.rename()
+            return True
+
+        def cmd_refresh( album ):
+            album.refresh()
+            return True
+
+        def cmd_copy_album_artist_to_artist( album ):
+            for flac in album.contents:
+                flac.artist = album.album_artist()
+            return True
+
+        def cmd_copy_folder_to_album_name_artist( album ):
+            album_artist = album.get_album_artist_from_path()
+            album_name = album.get_album_name_from_path()
+            for flac in album.contents:
+                flac.album_artist = album_artist
+                flac.album = album_name
+            return True
+
+        def cmd_copy_filename_to_title( album ):
+            for flac in album.contents:
+                flac.title = str( flac.path.name )
+            return True
+
+        def cmd_set_album( album, cmd ):
+            # album <album name>
+            # artist <album artist>
+            for flac in album.contents:
+                if cmd.startswith( 'album ' ):
+                    flac.album = cmd[ len( 'album ' ): ]
+                elif cmd.startswith( 'artist ' ):
+                    flac.album_artist = cmd[ len( 'artist ' ): ]
+            return True
+
+        def cmd_set_track( album, cmd ):
+            # Change the track artist or title
+            # ta <track> <title>
+            # tt <track> <title>
+            obj = re.match( r'^[ta|tt] (\d+) (.*)$', cmd )
+            if obj:
+                track = int( obj.group( 1 ) )
+                field = obj.group( 2 )
+                flac = album.get_track( ( 1, track ) )
+                if cmd.startswith( 'tt' ):
+                    flac.title = field
+                elif cmd.startswith( 'ta ' ):
+                    flac.artist = field
+                return True
+            return False
+
+        def cmd_set_disc_track( album, cmd ):
+            # Change ( disc, track ) artist or title
+            # dta <disc> <trac> <title>
+            # dtt <disc> <trac> <title>
+            obj = re.match( r'^[dta|dtt] (\d+) (\d+) (.*)$', cmd )
+            if obj:
+                disc = int( obj.group( 1 ) )
+                track = int( obj.group( 2 ) )
+                field = obj.group( 3 )
+                flac = album.get_track( ( disc, track ) )
+                if cmd.startswith( 'dta' ):
+                    flac.artist = field
+                elif cmd.startswith( 'dtt' ):
+                    flac.title = field
+                return True
+            return False
+
+        def cmd_set_track_regex( album, cmd ):
+            # rea <regular expression>
+            # ret <regular expression>
+            dirty = False
+            if cmd.startswith( 'rea' ):
+                regex = cmd[ len( 'rea ' ): ]
+                for flac in album.contents:
+                    obj = re.match( regex, flac.artist )
+                    if obj:
+                        dirty = True
+                        flac.artist = obj.group( 1 )
+            elif cmd.startswith( 'ret' ):
+                regex = cmd[ len( 'ret ' ): ]
+                for flac in album.contents:
+                    obj = re.match( regex, flac.title )
+                    if obj:
+                        dirty = True
+                        flac.title = obj.group( 1 )
+            return dirty
+
+        def cmd_show( _ ):
+            return True
+
+        def cmd_help( func_map ):
+            tab_data = []
+            for keywords, info in func_map[ 'Exact' ].items():
+                cmd = ', '.join( list( keywords ) )
+                tab_data.append( [ cmd, info[ 'desc' ] ] )
+            for keywords, info in func_map[ 'Regex' ].items():
+                cmd = ', '.join( list( keywords ) )
+                tab_data.append( [ cmd, info[ 'desc' ] ] )
+            print( tabulate( tab_data ) )
+
+        def get_input( func_map ):
+            keys = [ keywords[ 0 ] for keywords in func_map[ 'Exact' ].keys() ]
+            for keywords in func_map[ 'Regex' ].keys():
+                keys += list( keywords )
+            keys = '/'.join( keys )
+            print()
+            prompt = f'Enter command[{keys}]: '
+            cmd = input( prompt )
+            return cmd
+
+        def dispatcher( func_map, cmd, album ):
+            for keywords, info in func_map[ 'Exact' ].items():
+                if 'func' not in info:
+                    continue
+                if cmd in keywords:
+                    return info[ 'func' ]( album )
+            for keywords, info in func_map[ 'Regex' ].items():
+                if 'func' not in info:
+                    continue
+                for k in keywords:
+                    if cmd.startswith( k ):
+                        return info[ 'func' ]( album, cmd )
+            return False
+
+        func_map = {
+            "Exact" : {
+                ( 'q', 'quit' ) : {
+                    'desc' : 'quit',
+                },
+                ( 'c', 'cont' ) : {
+                    'desc' : 'continue without saving',
+                },
+                ( 'n', 'next' ) : {
+                    'desc' : 'save and continue',
+                },
+                ( 'r', 'refresh' ) : {
+                    'desc' : "refresh the content of this album",
+                    'func' : cmd_refresh,
+                },
+                ( 's', 'save' ) : {
+                    'desc' : "save changes",
+                    'func' : cmd_save,
+                },
+                ( 'r', 'reload' ) : {
+                    'desc' : 'reload the content of the album',
+                },
+                ( 'sh', 'show' ) : {
+                    'desc' : 'show this album',
+                    'func' : cmd_show,
+                },
+                ( 'cp', 'copy' ) : {
+                    'desc' : 'copy the album artist to the artist in all files',
+                    'func' : cmd_copy_album_artist_to_artist,
+                },
+                ( 'fo', 'folder' ) : {
+                    'desc' : 'Use the folder name to imply the album artist and album name',
+                    'func' : cmd_copy_folder_to_album_name_artist,
+                },
+                ( 'fi', 'file' ) : {
+                    'desc' : 'Copy the filename to the title of all files',
+                    'func' : cmd_copy_filename_to_title
+                },
+            },
+            "Regex" : {
+                ( 'album', 'artist' ) : {
+                    'desc' : 'Set the album name or album artist',
+                    'func' : cmd_set_album,
+                },
+                ( 'ta', 'tt' ) : {
+                    'desc' : "Set the track's artist or title",
+                    'func' : cmd_set_track,
+                },
+                ( 'dta', 'dtt' ) : {
+                    'desc' : "Set the ( disc, track )'s artist or title",
+                    'func' : cmd_set_disc_track,
+                },
+                ( 'rea', 'ret' ) : {
+                    'desc' : 'Set the artist or title of all files using regular expression',
+                    'func' : cmd_set_track_regex,
+                }
+            }
+        }
+
+        for album in sorted( self.albums.values(), key=lambda x: str( x.path.name ) ):
             if self.skip_complete and album.ready_to_copy():
                 continue
-
             album.show_content()
-            print()
-            cmd = input( 'Enter command[q/c/sa/sh/cp/fi/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
             while True:
-                show = False
+                cmd = get_input( func_map )
                 if cmd in [ 'q', 'quit' ]:
                     return
-                if cmd in [ 'c', 'cont' ]:
+                if cmd in [ '', 'c', 'cont', 'n', 'next' ]:
+                    if cmd in [ 'n', 'next' ]:
+                        cmd_save( album )
                     break
-                if cmd in [ 'sa', 'save' ]:
-                    album.save()
-                    album.remove_unwanted_files()
-                    album.rename()
-                    show = True
-                elif cmd in [ 'sh', 'show' ]:
-                    show = True
-                elif cmd in [ 'cp', 'copy' ]:
-                    # copy album artist to each file
-                    for flac in album.contents:
-                        flac.artist = album.album_artist()
-                    show = True
-                elif cmd in [ 'fo', 'folder' ]:
-                    # copy album artist and album from album folder
-                    album_artist = album.get_album_artist_from_path()
-                    album_name = album.get_album_name_from_path()
-                    for flac in album.contents:
-                        flac.album_artist = album_artist
-                        flac.album = album_name
-                    show = True
-                elif cmd in [ 'fi', 'file' ]:
-                    for flac in album.contents:
-                        flac.title = str( flac.path.name )
-                    show = True
-                elif cmd.startswith( 'album '):
-                    # Change the album name
-                    # ab <album>
-                    album_name = cmd[ len( 'album ' ): ]
-                    for flac in album.contents:
-                        flac.album = album_name
-                    show = True
-                elif cmd.startswith( 'artist '):
-                    # Change the album artist
-                    # at <album artist>
-                    album_artist = cmd[ len( 'artist ' ): ]
-                    for flac in album.contents:
-                        flac.album_artist = album_artist
-                    show = True
-                elif cmd.startswith( 'tt' ):
-                    # Change the track titile
-                    # tt <track> <title>
-                    obj = re.match( r'^tt (\d+) (.*)$', cmd )
-                    if obj:
-                        track = int( obj.group( 1 ) )
-                        title = obj.group( 2 )
-                        flac = album.get_track( ( 1, track ) )
-                        flac.title = title
-                        show = True
-                elif cmd.startswith( 'ta'):
-                    # Change the track artist
-                    # ta <track> <title>
-                    obj = re.match( r'^ta (\d+) (.*)$', cmd )
-                    if obj:
-                        track = int( obj.group( 1 ) )
-                        artist = obj.group( 2 )
-                        flac = album.get_track( ( 1, track ) )
-                        flac.artist = artist
-                        show = True
-                elif cmd.startswith( 'dtt'):
-                    # Change ( disc, track ) title
-                    # dtt <disc> <trac> <title>
-                    obj = re.match( r'^dtt (\d+) (\d+) (.*)$', cmd )
-                    if obj:
-                        disc = int( obj.group( 1 ) )
-                        track = int( obj.group( 2 ) )
-                        title = obj.group( 3 )
-                        flac = album.get_track( ( disc, track ) )
-                        flac.title = title
-                        show = True
-                elif cmd.startswith( 'dta'):
-                    # Change ( disc, track ) artist
-                    # dta <disc> <trac> <title>
-                    obj = re.match( r'^dta (\d+) (\d+) (.*)$', cmd )
-                    if obj:
-                        disc = int( obj.group( 1 ) )
-                        track = int( obj.group( 2 ) )
-                        artist = obj.group( 3 )
-                        flac = album.get_track( ( disc, track ) )
-                        flac.artist = artist
-                        show = True
-                elif cmd.startswith( 'tre' ):
-                    # re <regular expression>
-                    regex = cmd[ len( 'tre ' ): ]
-                    print( regex )
-                    for flac in album.contents:
-                        obj = re.match( regex, flac.title )
-                        if obj:
-                            show = True
-                            flac.title = obj.group( 1 )
-                elif cmd.startswith( 'are' ):
-                    # re <regular expression>
-                    regex = cmd[ len( 'are ' ): ]
-                    for flac in album.contents:
-                        obj = re.match( regex, flac.artist )
-                        if obj:
-                            show = True
-                            flac.artist = obj.group( 1 )
-                if show:
+                if cmd in [ 'h', 'help' ]:
+                    cmd_help( func_map )
+                elif dispatcher( func_map, cmd, album ):
                     album.show_content()
-
-
-                cmd = input( 'Enter command[q/c/sa/sh/cp/fi/fo/album/artist/tt/ta/dtt/dta/tre/are]: ' )
-                print()
 
     def show_summary( self ):
         '''Show the summary of all albums'''
