@@ -1005,7 +1005,7 @@ class RoonCopyCmd( CleanupCmd ):
 
             dst = self.config[ 'Roon Library' ][ 'Location']
             dst = os.path.join( dst, self.roon_target )
-            if self.roon_target in [ 'cd', 'flac', 'mqa' ]:
+            if self.roon_target in [ 'cd', 'flac' ]:
                 if album.album_artist() == various_artists:
                     dst = os.path.join( dst, various_artists )
                 else:
@@ -1013,7 +1013,7 @@ class RoonCopyCmd( CleanupCmd ):
                     initial = '0' if ord( initial ) >= ord( 'a' ) and \
                               ord( initial ) <= ord( '9' ) else initial
                     dst = os.path.join( dst, initial, album.album_artist() )
-            elif self.roon_target == 'Thai':
+            elif self.roon_target in [ 'mqa', 'Thai' ]:
                 if album.album_artist() == various_artists:
                     dst = os.path.join( dst, various_artists )
                 else:
