@@ -938,6 +938,8 @@ class RoonCopyCmd( CleanupCmd ):
                     dst = os.path.join( dst, various_artists )
                 else:
                     initial = album.album_artist()[ 0 ]
+                    initial = '0' if ord( initial ) >= ord( 'a' ) and \
+                              ord( initial ) <= ord( '9' ) else initial
                     dst = os.path.join( dst, initial, album.album_artist() )
             elif self.roon_target == 'Thai':
                 if album.album_artist() == various_artists:
