@@ -96,6 +96,7 @@ class FileBase:
         txt = txt.strip()
         # FIXME: skip Roman numbers
         # FIXME: capwords is not good
+        #import string
         #return string.capwords( txt )
         return txt
 
@@ -329,6 +330,7 @@ class Album( FileBase ):
 
     def show_content( self ):
         '''Show the contents of this album'''
+        print()
         print( f'Folder : {self.path.name}' )
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
@@ -350,7 +352,18 @@ class Album( FileBase ):
         headers = [ 'Track', 'Artist', 'Title', 'Cover', 'Filename' ]
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
-                print( f'Disc {disc}' )
+                disc_folder_found = False
+                for disc_folder in [ 'CD', 'Disc ' ]:
+                    disc_folder += str( disc )
+                    disc_folder = \
+                            os.path.join( self.path.absolute(), disc_folder )
+                    if os.path.exists( disc_folder ):
+                        disc_folder_found = True
+                        break
+                disc_msg = f'Disc {disc}' if disc_folder_found \
+                           else f'Disc {disc} NOT FOUND'
+                print( disc_msg )
+
                 tab_data = []
                 for flac in sorted( flacs, key=lambda x: int( x.track ) ):
                     track = flac.track if flac.track else 'None'
@@ -682,6 +695,12 @@ class CleanupCmd( BaseCmd ):
     def command_prompt( self ):
         '''Temporary interactive command'''
         def cmd_save( album ):
+            if album.album_artist() is None:
+                print( 'Album artist is missing.')
+                return False
+            if album.album_name() is None:
+                print( 'Album name is missing.')
+                return False
             del self.albums[ album.path ]
             album.save()
             album.remove_unwanted_files()
@@ -725,7 +744,7 @@ class CleanupCmd( BaseCmd ):
             # Change the track artist or title
             # ta <track> <title>
             # tt <track> <title>
-            obj = re.match( r'^[ta|tt] (\d+) (.*)$', cmd )
+            obj = re.match( r'^t[a|t] (\d+) (.*)$', cmd )
             if obj:
                 track = int( obj.group( 1 ) )
                 field = obj.group( 2 )
@@ -741,7 +760,7 @@ class CleanupCmd( BaseCmd ):
             # Change ( disc, track ) artist or title
             # dta <disc> <trac> <title>
             # dtt <disc> <trac> <title>
-            obj = re.match( r'^[dta|dtt] (\d+) (\d+) (.*)$', cmd )
+            obj = re.match( r'^dt[a|t] (\d+) (\d+) (.*)$', cmd )
             if obj:
                 disc = int( obj.group( 1 ) )
                 track = int( obj.group( 2 ) )
@@ -773,6 +792,18 @@ class CleanupCmd( BaseCmd ):
                         dirty = True
                         flac.title = obj.group( 1 )
             return dirty
+
+        def cmd_populate_track_no( album ):
+            if len( album.disc ) > 1:
+                for _, flacs in album.disc.items():
+                    for count, flac in \
+                            enumerate( sorted( flacs, key=lambda x: int( x.track ) ) ):
+                        flac.track = count + 1
+            else:
+                for count, flac in \
+                        enumerate( sorted( album.contents, key=lambda x: x.track ) ):
+                    flac.track = count + 1
+            return True
 
         def cmd_show( _ ):
             return True
@@ -849,6 +880,10 @@ class CleanupCmd( BaseCmd ):
                     'desc' : 'Copy the filename to the title of all files',
                     'func' : cmd_copy_filename_to_title
                 },
+                ( 'tr', 'track' ) : {
+                    'desc' : 'Repopulate the track number in each disc',
+                    'func' : cmd_populate_track_no
+                }
             },
             "Regex" : {
                 ( 'album', 'artist' ) : {
@@ -874,6 +909,8 @@ class CleanupCmd( BaseCmd ):
             if self.skip_complete and album.ready_to_copy():
                 continue
             album.show_content()
+            if self.dry_run:
+                continue
             while True:
                 cmd = get_input( func_map )
                 if cmd in [ 'q', 'quit' ]:
