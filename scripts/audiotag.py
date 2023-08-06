@@ -327,6 +327,7 @@ class Album( FileBase ):
 
     def show_content( self ):
         '''Show the contents of this album'''
+        print( f'Folder : {self.path.name}' )
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
 
@@ -513,6 +514,8 @@ class FlacFile( FileBase ):
             del self.metadata[ key ]
         self.metadata[ 'tracknumber' ] = [ str( self.track ) ]
         self.metadata[ 'title' ] = [ self.title ]
+        self.metadata[ 'artist' ] = [ self.artist ]
+        self.metadata[ 'album' ] = [ self.album ]
         self.metadata[ 'albumartist' ] = [ self.album_artist ]
         if self.discno:
             self.metadata[ 'discnumber' ] = [ str( self.discno ) ]
