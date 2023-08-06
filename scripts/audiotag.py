@@ -329,15 +329,21 @@ class Album( FileBase ):
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
 
-        warning = ''
-        if not self.no_unwanted_files():
-            warning += '"Unwanted files are found."'
+        warning = '"Unwanted files are found."' if not self.no_unwanted_files() else ''
         if not self.not_found_in_roon_library():
-            warning = warning + ', ' if warning else warning
-            warning += '"Found in Roon"'
+            msg = '"Found in Roon"'
+            warning = warning + ', ' + msg if warning else msg
+        if not self.has_all_tags():
+            msg = '"Missing required tags"'
+            warning = warning + ', ' + msg if warning else msg
+        if not self.has_album_art():
+            msg = '"Missing album art"'
+            warning = warning + ', ' + msg if warning else msg
         if warning:
             print( f'Warning : {warning}' )
+        print( f'Ready to copy : {self.ready_to_copy()}' )
 
+        headers = [ 'Track', 'Artist', 'Title', 'Cover', 'Filename' ]
         if len( self.disc ) > 1:
             for disc, flacs in self.disc.items():
                 print( f'Disc {disc}' )
@@ -346,16 +352,18 @@ class Album( FileBase ):
                     track = flac.track if flac.track else 'None'
                     artist = flac.artist if flac.artist else 'None'
                     title = flac.title if flac.title else 'None'
-                    tab_data.append( [ track, artist, title, str( flac.path.name ) ] )
-                print( tabulate( tab_data, tablefmt="plain" ) )
+                    tab_data.append( [ track, artist, title, flac.has_album_art,
+                                       str( flac.path.name ) ] )
+                print( tabulate( tab_data, headers=headers, tablefmt="plain" ) )
         else:
             tab_data = []
             for flac in sorted( self.contents, key=lambda x: x.track ):
                 track = flac.track if flac.track else 'None'
                 artist = flac.artist if flac.artist else 'None'
                 title = flac.title if flac.title else 'None'
-                tab_data.append( [ track, artist, title, str( flac.path.name ) ] )
-            print( tabulate( tab_data, tablefmt="plain" ) )
+                tab_data.append( [ track, artist, title, flac.has_album_art,
+                                   str( flac.path.name ) ] )
+            print( tabulate( tab_data, headers=headers, tablefmt="plain" ) )
 
 # pylint: disable=too-many-instance-attributes
 class FlacFile( FileBase ):
@@ -920,7 +928,7 @@ class RoonCopyCmd( CleanupCmd ):
         '''Copy all complete albums to Roon library'''
         for album in self.albums.values():
             various_artists = 'Various Artists'
-            folder_name = f'{album.album_artist()} - {album.album_name()}'
+            folder_name = str( album.path.name )
             src = album.path.absolute()
 
             dst = self.config[ 'Roon Library' ][ 'Location']
@@ -937,6 +945,10 @@ class RoonCopyCmd( CleanupCmd ):
                 else:
                     dst = os.path.join( dst, album.album_artist() )
             dst = os.path.join( dst, folder_name )
+
+            if os.path.exists( dst ):
+                print( f'Skipped {folder_name}' )
+                return
 
             if self.verbose or self.dry_run:
                 print( f'Copy "{src}" to "{dst}"' )
