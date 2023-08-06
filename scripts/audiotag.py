@@ -989,8 +989,6 @@ class RoonCopyCmd( CleanupCmd ):
                         if album.ready_to_copy( target=self.roon_target ) }
 
         corrupted = [ f.album_path() for f in corrupted ]
-        if not corrupted:
-            return
         for path in corrupted:
             if path in self.albums:
                 print( f'Skipping corrupted album {path}' )
@@ -1022,7 +1020,7 @@ class RoonCopyCmd( CleanupCmd ):
 
             if os.path.exists( dst ):
                 print( f'Skipped {folder_name}' )
-                return
+                continue
 
             if self.verbose or self.dry_run:
                 print( f'Copy "{src}" to "{dst}"' )
