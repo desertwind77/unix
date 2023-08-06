@@ -188,6 +188,8 @@ class Album( FileBase ):
         3) Try to get the album name from the folder name
         '''
         result = list( set( f.album for f in self.contents if f.album is not None ) )
+        if not result:
+            return None
         if len( result ) == 1:
             if result[ 0 ] is not None:
                 return result[ 0 ]
