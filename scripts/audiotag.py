@@ -26,6 +26,7 @@ from mutagen.wave import WAVE
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 from tabulate import tabulate
+import mutagen
 import pyunpack
 
 from genutils import load_config
@@ -186,7 +187,7 @@ class Album( FileBase ):
            string in the album names.
         3) Try to get the album name from the folder name
         '''
-        result = list( set( f.album for f in self.contents ) )
+        result = list( set( f.album for f in self.contents if f.album is not None ) )
         if len( result ) == 1:
             if result[ 0 ] is not None:
                 return result[ 0 ]
@@ -379,11 +380,16 @@ class FlacFile( FileBase ):
         self.album_artist = None
         self.discno = None
         self.has_album_art = None
+        self.initialized = False
         self.load_metadata()
 
     def load_metadata( self ):
         '''Load the metadata from the disk'''
-        self.metadata = FLAC( self.path )
+        try:
+            self.metadata = FLAC( self.path )
+        except mutagen.flac.error:
+            print( f'Unable to read {self.path.absolute()}' )
+            return
         self.track = self.get_track_number()
         self.title = self.get_title()
         self.artist = self.get_metadata_str( 'artist' )
@@ -391,6 +397,7 @@ class FlacFile( FileBase ):
         self.album_artist = self.get_metadata_str( 'albumartist' )
         self.discno = self.get_disc_number()
         self.has_album_art = self.check_album_art()
+        self.initialized = True
 
     def rename( self ):
         '''Rename this file to <track> <title>.flac'''
@@ -432,7 +439,7 @@ class FlacFile( FileBase ):
         filename = self.sanitize_text_display( str( self.path.name ) )
         obj = re.match( r'^(\d+) *(.*)', filename )
         if obj:
-            return obj.group( 1 )
+            return int( obj.group( 1 ) )
         # Track 0 means invalid
         return 0
 
@@ -506,8 +513,6 @@ class FlacFile( FileBase ):
             del self.metadata[ key ]
         self.metadata[ 'tracknumber' ] = [ str( self.track ) ]
         self.metadata[ 'title' ] = [ self.title ]
-        self.metadata[ 'artist' ] = [ self.artist ]
-        self.metadata[ 'album' ] = [ self.album ]
         self.metadata[ 'albumartist' ] = [ self.album_artist ]
         if self.discno:
             self.metadata[ 'discnumber' ] = [ str( self.discno ) ]
@@ -650,12 +655,24 @@ class CleanupCmd( BaseCmd ):
         filenames = [ f for f in cwd.glob( '**/*.flac' )
                       if self.roon_dst and \
                               self.roon_dst not in str( f.absolute() ) ]
+        corrupted = []
         for filename in filenames:
             flac = FlacFile( self.config, filename )
+            if not flac.initialized:
+                corrupted.append( flac )
+                continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
                         Album( self.config, flac.album_path() )
             self.albums[ flac.album_path() ].add_track( flac )
+
+        corrupted = [ f.album_path() for f in corrupted ]
+        if not corrupted:
+            return
+        for path in corrupted:
+            if path in self.albums:
+                print( f'Skipping corrupted album {path}' )
+                del self.albums[ path ]
 
     def command_prompt( self ):
         '''Temporary interactive command'''
@@ -913,9 +930,14 @@ class RoonCopyCmd( CleanupCmd ):
 
     def load_flac_files( self ):
         '''Load all flac files'''
+        corrupted = []
+
         cwd = Path( self.location )
         for filename in list( cwd.glob( '**/*.flac' ) ):
             flac = FlacFile( self.config, filename )
+            if not flac.initialized:
+                corrupted.append( flac )
+                continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
                         Album( self.config, flac.album_path() )
@@ -923,6 +945,14 @@ class RoonCopyCmd( CleanupCmd ):
 
         self.albums = { path : album for path, album in self.albums.items()
                         if album.ready_to_copy( target=self.roon_target ) }
+
+        corrupted = [ f.album_path() for f in corrupted ]
+        if not corrupted:
+            return
+        for path in corrupted:
+            if path in self.albums:
+                print( f'Skipping corrupted album {path}' )
+                del self.albums[ path ]
 
     def roon_copy( self ):
         '''Copy all complete albums to Roon library'''
