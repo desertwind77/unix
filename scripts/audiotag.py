@@ -1036,7 +1036,7 @@ class RoonCopyCmd( CleanupCmd ):
             try:
                 if not self.dry_run:
                     shutil.copytree( src, dst )
-            except subprocess.CalledProcessError as exception:
+            except shutil.Error as exception:
                 print( exception )
 
     def run( self ):
