@@ -96,8 +96,8 @@ class FileBase:
         txt = txt.strip()
         # FIXME: skip Roman numbers
         # FIXME: capwords is not good
-        #import string
-        #return string.capwords( txt )
+        # import string
+        # return string.capwords( txt )
         return txt
 
     def sanitize_text_display( self, txt ):
@@ -916,13 +916,19 @@ class CleanupCmd( BaseCmd ):
                 if cmd in [ 'q', 'quit' ]:
                     return
                 if cmd in [ '', 'c', 'cont', 'n', 'next' ]:
+                    error = False
                     if cmd in [ 'n', 'next' ]:
                         cmd_save( album )
                         if album.ready_to_copy():
                             del self.albums[ album.path ]
                             os.makedirs( self.roon_dst, exist_ok=True )
-                            shutil.move( album.path.absolute(), self.roon_dst )
-                    break
+                            try:
+                                shutil.move( album.path.absolute(), self.roon_dst )
+                            except shutil.Error as exception:
+                                error = True
+                                print( exception )
+                    if not error:
+                        break
                 if cmd in [ 'h', 'help' ]:
                     cmd_help( func_map )
                 elif dispatcher( func_map, cmd, album ):
