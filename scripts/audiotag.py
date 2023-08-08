@@ -114,10 +114,13 @@ class FileBase:
         1) If the number in the format of <num> / <total_num>, retain only <num>
         2) Convet from the string <num> to integer
         '''
-        if '/' in txt:
-            txt = txt.split( '/' )
-            return int( txt[ 0 ] )
-        return int( txt )
+        txt = txt.split( '/' )[ 0 ] if '/' in txt else txt
+        try:
+            num = int( txt )
+        except ValueError as exception:
+            print( exception )
+            num = None
+        return num
 
 class Album( FileBase ):
     '''The class representing a folder containing an album'''
@@ -706,16 +709,27 @@ class CleanupCmd( BaseCmd ):
             album.remove_unwanted_files()
             album.rename()
             self.albums[ album.path ] = album
+            album.show_content()
+            return False
+
+        def cmd_delete( album ):
+            print( f'Deleting {album.path.absolute()}' )
+            confirm = input( 'Are you sure? [Y/n] ' )
+            if confirm in ( '', 'y', 'Y' ):
+                shutil.rmtree( str( album.path.absolute() ) )
+            print()
             return True
 
         def cmd_refresh( album ):
             album.refresh()
-            return True
+            album.show_content()
+            return False
 
         def cmd_copy_album_artist_to_artist( album ):
             for flac in album.contents:
                 flac.artist = album.album_artist()
-            return True
+            album.show_content()
+            return False
 
         def cmd_copy_folder_to_album_name_artist( album ):
             album_artist = album.get_album_artist_from_path()
@@ -723,12 +737,14 @@ class CleanupCmd( BaseCmd ):
             for flac in album.contents:
                 flac.album_artist = album_artist
                 flac.album = album_name
-            return True
+            album.show_content()
+            return False
 
         def cmd_copy_filename_to_title( album ):
             for flac in album.contents:
                 flac.title = str( flac.path.name )
-            return True
+            album.show_content()
+            return False
 
         def cmd_set_album( album, cmd ):
             # album <album name>
@@ -738,7 +754,8 @@ class CleanupCmd( BaseCmd ):
                     flac.album = cmd[ len( 'album ' ): ]
                 elif cmd.startswith( 'artist ' ):
                     flac.album_artist = cmd[ len( 'artist ' ): ]
-            return True
+            album.show_content()
+            return False
 
         def cmd_set_track( album, cmd ):
             # Change the track artist or title
@@ -753,7 +770,7 @@ class CleanupCmd( BaseCmd ):
                     flac.title = field
                 elif cmd.startswith( 'ta ' ):
                     flac.artist = field
-                return True
+                album.show_content()
             return False
 
         def cmd_set_disc_track( album, cmd ):
@@ -770,7 +787,7 @@ class CleanupCmd( BaseCmd ):
                     flac.artist = field
                 elif cmd.startswith( 'dtt' ):
                     flac.title = field
-                return True
+                album.show_content()
             return False
 
         def cmd_set_track_regex( album, cmd ):
@@ -791,7 +808,9 @@ class CleanupCmd( BaseCmd ):
                     if obj:
                         dirty = True
                         flac.title = obj.group( 1 )
-            return dirty
+            if dirty:
+                album.show_content()
+            return False
 
         def cmd_populate_track_no( album ):
             if len( album.disc ) > 1:
@@ -803,10 +822,29 @@ class CleanupCmd( BaseCmd ):
                 for count, flac in \
                         enumerate( sorted( album.contents, key=lambda x: x.track ) ):
                     flac.track = count + 1
-            return True
+            album.show_content()
+            return False
+
+        def cmd_continue( album ):
+            error = False
+            if cmd in [ 'n', 'next' ]:
+                cmd_save( album )
+                if album.ready_to_copy():
+                    os.makedirs( self.roon_dst, exist_ok=True )
+                    try:
+                        shutil.move( album.path.absolute(), self.roon_dst )
+                    except shutil.Error as exception:
+                        error = True
+                        print( exception )
+            return not error
+
+        def cmd_print( album ):
+            print( f'Location: {album.path.absolute()}' )
+            return False
 
         def cmd_show( _ ):
-            return True
+            album.show_content()
+            return False
 
         def cmd_help( func_map ):
             tab_data = []
@@ -847,11 +885,13 @@ class CleanupCmd( BaseCmd ):
                 ( 'q', 'quit' ) : {
                     'desc' : 'quit',
                 },
-                ( 'c', 'cont' ) : {
+                ( 'c', 'cont', '' ) : {
                     'desc' : 'continue without saving',
+                    'func' : cmd_continue,
                 },
                 ( 'n', 'next' ) : {
                     'desc' : 'save and continue',
+                    'func' : cmd_continue,
                 },
                 ( 'r', 'refresh' ) : {
                     'desc' : "refresh the content of this album",
@@ -861,8 +901,13 @@ class CleanupCmd( BaseCmd ):
                     'desc' : "save changes",
                     'func' : cmd_save,
                 },
-                ( 'r', 'reload' ) : {
-                    'desc' : 'reload the content of the album',
+                ( 'd', 'delete' ) : {
+                    'desc' : "delete the album from the filesystem",
+                    'func' : cmd_delete,
+                },
+                ( 'p', 'print' ) : {
+                    'desc' : "print the absolute path of the album",
+                    'func' : cmd_print,
                 },
                 ( 'sh', 'show' ) : {
                     'desc' : 'show this album',
@@ -915,24 +960,12 @@ class CleanupCmd( BaseCmd ):
                 cmd = get_input( func_map )
                 if cmd in [ 'q', 'quit' ]:
                     return
-                if cmd in [ '', 'c', 'cont', 'n', 'next' ]:
-                    error = False
-                    if cmd in [ 'n', 'next' ]:
-                        cmd_save( album )
-                        if album.ready_to_copy():
-                            del self.albums[ album.path ]
-                            os.makedirs( self.roon_dst, exist_ok=True )
-                            try:
-                                shutil.move( album.path.absolute(), self.roon_dst )
-                            except shutil.Error as exception:
-                                error = True
-                                print( exception )
-                    if not error:
-                        break
                 if cmd in [ 'h', 'help' ]:
                     cmd_help( func_map )
                 elif dispatcher( func_map, cmd, album ):
-                    album.show_content()
+                    if cmd in [ 'n', 'next' ]:
+                        del self.albums[ album.path ]
+                    break
 
     def show_summary( self ):
         '''Show the summary of all albums'''
