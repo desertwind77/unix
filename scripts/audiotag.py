@@ -699,18 +699,21 @@ class CleanupCmd( BaseCmd ):
     def command_prompt( self ):
         '''Temporary interactive command'''
         def cmd_save( album ):
-            if album.album_artist() is None:
-                print( 'Album artist is missing.')
-                return False
-            if album.album_name() is None:
-                print( 'Album name is missing.')
-                return False
-            del self.albums[ album.path ]
-            album.save()
-            album.remove_unwanted_files()
-            album.rename()
-            self.albums[ album.path ] = album
-            album.show_content()
+            try:
+                if album.album_artist() is None:
+                    print( 'Album artist is missing.')
+                    return False
+                if album.album_name() is None:
+                    print( 'Album name is missing.')
+                    return False
+                del self.albums[ album.path ]
+                album.save()
+                album.remove_unwanted_files()
+                album.rename()
+                self.albums[ album.path ] = album
+                album.show_content()
+            except ValueError as exception:
+                print( exception )
             return False
 
         def cmd_delete( album ):
@@ -757,6 +760,8 @@ class CleanupCmd( BaseCmd ):
                     flac.album = cmd[ len( 'ab ' ): ]
                 elif cmd.startswith( 'artist ' ):
                     flac.album_artist = cmd[ len( 'artist ' ): ]
+                elif cmd == 'atva':
+                    flac.album_artist = 'Various Artists'
                 elif cmd.startswith( 'at' ):
                     flac.album_artist = cmd[ len( 'at ' ): ]
             album.show_content()
@@ -831,16 +836,16 @@ class CleanupCmd( BaseCmd ):
             return False
 
         def cmd_continue( album ):
-            error = False
-            if cmd in [ 'n', 'next' ]:
-                cmd_save( album )
-                if album.ready_to_copy():
-                    os.makedirs( self.roon_dst, exist_ok=True )
-                    try:
+            try:
+                error = False
+                if cmd in [ 'n', 'next' ]:
+                    cmd_save( album )
+                    if album.ready_to_copy():
+                        os.makedirs( self.roon_dst, exist_ok=True )
                         shutil.move( album.path.absolute(), self.roon_dst )
-                    except shutil.Error as exception:
-                        error = True
-                        print( exception )
+            except shutil.Error as exception:
+                error= True
+                print( exception )
             return not error
 
         def cmd_print( album ):
@@ -936,7 +941,7 @@ class CleanupCmd( BaseCmd ):
                 }
             },
             "Regex" : {
-                ( 'ab', 'album', 'at', 'artist' ) : {
+                ( 'ab', 'album', 'at', 'artist', 'atva' ) : {
                     'desc' : 'Set the album name or album artist',
                     'func' : cmd_set_album,
                 },
