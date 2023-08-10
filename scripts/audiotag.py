@@ -15,6 +15,7 @@ import concurrent
 import errno
 import os
 import re
+import readline
 import shutil
 import subprocess
 
@@ -752,8 +753,12 @@ class CleanupCmd( BaseCmd ):
             for flac in album.contents:
                 if cmd.startswith( 'album ' ):
                     flac.album = cmd[ len( 'album ' ): ]
+                elif cmd.startswith( 'ab' ):
+                    flac.album = cmd[ len( 'ab ' ): ]
                 elif cmd.startswith( 'artist ' ):
                     flac.album_artist = cmd[ len( 'artist ' ): ]
+                elif cmd.startswith( 'at' ):
+                    flac.album_artist = cmd[ len( 'at ' ): ]
             album.show_content()
             return False
 
@@ -931,7 +936,7 @@ class CleanupCmd( BaseCmd ):
                 }
             },
             "Regex" : {
-                ( 'album', 'artist' ) : {
+                ( 'ab', 'album', 'at', 'artist' ) : {
                     'desc' : 'Set the album name or album artist',
                     'func' : cmd_set_album,
                 },
