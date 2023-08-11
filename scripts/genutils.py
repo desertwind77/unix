@@ -59,6 +59,7 @@ class RomanNumeric:
         '''Convert from txt containing a valid Roman numeric to an integer'''
         if self.contain_invalid_chars( txt ):
             return None
+        txt = txt.upper()
         total = prev_char_value = cur_word_value = cur_char_count = 0
         max_repeat = 3
         for cur_char in txt:
