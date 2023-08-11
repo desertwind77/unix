@@ -15,9 +15,10 @@ import concurrent
 import errno
 import os
 import re
+# pylint: disable=unused-import
+# readline will change the behavior of input() even though it is not called
 import readline
 import shutil
-import subprocess
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
@@ -30,7 +31,7 @@ from tabulate import tabulate
 import mutagen
 import pyunpack
 
-from genutils import load_config
+from genutils import load_config, RomanNumeric
 
 CONFIG_FILENAME = "config/audiotag.json"
 
@@ -95,11 +96,25 @@ class FileBase:
                 txt = txt.replace( src, dst )
         # Removing leading and tailing whitespaces
         txt = txt.strip()
-        # FIXME: skip Roman numbers
-        # FIXME: capwords is not good
-        # import string
-        # return string.capwords( txt )
-        return txt
+        # Uncomment the following line if we want to disable our
+        # text sanitization
+        # return txt
+        new_txt = []
+        for token in txt.split():
+            token = token.lower()
+            if token[ 0 ] in [ '(', '[', '{' ]:
+                i = 1
+                while i < len( token) and ( ord( token[ i ] ) < ord( 'a' ) or \
+                                            ord( token[ i ] ) > ord( 'z' ) ):
+                    i += 1
+                if i < len( token ):
+                    token = token[ : i ] + token[ i ].upper() + token[ i + 1: ]
+            elif RomanNumeric().is_valid( token ):
+                token = token.upper()
+            else:
+                token = token[ 0 ].upper() + token[ 1: ]
+            new_txt.append( token )
+        return ' '.join( new_txt )
 
     def sanitize_text_display( self, txt ):
         '''Change the text to display on screen'''
