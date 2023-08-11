@@ -185,7 +185,7 @@ class Album( FileBase ):
         '''
         obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
         if obj:
-            return obj.group( 1 )
+            return self.sanitize_text_display( obj.group( 1 ) )
         return None
 
     def get_album_name_from_path( self ):
@@ -195,7 +195,7 @@ class Album( FileBase ):
         '''
         obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
         if obj:
-            return obj.group( 2 )
+            return self.sanitize_text_display( obj.group( 2 ) )
         return None
 
     def album_name( self ):
@@ -230,7 +230,7 @@ class Album( FileBase ):
             if len( cur_char ) != 1:
                 break
         if stop != 0:
-            return result[ 0 ][ : stop ]
+            return self.sanitize_text_display( result[ 0 ][ : stop ] )
         return None
 
     def album_artist( self ):
@@ -244,7 +244,7 @@ class Album( FileBase ):
         # All flac files in this album should have the same album artist
         # But sometimes mistake happens.
         if len( result ) == 1 and result[ 0 ]:
-            return result[ 0 ]
+            return self.sanitize_text_display( result[ 0 ] )
         return self.get_album_artist_from_path()
 
     def has_all_tags( self ):
@@ -1094,7 +1094,7 @@ class RoonCopyCmd( CleanupCmd ):
             try:
                 if not self.dry_run:
                     shutil.copytree( src, dst )
-            except shutil.Error as exception:
+            except ( PermissionError, shutil.Error ) as exception:
                 print( exception )
 
     def run( self ):
