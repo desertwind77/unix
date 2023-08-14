@@ -88,7 +88,7 @@ class FileBase:
     def __init__( self, config ):
         self.config = config
 
-    def sanitize_text( self, txt, charset ):
+    def sanitize_text( self, txt, charset, capitalize=False ):
         '''Change the text to conform with what is expected'''
         for replacement in self.config[ 'Cleanup' ][ charset ]:
             dst = replacement[ "dst"]
@@ -96,33 +96,41 @@ class FileBase:
                 txt = txt.replace( src, dst )
         # Removing leading and tailing whitespaces
         txt = txt.strip()
-        # Uncomment the following line if we want to disable our
-        # text sanitization
-        # return txt
+
+        if not capitalize:
+            return txt
+
         new_txt = []
         for token in txt.split():
             token = token.lower()
-            if token[ 0 ] in [ '(', '[', '{' ]:
+            if len( token ) == 1 or \
+                    token.lower() == 'ost' or \
+                    RomanNumeric().is_valid( token ):
+                token = token.upper()
+            elif token[ -1 ] in [ '.' ] and RomanNumeric().is_valid( token[ :-1] ):
+                # For matching 'I.' found frequently in classical music titles
+                token = token[ :-1 ].upper() + token[ -1 ]
+            elif token[ 0 ] in [ '(', '[', '{' ]:
+                # Capitalize the next word character if (, [, or { is present
                 i = 1
                 while i < len( token) and ( ord( token[ i ] ) < ord( 'a' ) or \
                                             ord( token[ i ] ) > ord( 'z' ) ):
                     i += 1
                 if i < len( token ):
                     token = token[ : i ] + token[ i ].upper() + token[ i + 1: ]
-            elif RomanNumeric().is_valid( token ):
-                token = token.upper()
             else:
+                # Capitalize the first character only
                 token = token[ 0 ].upper() + token[ 1: ]
             new_txt.append( token )
         return ' '.join( new_txt )
 
-    def sanitize_text_display( self, txt ):
+    def sanitize_text_display( self, txt, capitalize=False ):
         '''Change the text to display on screen'''
-        return self.sanitize_text( txt, 'Display Chars' )
+        return self.sanitize_text( txt, 'Display Chars', capitalize=capitalize )
 
-    def sanitize_text_filesystem( self, txt ):
+    def sanitize_text_filesystem( self, txt, capitalize=False ):
         '''Change the text for a filename'''
-        return self.sanitize_text( txt, 'Filesystem Chars' )
+        return self.sanitize_text( txt, 'Filesystem Chars', capitalize=capitalize )
 
     def sanitize_number( self, txt ):
         '''
@@ -185,7 +193,7 @@ class Album( FileBase ):
         '''
         obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
         if obj:
-            return self.sanitize_text_display( obj.group( 1 ) )
+            return obj.group( 1 )
         return None
 
     def get_album_name_from_path( self ):
@@ -195,7 +203,7 @@ class Album( FileBase ):
         '''
         obj = re.match( r'(.*?) - (.*)', str( self.path.name ) )
         if obj:
-            return self.sanitize_text_display( obj.group( 2 ) )
+            return obj.group( 2 )
         return None
 
     def album_name( self ):
@@ -230,7 +238,7 @@ class Album( FileBase ):
             if len( cur_char ) != 1:
                 break
         if stop != 0:
-            return self.sanitize_text_display( result[ 0 ][ : stop ] )
+            return result[ 0 ][ : stop ]
         return None
 
     def album_artist( self ):
@@ -244,7 +252,7 @@ class Album( FileBase ):
         # All flac files in this album should have the same album artist
         # But sometimes mistake happens.
         if len( result ) == 1 and result[ 0 ]:
-            return self.sanitize_text_display( result[ 0 ] )
+            return result[ 0 ]
         return self.get_album_artist_from_path()
 
     def has_all_tags( self ):
@@ -555,6 +563,18 @@ class FlacFile( FileBase ):
             self.metadata[ 'discnumber' ] = [ str( self.discno ) ]
         self.metadata.save()
 
+    def capitalize( self ):
+        '''Capitalize all text fields'''
+        self.title = self.sanitize_text_display( self.title, capitalize=True ) \
+                if self.title else self.title
+        self.artist = self.sanitize_text_display( self.artist, capitalize=True ) \
+                if self.artist else self.artist
+        self.album = self.sanitize_text_display( self.album, capitalize=True ) \
+                if self.album else self.album
+        self.album_artist = \
+                self.sanitize_text_display( self.album_artist, capitalize=True ) \
+                if self.album_artist else self.album_artist
+
     def dump_metadata( self ):
         '''Dump all ID3 tags'''
         for tag, value in self.metadata.items():
@@ -727,7 +747,7 @@ class CleanupCmd( BaseCmd ):
                 album.rename()
                 self.albums[ album.path ] = album
                 album.show_content()
-            except ValueError as exception:
+            except ( KeyError, ValueError )as exception:
                 print( exception )
             return False
 
@@ -818,23 +838,26 @@ class CleanupCmd( BaseCmd ):
         def cmd_set_track_regex( album, cmd ):
             # rea <regular expression>
             # ret <regular expression>
-            dirty = False
-            if cmd.startswith( 'rea' ):
-                regex = cmd[ len( 'rea ' ): ]
-                for flac in album.contents:
-                    obj = re.match( regex, flac.artist )
-                    if obj:
-                        dirty = True
-                        flac.artist = obj.group( 1 )
-            elif cmd.startswith( 'ret' ):
-                regex = cmd[ len( 'ret ' ): ]
-                for flac in album.contents:
-                    obj = re.match( regex, flac.title )
-                    if obj:
-                        dirty = True
-                        flac.title = obj.group( 1 )
-            if dirty:
-                album.show_content()
+            try:
+                dirty = False
+                if cmd.startswith( 'rea' ):
+                    regex = cmd[ len( 'rea ' ): ]
+                    for flac in album.contents:
+                        obj = re.match( regex, flac.artist )
+                        if obj:
+                            dirty = True
+                            flac.artist = obj.group( 1 )
+                elif cmd.startswith( 'ret' ):
+                    regex = cmd[ len( 'ret ' ): ]
+                    for flac in album.contents:
+                        obj = re.match( regex, flac.title )
+                        if obj:
+                            dirty = True
+                            flac.title = obj.group( 1 )
+                if dirty:
+                    album.show_content()
+            except ( IndexError, re.error ) as exception:
+                print( exception )
             return False
 
         def cmd_populate_track_no( album ):
@@ -867,7 +890,9 @@ class CleanupCmd( BaseCmd ):
             print( f'Location: {album.path.absolute()}' )
             return False
 
-        def cmd_show( _ ):
+        def cmd_capitalize( album ):
+            for flac in album.contents:
+                flac.capitalize()
             album.show_content()
             return False
 
@@ -930,13 +955,13 @@ class CleanupCmd( BaseCmd ):
                     'desc' : "delete the album from the filesystem",
                     'func' : cmd_delete,
                 },
+                ( 'k', 'capitalize' ) : {
+                    'desc' : "Capitalize all text fields",
+                    'func' : cmd_capitalize,
+                },
                 ( 'p', 'print' ) : {
                     'desc' : "print the absolute path of the album",
                     'func' : cmd_print,
-                },
-                ( 'sh', 'show' ) : {
-                    'desc' : 'show this album',
-                    'func' : cmd_show,
                 },
                 ( 'cp', 'copy' ) : {
                     'desc' : 'copy the album artist to the artist in all files',
