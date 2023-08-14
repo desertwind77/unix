@@ -507,11 +507,11 @@ class FlacFile( FileBase ):
         '''Retrieve the disc number from the file path'''
         discno = None
         parent = self.path.absolute().parent.name
-        obj = re.match( r'cd.*(\d+)', parent.lower() )
+        obj = re.search( r'^cd\D*(\d+)', parent.lower() )
         if obj:
             discno = int( obj.group( 1 ) )
         else:
-            obj = re.match( r'disc.*(\d+)', parent.lower() )
+            obj = re.search( r'^disc\D*(\d+)', parent.lower() )
             if obj:
                 discno = int( obj.group( 1 ) )
         return discno
