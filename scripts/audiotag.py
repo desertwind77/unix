@@ -1119,7 +1119,7 @@ class RoonCopyCmd( CleanupCmd ):
             try:
                 if not self.dry_run:
                     shutil.copytree( src, dst )
-            except ( PermissionError, shutil.Error ) as exception:
+            except ( FileNotFoundError, PermissionError, shutil.Error ) as exception:
                 print( exception )
 
     def run( self ):
