@@ -23,7 +23,8 @@ import shutil
 # pylint: disable=import-error
 from fastprogress import progress_bar
 from mutagen.flac import FLAC, Picture
-from mutagen.id3 import PictureType
+from mutagen.dsf import DSF
+from mutagen.id3 import ID3, TRCK, TIT2, TPE1, TALB, TPE2, TPOS, PictureType
 from mutagen.wave import WAVE
 from pydub import AudioSegment
 from pydub.utils import mediainfo
@@ -40,6 +41,9 @@ class UnsupportedFormat( Exception ):
 
 class UnsupportedCommand( Exception ):
     '''Unsupport Command'''
+
+class UnimplementedMethod( Exception ):
+    '''Unimplemented Method'''
 
 class Parameters:
     '''Commandline parameters'''
@@ -66,7 +70,6 @@ class Parameters:
         '''Return the archive_dst argument'''
         return self.params.get( 'archive_dst' )
 
-
     def skip_complete( self ):
         '''Return the skip_complete argument'''
         return self.params.get( 'skip_complete' )
@@ -83,7 +86,7 @@ class Parameters:
         '''Return the roon_target argument'''
         return self.params.get( 'roon_target' )
 
-class FileBase:
+class TextSanitizer:
     '''The base clase for Album and FlacFile'''
     def __init__( self, config ):
         self.config = config
@@ -146,7 +149,7 @@ class FileBase:
             num = None
         return num
 
-class Album( FileBase ):
+class Album( TextSanitizer ):
     '''The class representing a folder containing an album'''
     def __init__( self, config, path ):
         super().__init__( config )
@@ -329,8 +332,9 @@ class Album( FileBase ):
         self.disc = defaultdict( list )
         self.contents = []
         self.track_map = {}
-        for filename in self.path.glob( '**/*.flac' ):
-            self.add_track( FlacFile( self.config, filename ) )
+        for ext in self.config[ 'Cleanup' ][ 'Supported Formats' ]:
+            for filename in self.path.glob( f'**/*{ext}' ):
+                self.add_track( FlacFile( self.config, filename ) )
 
     def rename( self ):
         '''Rename all the files in the folder and this folder'''
@@ -409,8 +413,145 @@ class Album( FileBase ):
                                    str( flac.path.name ) ] )
             print( tabulate( tab_data, headers=headers, tablefmt="plain" ) )
 
+class MetadataBase( TextSanitizer ):
+    '''Base class for metadata'''
+    def __init__( self, config, path ):
+        super().__init__( config )
+        self.path = path
+        self.metadata = None
+
+    def get_metadata( self, field ):
+        '''Get a tag'''
+        title = self.metadata.get( field )
+        return title[ 0 ] if title else None
+
+    def get_metadata_num( self, field ):
+        '''Get a sanitized numeric tag'''
+        result = self.get_metadata( field )
+        return self.sanitize_number( result ) if result else None
+
+    def get_metadata_str( self, field ):
+        '''Get a sanitized string tag'''
+        result = self.get_metadata( field )
+        return self.sanitize_text_display( result ) if result else None
+
+    def get_track( self ):
+        '''Get the track number of the song'''
+        raise UnimplementedMethod
+
+    def get_title( self ):
+        '''Get the title of the song'''
+        raise UnimplementedMethod
+
+    def get_artist( self ):
+        '''Get the artist of the song'''
+        raise UnimplementedMethod
+
+    def get_album( self ):
+        '''Get the album of the song'''
+        raise UnimplementedMethod
+
+    def get_album_artist( self ):
+        '''Get the album artist of the song'''
+        raise UnimplementedMethod
+
+    def get_disc( self ):
+        '''Get the disc number of the song'''
+        raise UnimplementedMethod
+
+    def has_album_art( self ):
+        '''Check if the file contains an album art'''
+        raise UnimplementedMethod
+
+    def dump_metadata( self ):
+        '''Dump all ID3 tags'''
+        for tag, value in self.metadata.items():
+            print( f'{tag} = {value}' )
+
+class MetadataFlac( MetadataBase ):
+    '''Metadata class for .flac files'''
+    def __init__( self, config, path ):
+        super().__init__( config, path )
+        self.metadata = FLAC( self.path )
+
+    def get_track( self ):
+        return self.get_metadata_num( 'tracknumber' )
+
+    def get_title( self ):
+        return self.get_metadata_str( 'title' )
+
+    def get_artist( self ):
+        return self.get_metadata_str( 'artist' )
+
+    def get_album( self ):
+        return self.get_metadata_str( 'album' )
+
+    def get_album_artist( self ):
+        return self.get_metadata_str( 'albumartist' )
+
+    def get_disc( self ):
+        return self.get_metadata_num( 'discnumber' )
+
+    def has_album_art( self ):
+        '''Check if this file contains an album art'''
+        for pic in self.metadata.pictures:
+            if pic.type == 3:
+                return True
+        return False
+
+    def save( self, new_metadata ):
+        '''Write the new metadata to disk'''
+        for key in self.metadata.keys():
+            del self.metadata[ key ]
+        for key, value in new_metadata.items():
+            if not value:
+                continue
+            self.metadata[ key ] = [ value ]
+        self.metadata.save()
+
+class MetadataID3( MetadataBase ):
+    '''Common metadata class for audio files that use ID3'''
+    def __init__( self, config, path ):
+        super().__init__( config, path )
+        if  self.path.suffix == '.dsf':
+            self.metadata = DSF( self.path )
+        else:
+            assert False, "Unsupported Format"
+
+    def get_track( self ):
+        return self.get_metadata_num( 'TRCK' )
+
+    def get_title( self ):
+        return self.get_metadata_str( 'TIT2' )
+
+    def get_artist( self ):
+        return self.get_metadata_str( 'TPE1' )
+
+    def get_album( self ):
+        return self.get_metadata_str( 'TALB' )
+
+    def get_album_artist( self ):
+        return self.get_metadata_str( 'TPE2' )
+
+    def get_disc( self ):
+        return self.get_metadata_num( 'TPOS' )
+
+    def has_album_art( self ):
+        return 'APIC:Picture' in self.metadata
+
+    def save( self, new_metadata ):
+        '''Write the new metadata to disk'''
+        self.metadata[ 'TRCK' ] = TRCK( encoding=3, text=new_metadata[ 'tracknumber' ] )
+        self.metadata[ 'TIT2' ] = TIT2( encoding=3, text=new_metadata[ 'title' ] )
+        self.metadata[ 'TPE1' ] = TPE1( encoding=3, text=new_metadata[ 'artist' ] )
+        self.metadata[ 'TALB' ] = TALB( encoding=3, text=new_metadata[ 'album' ] )
+        self.metadata[ 'TPE2' ] = TPE2( encoding=3, text=new_metadata[ 'albumartist' ] )
+        if 'disc' in new_metadata:
+            self.metadata[ 'TPOS' ] = TPOS( encoding=3, text=new_metadata[ 'discnumber' ] )
+        self.metadata.save()
+
 # pylint: disable=too-many-instance-attributes
-class FlacFile( FileBase ):
+class FlacFile( TextSanitizer ):
     '''The class representing a flac file'''
     def __init__( self, config, path ):
         super().__init__( config )
@@ -429,24 +570,29 @@ class FlacFile( FileBase ):
     def load_metadata( self ):
         '''Load the metadata from the disk'''
         try:
-            self.metadata = FLAC( self.path )
+            if self.path.suffix == '.flac':
+                self.metadata = MetadataFlac( self.config, self.path )
+            elif self.path.suffix == '.dsf':
+                self.metadata = MetadataID3( self.config, self.path )
+            else:
+                raise UnsupportedFormat( self.path )
         except mutagen.flac.error:
             print( f'Unable to read {self.path.absolute()}' )
             return
         self.track = self.get_track_number()
         self.title = self.get_title()
-        self.artist = self.get_metadata_str( 'artist' )
-        self.album = self.get_metadata_str( 'album' )
-        self.album_artist = self.get_metadata_str( 'albumartist' )
         self.discno = self.get_disc_number()
-        self.has_album_art = self.check_album_art()
+        self.artist = self.metadata.get_artist()
+        self.album = self.metadata.get_album()
+        self.album_artist = self.metadata.get_album_artist()
+        self.has_album_art = self.metadata.has_album_art()
         self.initialized = True
 
     def rename( self ):
-        '''Rename this file to <track> <title>.flac'''
+        '''Rename this file to <track> <title>.<ext>'''
         parent = str( self.path.parent )
         # It is unlikely that there will be more than 99 tracks in an album.
-        filename = f'{self.track:02} {self.title}.flac'
+        filename = f'{self.track:02} {self.title}{self.path.suffix}'
         filename = self.sanitize_text_filesystem( filename )
         dst = os.path.join( parent, filename )
         if str( self.path ) == dst:
@@ -455,27 +601,12 @@ class FlacFile( FileBase ):
         self.path = Path( dst )
         self.load_metadata()
 
-    def get_metadata( self, field ):
-        '''Get a tag'''
-        title = self.metadata.get( field )
-        return title[ 0 ] if title else None
-
-    def get_metadata_num( self, field ):
-        '''Get a sanitized numeric tag'''
-        result = self.get_metadata( field )
-        return self.sanitize_number( result ) if result else None
-
-    def get_metadata_str( self, field ):
-        '''Get a sanitized string tag'''
-        result = self.get_metadata( field )
-        return self.sanitize_text_display( result ) if result else None
-
     def get_track_number( self ):
         '''
         Get the track number from ID3 tag first.
         If that fails, then the filename
         '''
-        track = self.get_metadata_num( 'tracknumber' )
+        track = self.metadata.get_track()
         if track:
             return track
 
@@ -488,7 +619,7 @@ class FlacFile( FileBase ):
 
     def get_title( self ):
         '''Get the title from ID3 tag first.  If that fails, then the filename'''
-        title = self.get_metadata_str( 'title' )
+        title = self.metadata.get_title()
         if title:
             return title
 
@@ -498,13 +629,11 @@ class FlacFile( FileBase ):
             return obj.group( 2 )
         return None
 
-    def get_disc_number_from_metadata( self ):
-        '''Retrieve the disc number from the metadata in the file'''
-        discno = self.get_metadata_num( 'discnumber' )
-        return discno if discno else None
-
-    def get_disc_number_from_path( self ):
-        '''Retrieve the disc number from the file path'''
+    def get_disc_number( self ):
+        '''
+        Retrieve the disc number from the file path first.
+        If failed, try to get it from the metadata
+        '''
         discno = None
         parent = self.path.absolute().parent.name
         obj = re.search( r'^cd\D*(\d+)', parent.lower() )
@@ -514,25 +643,9 @@ class FlacFile( FileBase ):
             obj = re.search( r'^disc\D*(\d+)', parent.lower() )
             if obj:
                 discno = int( obj.group( 1 ) )
+            else:
+                discno = self.metadata.get_disc()
         return discno
-
-    def get_disc_number( self ):
-        '''
-        Get the disc number of this file. For Disc No,
-        we trust the information from the path first.
-        '''
-        discno = self.get_disc_number_from_path()
-        if not discno:
-            discno = self.get_disc_number_from_metadata()
-        return discno
-
-    def check_album_art( self ):
-        '''Check if this file contains an album art'''
-        metadata = FLAC( self.path )
-        for pic in metadata.pictures:
-            if pic.type == 3:
-                return True
-        return False
 
     def has_all_tags( self, check_discno=False):
         '''Check if this file has all required tags'''
@@ -552,16 +665,15 @@ class FlacFile( FileBase ):
 
     def save( self ):
         '''Save all ID3 tag changes to disk'''
-        for key in self.metadata.keys():
-            del self.metadata[ key ]
-        self.metadata[ 'tracknumber' ] = [ str( self.track ) ]
-        self.metadata[ 'title' ] = [ self.title ]
-        self.metadata[ 'artist' ] = [ self.artist ]
-        self.metadata[ 'album' ] = [ self.album ]
-        self.metadata[ 'albumartist' ] = [ self.album_artist ]
-        if self.discno:
-            self.metadata[ 'discnumber' ] = [ str( self.discno ) ]
-        self.metadata.save()
+        new_metadata = {
+            'tracknumber' : str( self.track ),
+            'title' : self.title,
+            'artist' : self.artist,
+            'album' : self.album,
+            'albumartist' : self.album_artist,
+            'discnumber' : str( self.discno ) if self.discno else None,
+        }
+        self.metadata.save( new_metadata )
 
     def capitalize( self ):
         '''Capitalize all text fields'''
@@ -575,11 +687,6 @@ class FlacFile( FileBase ):
                 self.sanitize_text_display( self.album_artist, capitalize=True ) \
                 if self.album_artist else self.album_artist
 
-    def dump_metadata( self ):
-        '''Dump all ID3 tags'''
-        for tag, value in self.metadata.items():
-            print( f'{tag} = {value}' )
-
 class BaseCmd:
     '''The base class of all commands'''
     def run( self ):
@@ -590,7 +697,6 @@ class BaseCmd:
         if not os.path.exists( filename ):
             raise FileNotFoundError( errno.ENOENT, os.strerror(errno.ENOENT),
                                      filename )
-
 
 class ExtractCmd( BaseCmd ):
     '''The command to extract a compressed file'''
@@ -709,9 +815,11 @@ class CleanupCmd( BaseCmd ):
     def load_flac_files( self ):
         '''Load all flac files'''
         cwd = Path( self.location )
-        filenames = [ f for f in cwd.glob( '**/*.flac' )
-                      if self.roon_dst and \
-                              self.roon_dst not in str( f.absolute() ) ]
+        filenames = []
+        for ext in self.config[ 'Cleanup' ][ 'Supported Formats' ]:
+            filenames += [ f for f in cwd.glob( f'**/*{ext}' )
+                          if self.roon_dst and \
+                                  self.roon_dst not in str( f.absolute() ) ]
         corrupted = []
         for filename in filenames:
             flac = FlacFile( self.config, filename )
