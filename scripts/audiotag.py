@@ -24,8 +24,8 @@ import shutil
 from fastprogress import progress_bar
 from mutagen.flac import FLAC, Picture
 from mutagen.dsf import DSF
-from mutagen.id3 import ID3, TRCK, TIT2, TPE1, TALB, TPE2, TPOS, PictureType
 from mutagen.wave import WAVE
+from mutagen.id3 import ID3, TRCK, TIT2, TPE1, TALB, TPE2, TPOS, PictureType
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 from tabulate import tabulate
@@ -139,28 +139,27 @@ class TextSanitizer:
 
 class Album( TextSanitizer ):
     '''The class representing a folder containing an album'''
-    def __init__( self, config, path ):
+    def __init__( self, config, path, flac_target ):
         super().__init__( config )
         self.path = path
+        self.flac_target = flac_target
         self.disc = defaultdict( list )
         self.contents = []
         self.track_map = {}
 
-    def not_found_in_roon_library( self, target=None ):
+    def not_found_in_roon_library( self ):
         '''Check if this album already exists in the Roon library'''
         if not self.album_artist() or not self.album_name():
             return True
 
-        roon_config = self.config[ 'Roon Library' ]
-        roon_library = roon_config[ 'Location']
-        target = target if target else roon_config[ 'Default Target' ]
+        roon_library = self.config[ 'Roon Library' ][ 'Location' ]
         folder = f'{self.album_artist()} - {self.album_name()}'
         if self.album_artist() == 'Various Artists':
-            roon_path = os.path.join( roon_library, target,
+            roon_path = os.path.join( roon_library, self.flac_target,
                                       self.album_artist(), folder )
         else:
             subdir = folder[ 0 ]
-            roon_path = os.path.join( roon_library, target, subdir,
+            roon_path = os.path.join( roon_library, self.flac_target, subdir,
                                       self.album_artist(), folder )
         return not os.path.exists( roon_path )
 
@@ -340,12 +339,12 @@ class Album( TextSanitizer ):
         self.path = Path( dst )
         self.refresh()
 
-    def ready_to_copy( self, target=None ):
+    def ready_to_copy( self ):
         '''This album is ready to be copied to the Roon library'''
         return all( [ self.has_all_tags(),
                       self.has_album_art(),
                       self.no_unwanted_files(),
-                      self.not_found_in_roon_library( target=target )  ])
+                      self.not_found_in_roon_library() ] )
 
     def show_content( self ):
         '''Show the contents of this album'''
@@ -822,7 +821,7 @@ class CleanupCmd( BaseCmd ):
                 continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
-                        Album( self.config, flac.album_path() )
+                        Album( self.config, flac.album_path(), self.flac_target )
             self.albums[ flac.album_path() ].add_track( flac )
 
         corrupted = [ f.album_path() for f in corrupted ]
@@ -1168,11 +1167,11 @@ class RoonCopyCmd( CleanupCmd ):
                 continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
-                        Album( self.config, flac.album_path() )
+                        Album( self.config, flac.album_path(), self.flac_target )
             self.albums[ flac.album_path() ].add_track( flac )
 
         self.albums = { path : album for path, album in self.albums.items()
-                        if album.ready_to_copy( target=self.flac_target ) }
+                        if album.ready_to_copy() }
 
         corrupted = [ f.album_path() for f in corrupted ]
         if not corrupted:
@@ -1296,16 +1295,13 @@ class AudioTag:
 
 def process_arguments( config ):
     '''Process commandline arguments'''
-    flac_target = config[ 'Copy' ][ 'Flac Target' ]
-
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
                          help='Dry run' )
     parser.add_argument( '-s', '--seq-exec', action='store_true', dest='seq_exec',
                          help='Use sequential execution' )
-    parser.add_argument( '-t', '--target', action='store',
-                         dest='target', default=flac_target,
-                         choices=[ 'cd', 'dsd', 'flac', 'mqa', 'Thai' ],
+    parser.add_argument( '-t', '--flac-target', action='store', default='flac',
+                         choices=[ 'cd', 'flac', 'mqa', 'Thai' ],
                          help='Set the flac target for Roon' )
     parser.add_argument( '-v', '--verbose', action='store_true', dest='verbose',
                          help='Print debug info' )
@@ -1325,10 +1321,10 @@ def process_arguments( config ):
         "command" : args.command,
         "dry_run" : args.dry_run,
         "verbose" : args.verbose,
+        "flac_target" : args.flac_target,
         "seq_exec" : False if args.command in [ 'cleanup', 'copy' ] \
                      else args.seq_exec,
         "skip_complete" : getattr( args, 'skip_complete', False ),
-        "flac_target" : getattr( args, 'target', flac_target ),
     }
     return Parameters( params_dict )
 
