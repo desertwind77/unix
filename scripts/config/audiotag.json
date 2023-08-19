@@ -5,13 +5,15 @@
          "Targets" : [ "cd", "dsd", "flac", "mqa", "Thai" ]
       },
       "Extract" : {
-         "Archive Format" : [ ".7z", ".rar", ".zip" ],
-         "Convert Format" : [ ".wav" ],
+         "Supported Formats" : [ ".7z", ".rar", ".zip" ],
          "Archive" : "archive_files",
          "Extract" : "."
       },
+      "Convert" : {
+         "Supported Formats" : [ ".aif", ".aiff", ".ape", ".wav" ]
+      },
       "Cleanup" : {
-         "Allowed Formats" : [ ".dsf", ".flac", ".pdf", ".jpeg", ".jpg", ".png", ".tif" ],
+         "Allowed Formats" : [ ".pdf", ".jpeg", ".jpg", ".png", ".tif" ],
          "Supported Formats" : [ ".dsf", ".flac" ],
          "Finished Albums" : "roon_library_files",
          "Display Chars" : [

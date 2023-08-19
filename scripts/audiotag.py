@@ -8,6 +8,7 @@ https://mutagen.readthedocs.io/en/latest/
 '''
 
 from collections import defaultdict
+from copy import deepcopy
 from concurrent.futures.process import ProcessPoolExecutor
 from pathlib import Path
 import argparse
@@ -22,6 +23,8 @@ import shutil
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC, Picture
 from mutagen.dsf import DSF
 from mutagen.wave import WAVE
@@ -266,7 +269,8 @@ class Album( TextSanitizer ):
         filenames = [ f for f in self.path.glob( '**/*' ) if os.path.isfile( f ) ]
         for filename in filenames:
             fmt = self.get_format( filename )
-            if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ]:
+            if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ] or \
+                    fmt not in self.config[ "Cleanup" ][ "Supported Formats" ]:
                 unwanted.append( filename )
         return unwanted
 
@@ -724,7 +728,6 @@ class ConvertCmd( BaseCmd ):
         self.filename = filename
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
-
         self.format = self.get_format()
         self.tags = self.get_tags()
         self.album_art = self.get_album_art()
@@ -734,11 +737,8 @@ class ConvertCmd( BaseCmd ):
 
     def get_format( self ):
         '''Determine the file format from the filename'''
-        filename = str( self.filename.name )
-        ext = os.path.splitext( filename )[ -1 ].lower()
-        if ext == '.wav':
-            return 'wav'
-        raise UnsupportedFormat( self.filename )
+        ext = self.filename.suffix[ 1: ]
+        return ext if ext != 'aif' else 'aiff'
 
     def get_tags( self ):
         '''Get ID3 tags from the audio file'''
@@ -746,17 +746,18 @@ class ConvertCmd( BaseCmd ):
 
     def get_album_art( self ):
         '''Return the album art stored in the file'''
-        metadata = None
-        if self.format == 'wav':
-            metadata = WAVE( self.filename )
-        else:
-            raise UnsupportedFormat( self.filename )
-
-        if not metadata:
+        if self.format not in [ 'aiff', 'wav' ]:
+            # Unable to copy album art from .ape
             return None
 
-        apic = metadata.tags.get( 'APIC:' )
-        if not apic:
+        metadata = WAVE( self.filename ) \
+                if self.format == 'wav' else AIFF( self.filename )
+        apic = None
+        if 'APIC:' in metadata.tags:
+            apic = metadata.tags.get( 'APIC:' )
+        elif 'APIC:Picture' in metadata.tags:
+            apic = metadata.tags.get( 'APIC:Picture' )
+        else:
             return None
 
         pic = Picture()
@@ -768,9 +769,9 @@ class ConvertCmd( BaseCmd ):
 
     def get_flac_filename( self ):
         '''Given a filename, change the file extension to .flac'''
-        filename = self.filename.name
-        ext = os.path.splitext( filename )[ -1 ]
-        return str( self.filename ).replace( ext, '.flac' )
+        #filename = str( self.filename.name )
+        #ext = os.path.splitext( filename )[ -1 ]
+        return str( self.filename ).replace( self.filename.suffix, '.flac' )
 
     def run( self ):
         try:
@@ -778,7 +779,7 @@ class ConvertCmd( BaseCmd ):
             dst = self.get_flac_filename()
 
             if self.verbose:
-                print( f'Converting {self.filename}' )
+                print( f'Converting {self.filename} to {dst}' )
             if self.dry_run:
                 return
 
@@ -1255,7 +1256,7 @@ class AudioTag:
         cwd = Path( os.getcwd() )
         cmds = []
         archive_dst = self.config[ 'Extract' ][ 'Archive' ]
-        for fmt in self.config[ "Extract" ][ "Archive Format" ]:
+        for fmt in self.config[ "Extract" ][ "Supported Formats" ]:
             cmds += [ ExtractCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' )
                       if archive_dst not in str( f.absolute() ) ]
         if cmds and not params.dry_run():
@@ -1266,7 +1267,7 @@ class AudioTag:
         '''Convert the autio files to .flac'''
         cwd = Path( os.getcwd() )
         cmds = []
-        for fmt in self.config[ "Extract" ][ "Convert Format" ]:
+        for fmt in self.config[ "Convert" ][ "Supported Formats" ]:
             cmds += [ ConvertCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
