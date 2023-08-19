@@ -66,28 +66,16 @@ class Parameters:
         '''Return the verbose argument'''
         return self.params.get( 'verbose' )
 
-    def archive_dst ( self ):
-        '''Return the archive_dst argument'''
-        return self.params.get( 'archive_dst' )
-
     def skip_complete( self ):
         '''Return the skip_complete argument'''
         return self.params.get( 'skip_complete' )
 
-    def roon_dst ( self ):
-        '''Return the roon_dst argument'''
-        return self.params.get( 'roon_dst' )
-
-    def extract_dst ( self ):
-        '''Return the extract_dst argument'''
-        return self.params.get( 'extract_dst' )
-
-    def roon_target ( self ):
-        '''Return the roon_target argument'''
-        return self.params.get( 'roon_target' )
+    def flac_target ( self ):
+        '''Return the flac_target argument'''
+        return self.params.get( 'flac_target' )
 
 class TextSanitizer:
-    '''The base clase for Album and FlacFile'''
+    '''The base clase for Album and AudioFile'''
     def __init__( self, config ):
         self.config = config
 
@@ -334,7 +322,7 @@ class Album( TextSanitizer ):
         self.track_map = {}
         for ext in self.config[ 'Cleanup' ][ 'Supported Formats' ]:
             for filename in self.path.glob( f'**/*{ext}' ):
-                self.add_track( FlacFile( self.config, filename ) )
+                self.add_track( AudioFile( self.config, filename ) )
 
     def rename( self ):
         '''Rename all the files in the folder and this folder'''
@@ -551,7 +539,7 @@ class MetadataID3( MetadataBase ):
         self.metadata.save()
 
 # pylint: disable=too-many-instance-attributes
-class FlacFile( TextSanitizer ):
+class AudioFile( TextSanitizer ):
     '''The class representing a flac file'''
     def __init__( self, config, path ):
         super().__init__( config )
@@ -689,6 +677,9 @@ class FlacFile( TextSanitizer ):
 
 class BaseCmd:
     '''The base class of all commands'''
+    def __init__( self, config ):
+        self.config = config
+
     def run( self ):
         '''A virtual function to run the core function of the command'''
 
@@ -700,10 +691,11 @@ class BaseCmd:
 
 class ExtractCmd( BaseCmd ):
     '''The command to extract a compressed file'''
-    def __init__( self, filename, params ):
+    def __init__( self, config, filename, params ):
+        super().__init__( config )
         self.filename = filename
-        self.archive_dst = params.archive_dst()
-        self.extract_dst = params.extract_dst()
+        self.archive_dst = self.config[ 'Extract' ][ 'Archive' ]
+        self.extract_dst = self.config[ 'Extract' ][ 'Extract' ]
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
 
@@ -728,7 +720,8 @@ class ExtractCmd( BaseCmd ):
 
 class ConvertCmd( BaseCmd ):
     '''Convert an audio file into .flac'''
-    def __init__( self, filename, params ):
+    def __init__( self, config, filename, params ):
+        super().__init__( config )
         self.filename = filename
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
@@ -803,26 +796,27 @@ class ConvertCmd( BaseCmd ):
 
 class CleanupCmd( BaseCmd ):
     '''Command to do various cleanup'''
-    def __init__( self, location, config, params ):
+    def __init__( self, config, location, params ):
+        super().__init__( config )
         self.location = location
-        self.config = config
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
-        self.roon_dst = params.roon_dst()
+        self.flac_target = params.flac_target()
+        self.finished_albums = self.config[ 'Cleanup' ][ 'Finished Albums' ]
         self.skip_complete = params.skip_complete()
         self.albums = {}
 
-    def load_flac_files( self ):
+    def load_audio_files( self ):
         '''Load all flac files'''
         cwd = Path( self.location )
         filenames = []
         for ext in self.config[ 'Cleanup' ][ 'Supported Formats' ]:
             filenames += [ f for f in cwd.glob( f'**/*{ext}' )
-                          if self.roon_dst and \
-                                  self.roon_dst not in str( f.absolute() ) ]
+                          if self.finished_albums and \
+                                  self.finished_albums not in str( f.absolute() ) ]
         corrupted = []
         for filename in filenames:
-            flac = FlacFile( self.config, filename )
+            flac = AudioFile( self.config, filename )
             if not flac.initialized:
                 corrupted.append( flac )
                 continue
@@ -987,8 +981,8 @@ class CleanupCmd( BaseCmd ):
                 if cmd in [ 'n', 'next' ]:
                     cmd_save( album )
                     if album.ready_to_copy():
-                        os.makedirs( self.roon_dst, exist_ok=True )
-                        shutil.move( album.path.absolute(), self.roon_dst )
+                        os.makedirs( self.finished_albums, exist_ok=True )
+                        shutil.move( album.path.absolute(), self.finished_albums )
             except shutil.Error as exception:
                 error= True
                 print( exception )
@@ -1155,25 +1149,20 @@ class CleanupCmd( BaseCmd ):
 
     def run( self ):
         '''Run the command'''
-        self.load_flac_files()
+        self.load_audio_files()
         self.show_summary()
         self.command_prompt()
         self.show_summary()
 
 class RoonCopyCmd( CleanupCmd ):
     '''The command to copy complete albums to Roon library'''
-    def __init__( self, location, config, params ):
-        super().__init__( location, config, params )
-        self.roon_dst = params.roon_dst()
-        self.roon_target = params.roon_target()
-
-    def load_flac_files( self ):
+    def load_audio_files( self ):
         '''Load all flac files'''
         corrupted = []
 
         cwd = Path( self.location )
         for filename in list( cwd.glob( '**/*.flac' ) ):
-            flac = FlacFile( self.config, filename )
+            flac = AudioFile( self.config, filename )
             if not flac.initialized:
                 corrupted.append( flac )
                 continue
@@ -1183,7 +1172,7 @@ class RoonCopyCmd( CleanupCmd ):
             self.albums[ flac.album_path() ].add_track( flac )
 
         self.albums = { path : album for path, album in self.albums.items()
-                        if album.ready_to_copy( target=self.roon_target ) }
+                        if album.ready_to_copy( target=self.flac_target ) }
 
         corrupted = [ f.album_path() for f in corrupted ]
         if not corrupted:
@@ -1201,8 +1190,8 @@ class RoonCopyCmd( CleanupCmd ):
             src = album.path.absolute()
 
             dst = self.config[ 'Roon Library' ][ 'Location']
-            dst = os.path.join( dst, self.roon_target )
-            if self.roon_target in [ 'cd', 'flac' ]:
+            dst = os.path.join( dst, self.flac_target )
+            if self.flac_target in [ 'cd', 'flac' ]:
                 if album.album_artist() == various_artists:
                     dst = os.path.join( dst, various_artists )
                 else:
@@ -1210,7 +1199,7 @@ class RoonCopyCmd( CleanupCmd ):
                     initial = '0' if ord( initial ) >= ord( 'a' ) and \
                               ord( initial ) <= ord( '9' ) else initial
                     dst = os.path.join( dst, initial, album.album_artist() )
-            elif self.roon_target in [ 'mqa', 'Thai' ]:
+            elif self.flac_target in [ 'mqa', 'Thai' ]:
                 if album.album_artist() == various_artists:
                     dst = os.path.join( dst, various_artists )
                 else:
@@ -1231,7 +1220,7 @@ class RoonCopyCmd( CleanupCmd ):
                 print( exception )
 
     def run( self ):
-        self.load_flac_files()
+        self.load_audio_files()
         self.roon_copy()
 
 def execute( cmd ):
@@ -1266,10 +1255,10 @@ class AudioTag:
         '''Extract all archives'''
         cwd = Path( os.getcwd() )
         cmds = []
+        archive_dst = self.config[ 'Extract' ][ 'Archive' ]
         for fmt in self.config[ "Extract" ][ "Archive Format" ]:
-            cmds += [ ExtractCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' )
-                      if params.archive_dst() and \
-                              params.archive_dst() not in str( f.absolute() ) ]
+            cmds += [ ExtractCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' )
+                      if archive_dst not in str( f.absolute() ) ]
         if cmds and not params.dry_run():
             os.makedirs( params.archive_dst(), exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
@@ -1279,17 +1268,17 @@ class AudioTag:
         cwd = Path( os.getcwd() )
         cmds = []
         for fmt in self.config[ "Extract" ][ "Convert Format" ]:
-            cmds += [ ConvertCmd( f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
+            cmds += [ ConvertCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
     def cleanup( self, params ):
         '''Do various data cleanup on all folders in the current folder'''
-        cmds = [ CleanupCmd( os.getcwd(), self.config, params ) ]
+        cmds = [ CleanupCmd( self.config, os.getcwd(), params ) ]
         self.execute_commands( execute, cmds )
 
     def roon_copy( self, params ):
         '''Do various data cleanup on all folders in the current folder'''
-        cmds = [ RoonCopyCmd( os.getcwd(), self.config, params ) ]
+        cmds = [ RoonCopyCmd( self.config, os.getcwd(), params ) ]
         self.execute_commands( execute, cmds )
 
     def run( self, params ):
@@ -1307,41 +1296,29 @@ class AudioTag:
 
 def process_arguments( config ):
     '''Process commandline arguments'''
-    archive_dst = config[ 'Default Folders' ][ 'Archive' ]
-    extract_dst = config[ 'Default Folders' ][ 'Extract' ]
-    roon_dst = config[ 'Default Folders' ][ 'Roon' ]
-    roon_target = config[ 'Roon Library' ][ 'Default Target' ]
+    flac_target = config[ 'Copy' ][ 'Flac Target' ]
 
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
                          help='Dry run' )
     parser.add_argument( '-s', '--seq-exec', action='store_true', dest='seq_exec',
                          help='Use sequential execution' )
+    parser.add_argument( '-t', '--target', action='store',
+                         dest='target', default=flac_target,
+                         choices=[ 'cd', 'dsd', 'flac', 'mqa', 'Thai' ],
+                         help='Set the flac target for Roon' )
     parser.add_argument( '-v', '--verbose', action='store_true', dest='verbose',
                          help='Print debug info' )
 
     subparser = parser.add_subparsers( dest='command' )
     subparser.required = True
 
-    extract_parser = subparser.add_parser( 'extract', help='Extract compressed archives' )
-    extract_parser.add_argument( '-a', '--archive-dst', default=archive_dst,
-                                 help='Move the uncompressed archives to this location' )
-    extract_parser.add_argument( '-e', '--extract-dst', default=extract_dst,
-                                 help='Extract the archives at this location' )
-
-    subparser.add_parser( 'convert', help='Convert audio files to .flac' )
-
     cleanup_parser = subparser.add_parser( 'cleanup', help='Do various data cleanup' )
     cleanup_parser.add_argument( '-k', '--skip-complete', action='store_true',
                                  help='Skip the cleaned album' )
-
-    copy_parser = subparser.add_parser( 'copy', help='Copy complete albums to Roon library' )
-    copy_parser.add_argument( '-r', '--roon-dst', default=roon_dst,
-                              help="Move the copied albums to this location" )
-    copy_parser.add_argument( '-t', '--roon-target', action='store',
-                              dest='roon_target', default=roon_target,
-                              choices=[ 'cd', 'dsd', 'flac', 'mqa', 'Thai' ],
-                              help="Move the copied albums to this location" )
+    subparser.add_parser( 'extract', help='Extract compressed archives' )
+    subparser.add_parser( 'convert', help='Convert audio files to .flac' )
+    subparser.add_parser( 'copy', help='Copy complete albums to Roon library' )
 
     args = parser.parse_args()
     params_dict = {
@@ -1351,10 +1328,7 @@ def process_arguments( config ):
         "seq_exec" : False if args.command in [ 'cleanup', 'copy' ] \
                      else args.seq_exec,
         "skip_complete" : getattr( args, 'skip_complete', False ),
-        "archive_dst" : getattr( args, 'archive_dst', archive_dst ),
-        "extract_dst" : getattr( args, 'extract_dst', extract_dst ),
-        "roon_dst" : getattr( args, 'roon_dst', roon_dst ),
-        "roon_target" : getattr( args, 'roon_target', roon_target ),
+        "flac_target" : getattr( args, 'target', flac_target ),
     }
     return Parameters( params_dict )
 

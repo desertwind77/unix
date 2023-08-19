@@ -2,21 +2,18 @@
    "config" : {
       "Roon Library" : {
          "Location" : "/Volumes/Public/Music",
-         "Targets" : [ "cd", "dsd", "flac", "mqa", "Thai" ],
-         "Default Target" : "flac"
-      },
-      "Default Folders" : {
-         "Archive" : "archive_files",
-         "Extract" : ".",
-         "Roon" : "roon_library_files"
+         "Targets" : [ "cd", "dsd", "flac", "mqa", "Thai" ]
       },
       "Extract" : {
          "Archive Format" : [ ".7z", ".rar", ".zip" ],
-         "Convert Format" : [ ".wav" ]
+         "Convert Format" : [ ".wav" ],
+         "Archive" : "archive_files",
+         "Extract" : "."
       },
       "Cleanup" : {
          "Allowed Formats" : [ ".dsf", ".flac", ".pdf", ".jpeg", ".jpg", ".png", ".tif" ],
          "Supported Formats" : [ ".dsf", ".flac" ],
+         "Finished Albums" : "roon_library_files",
          "Display Chars" : [
             {
                "src" : [ "\"" ],
@@ -58,5 +55,8 @@
             }
          ]
       }
+   },
+   "Copy" : {
+      "Flac Target" : "flac"
    }
 }
