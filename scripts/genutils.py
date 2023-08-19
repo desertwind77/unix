@@ -140,7 +140,7 @@ def load_config( config_filename, verbose=False ):
 
 def test_roman_numeric():
     '''The test function for RomanNumeric'''
-    test_vector_for_to_int = {
+    test_vector = {
         'III' : 3,
         'IIII' : None,
         'VII' : 7,
@@ -149,7 +149,8 @@ def test_roman_numeric():
         'LXIX' : 69,
         'MCMLXXXIV' : 1984,
     }
-    for txt, value in test_vector_for_to_int.items():
+
+    for txt, value in test_vector.items():
         assert value == RomanNumeric().to_int( txt )
 
 def test():
