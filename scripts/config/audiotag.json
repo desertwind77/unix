@@ -58,6 +58,7 @@
          ]
       },
       "Copy" : {
+         "Supported Formats" : [ ".dsf", ".flac" ],
          "Flac Target" : "flac"
       }
    }

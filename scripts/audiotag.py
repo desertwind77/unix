@@ -73,9 +73,9 @@ class Parameters:
         '''Return the skip_complete argument'''
         return self.params.get( 'skip_complete' )
 
-    def flac_target ( self ):
-        '''Return the flac_target argument'''
-        return self.params.get( 'flac_target' )
+    def copy_target ( self ):
+        '''Return the copy_target argument'''
+        return self.params.get( 'copy_target' )
 
 class TextSanitizer:
     '''The base clase for Album and AudioFile'''
@@ -142,10 +142,10 @@ class TextSanitizer:
 
 class Album( TextSanitizer ):
     '''The class representing a folder containing an album'''
-    def __init__( self, config, path, flac_target ):
+    def __init__( self, config, path, copy_target ):
         super().__init__( config )
         self.path = path
-        self.flac_target = flac_target
+        self.copy_target = copy_target
         self.disc = defaultdict( list )
         self.contents = []
         self.track_map = {}
@@ -158,11 +158,11 @@ class Album( TextSanitizer ):
         roon_library = self.config[ 'Roon Library' ][ 'Location' ]
         folder = f'{self.album_artist()} - {self.album_name()}'
         if self.album_artist() == 'Various Artists':
-            roon_path = os.path.join( roon_library, self.flac_target,
+            roon_path = os.path.join( roon_library, self.copy_target,
                                       self.album_artist(), folder )
         else:
             subdir = folder[ 0 ]
-            roon_path = os.path.join( roon_library, self.flac_target, subdir,
+            roon_path = os.path.join( roon_library, self.copy_target, subdir,
                                       self.album_artist(), folder )
         return not os.path.exists( roon_path )
 
@@ -174,6 +174,10 @@ class Album( TextSanitizer ):
             self.track_map[ ( flac.discno, flac.track ) ] = flac
         else:
             self.track_map[ ( 1, flac.track ) ] = flac
+
+        # if this album is in '.dsf' format, set the target to 'dsd'
+        if flac.path.suffix == '.dsf':
+            self.copy_target = 'dsd'
 
     def get_track( self, disc_and_track ):
         '''Get the flac file with this ( disc, track ) number'''
@@ -343,12 +347,20 @@ class Album( TextSanitizer ):
         self.path = Path( dst )
         self.refresh()
 
+    def contain_one_format( self ):
+        '''Check if this album contains only one file format'''
+        supported_formats = self.config[ 'Cleanup' ][ 'Supported Formats' ]
+        suffix = set( f.path.suffix for f in self.contents
+                      if f.path.suffix in supported_formats )
+        return len( suffix ) == 1
+
     def ready_to_copy( self ):
         '''This album is ready to be copied to the Roon library'''
         return all( [ self.has_all_tags(),
                       self.has_album_art(),
                       self.no_unwanted_files(),
-                      self.not_found_in_roon_library() ] )
+                      self.not_found_in_roon_library(),
+                      self.contain_one_format() ] )
 
     def show_content( self ):
         '''Show the contents of this album'''
@@ -357,7 +369,10 @@ class Album( TextSanitizer ):
         print( f'Album Artist : {self.album_artist()}' )
         print( f'Album : {self.album_name()}' )
 
-        warning = '"Unwanted files are found."' if not self.no_unwanted_files() else ''
+        warning = '"Multiple formats found"' if not self.contain_one_format() else ''
+        if not self.no_unwanted_files():
+            msg = '"Unwanted files are found."'
+            warning = warning + ', ' + msg if warning else msg
         if not self.not_found_in_roon_library():
             msg = '"Found in Roon"'
             warning = warning + ', ' + msg if warning else msg
@@ -528,7 +543,10 @@ class MetadataID3( MetadataBase ):
         return self.get_metadata_num( 'TPOS' )
 
     def has_album_art( self ):
-        return 'APIC:Picture' in self.metadata
+        # The following doesn't work because I saw a tag of which the key is
+        # 'APIC:<filename>'.
+        # return 'APIC:Picture' in self.metadata or 'APIC' in self.metadata
+        return any( 'APIC' in key for key in self.metadata.tags.keys() )
 
     def save( self, new_metadata ):
         '''Write the new metadata to disk'''
@@ -801,7 +819,7 @@ class CleanupCmd( BaseCmd ):
         self.location = location
         self.verbose = params.verbose()
         self.dry_run = params.dry_run()
-        self.flac_target = params.flac_target()
+        self.copy_target = params.copy_target()
         self.finished_albums = self.config[ 'Cleanup' ][ 'Finished Albums' ]
         self.skip_complete = params.skip_complete()
         self.albums = {}
@@ -822,7 +840,7 @@ class CleanupCmd( BaseCmd ):
                 continue
             if flac.album_path() not in self.albums:
                 self.albums[ flac.album_path() ] = \
-                        Album( self.config, flac.album_path(), self.flac_target )
+                        Album( self.config, flac.album_path(), self.copy_target )
             self.albums[ flac.album_path() ].add_track( flac )
 
         corrupted = [ f.album_path() for f in corrupted ]
@@ -1161,15 +1179,16 @@ class RoonCopyCmd( CleanupCmd ):
         corrupted = []
 
         cwd = Path( self.location )
-        for filename in list( cwd.glob( '**/*.flac' ) ):
-            flac = AudioFile( self.config, filename )
-            if not flac.initialized:
-                corrupted.append( flac )
-                continue
-            if flac.album_path() not in self.albums:
-                self.albums[ flac.album_path() ] = \
-                        Album( self.config, flac.album_path(), self.flac_target )
-            self.albums[ flac.album_path() ].add_track( flac )
+        for ext in self.config[ 'Copy' ][ 'Supported Formats' ]:
+            for filename in list( cwd.glob( f'**/*{ext}' ) ):
+                flac = AudioFile( self.config, filename )
+                if not flac.initialized:
+                    corrupted.append( flac )
+                    continue
+                if flac.album_path() not in self.albums:
+                    self.albums[ flac.album_path() ] = \
+                            Album( self.config, flac.album_path(), self.copy_target )
+                self.albums[ flac.album_path() ].add_track( flac )
 
         self.albums = { path : album for path, album in self.albums.items()
                         if album.ready_to_copy() }
@@ -1190,20 +1209,16 @@ class RoonCopyCmd( CleanupCmd ):
             src = album.path.absolute()
 
             dst = self.config[ 'Roon Library' ][ 'Location']
-            dst = os.path.join( dst, self.flac_target )
-            if self.flac_target in [ 'cd', 'flac' ]:
-                if album.album_artist() == various_artists:
-                    dst = os.path.join( dst, various_artists )
-                else:
-                    initial = album.album_artist()[ 0 ]
-                    initial = '0' if ord( initial ) >= ord( 'a' ) and \
-                              ord( initial ) <= ord( '9' ) else initial
-                    dst = os.path.join( dst, initial, album.album_artist() )
-            elif self.flac_target in [ 'mqa', 'Thai' ]:
-                if album.album_artist() == various_artists:
-                    dst = os.path.join( dst, various_artists )
-                else:
-                    dst = os.path.join( dst, album.album_artist() )
+            dst = os.path.join( dst, album.copy_target )
+            if album.album_artist() == various_artists:
+                dst = os.path.join( dst, various_artists )
+            elif album.copy_target in [ 'cd', 'dsd', 'flac', 'mqa' ]:
+                initial = album.album_artist()[ 0 ]
+                initial = '0' if ord( initial ) >= ord( 'a' ) and \
+                          ord( initial ) <= ord( '9' ) else initial
+                dst = os.path.join( dst, initial, album.album_artist() )
+            elif album.copy_target in [ 'Thai' ]:
+                dst = os.path.join( dst, album.album_artist() )
             dst = os.path.join( dst, folder_name )
 
             if os.path.exists( dst ):
@@ -1294,15 +1309,15 @@ class AudioTag:
         else:
             raise UnsupportedCommand( params.command() )
 
-def process_arguments( config ):
+def process_arguments():
     '''Process commandline arguments'''
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
                          help='Dry run' )
     parser.add_argument( '-s', '--seq-exec', action='store_true', dest='seq_exec',
                          help='Use sequential execution' )
-    parser.add_argument( '-t', '--flac-target', action='store', default='flac',
-                         choices=[ 'cd', 'flac', 'mqa', 'Thai' ],
+    parser.add_argument( '-t', '--copy-target', action='store', default='flac',
+                         choices=[ 'cd', 'dsd', 'flac', 'mqa', 'Thai' ],
                          help='Set the flac target for Roon' )
     parser.add_argument( '-v', '--verbose', action='store_true', dest='verbose',
                          help='Print debug info' )
@@ -1322,7 +1337,7 @@ def process_arguments( config ):
         "command" : args.command,
         "dry_run" : args.dry_run,
         "verbose" : args.verbose,
-        "flac_target" : args.flac_target,
+        "copy_target" : args.copy_target,
         "seq_exec" : False if args.command in [ 'cleanup', 'copy' ] \
                      else args.seq_exec,
         "skip_complete" : getattr( args, 'skip_complete', False ),
@@ -1332,7 +1347,7 @@ def process_arguments( config ):
 def main():
     '''The main function'''
     config = load_config( CONFIG_FILENAME )
-    params = process_arguments( config )
+    params = process_arguments()
     audiotag = AudioTag( config )
     audiotag.run( params )
 
