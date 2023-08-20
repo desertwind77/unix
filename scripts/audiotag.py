@@ -269,7 +269,7 @@ class Album( TextSanitizer ):
         filenames = [ f for f in self.path.glob( '**/*' ) if os.path.isfile( f ) ]
         for filename in filenames:
             fmt = self.get_format( filename )
-            if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ] or \
+            if fmt not in self.config[ "Cleanup" ][ "Allowed Formats" ] and \
                     fmt not in self.config[ "Cleanup" ][ "Supported Formats" ]:
                 unwanted.append( filename )
         return unwanted
