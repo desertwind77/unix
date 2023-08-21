@@ -924,35 +924,32 @@ class CleanupCmd( BaseCmd ):
 
         def cmd_set_track( album, cmd ):
             # Change the track artist or title
-            # ta <track> <title>
-            # tt <track> <title>
-            obj = re.match( r'^t[a|t] (\d+) (.*)$', cmd )
-            if obj:
-                track = int( obj.group( 1 ) )
-                field = obj.group( 2 )
-                flac = album.get_track( ( 1, track ) )
-                if cmd.startswith( 'tt' ):
-                    flac.title = field
-                elif cmd.startswith( 'ta ' ):
-                    flac.artist = field
-                album.show_content()
-            return False
-
-        def cmd_set_disc_track( album, cmd ):
-            # Change ( disc, track ) artist or title
-            # dta <disc> <trac> <title>
-            # dtt <disc> <trac> <title>
-            obj = re.match( r'^dt[a|t] (\d+) (\d+) (.*)$', cmd )
-            if obj:
-                disc = int( obj.group( 1 ) )
-                track = int( obj.group( 2 ) )
-                field = obj.group( 3 )
-                flac = album.get_track( ( disc, track ) )
-                if cmd.startswith( 'dta' ):
-                    flac.artist = field
-                elif cmd.startswith( 'dtt' ):
-                    flac.title = field
-                album.show_content()
+            if len( album.disc ) > 1:
+                # ta <disc> <trac> <title>
+                # tt <disc> <trac> <title>
+                obj = re.match( r'^dt[a|t] (\d+) (\d+) (.*)$', cmd )
+                if obj:
+                    disc = int( obj.group( 1 ) )
+                    track = int( obj.group( 2 ) )
+                    field = obj.group( 3 )
+                    flac = album.get_track( ( disc, track ) )
+                    if cmd.startswith( 'dta' ):
+                        flac.artist = field
+                    elif cmd.startswith( 'dtt' ):
+                        flac.title = field
+            else:
+                # ta <track> <title>
+                # tt <track> <title>
+                obj = re.match( r'^t[a|t] (\d+) (.*)$', cmd )
+                if obj:
+                    track = int( obj.group( 1 ) )
+                    field = obj.group( 2 )
+                    flac = album.get_track( ( 1, track ) )
+                    if cmd.startswith( 'tt' ):
+                        flac.title = field
+                    elif cmd.startswith( 'ta ' ):
+                        flac.artist = field
+            album.show_content()
             return False
 
         def cmd_set_track_regex( album, cmd ):
@@ -982,14 +979,13 @@ class CleanupCmd( BaseCmd ):
 
         def cmd_filename_regex( album, cmd ):
             # ref %{track} %{artist} %{title}
-            regex = cmd[ len( 'ref ') : ]
+            regex = cmd[ len( 'ref ' ) : ]
             field_dict = {}
 
             obj = re.search( r'%{(.*?)}', regex )
             # count must start from 1 because after a successfull re.match,
             # for example obj = re.match(...). The group starts from 1.
             count = 1
-            print( regex )
             while obj:
                 field = obj.group( 1 )
                 field_dict[ field ] = count
@@ -1001,12 +997,14 @@ class CleanupCmd( BaseCmd ):
                 obj = re.search( r'%{(.*?)}', regex )
 
             for audio_file in album.contents:
-                print( regex, str( audio_file.path.stem ) )
+                if self.verbose:
+                    print( regex, str( audio_file.path.stem ) )
                 obj = re.match( regex, str( audio_file.path.stem ) )
                 if not obj:
                     continue
                 for field, index in field_dict.items():
-                    print( field, index, obj.group( index ) )
+                    if self.verbose:
+                        print( field, index, obj.group( index ) )
                     if field == 'track':
                         audio_file.track = int( obj.group( index ) )
                     elif field == 'artist':
@@ -1015,6 +1013,41 @@ class CleanupCmd( BaseCmd ):
                         audio_file.title = obj.group( index )
                     else:
                         assert False
+            album.show_content()
+            return False
+
+        def cmd_title_regex( album, cmd ):
+            regex = cmd[ len( 'ted ' ): ]
+            obj = re.search( r'^"(.*)" *"(.*)"', regex )
+            if not obj:
+                return False
+            src, dst = obj.group( 1 ), obj.group( 2 )
+
+            field_index = {}
+            count = 1
+            obj = re.search( r'%{(.*?)}', src )
+            while obj:
+                field = obj.group( 1 )
+                field_index[ field ] = count
+                src = src.replace( '%{' + field + '}', "([\w ?'&]+)" )
+                count += 1
+                obj = re.search( r'%{(.*?)}', src )
+
+            for audio_file in album.contents:
+                if self.verbose:
+                    print( src, str( audio_file.path.stem ) )
+                obj = re.match( src, str( audio_file.title ) )
+                if not obj:
+                    continue
+                field_value = {}
+                for field, index in field_index.items():
+                    if self.verbose:
+                        print( field, index, obj.group( index ) )
+                    field_value[ field ] = obj.group( index )
+                new_title = dst
+                for field, value in field_value.items():
+                    new_title = new_title.replace( '%{' + field + '}', value )
+                audio_file.title = new_title
             album.show_content()
             return False
 
@@ -1147,10 +1180,6 @@ class CleanupCmd( BaseCmd ):
                     'desc' : "Set the track's artist or title",
                     'func' : cmd_set_track,
                 },
-                ( 'dta', 'dtt' ) : {
-                    'desc' : "Set the ( disc, track )'s artist or title",
-                    'func' : cmd_set_disc_track,
-                },
                 ( 'rea', 'ret' ) : {
                     'desc' : 'Set the artist or title of all files using regular expression',
                     'func' : cmd_set_track_regex,
@@ -1159,6 +1188,10 @@ class CleanupCmd( BaseCmd ):
                     'desc' : 'Use the regular expression and filename to populate tags',
                     'func' : cmd_filename_regex,
                 },
+                ( 'ted', ) : {
+                    'desc' : 'Edit the title using regex',
+                    'func' : cmd_title_regex,
+                }
             }
         }
 
