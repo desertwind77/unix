@@ -927,15 +927,15 @@ class CleanupCmd( BaseCmd ):
             if len( album.disc ) > 1:
                 # ta <disc> <trac> <title>
                 # tt <disc> <trac> <title>
-                obj = re.match( r'^dt[a|t] (\d+) (\d+) (.*)$', cmd )
+                obj = re.match( r'^t[a|t] (\d+) (\d+) (.*)$', cmd )
                 if obj:
                     disc = int( obj.group( 1 ) )
                     track = int( obj.group( 2 ) )
                     field = obj.group( 3 )
                     flac = album.get_track( ( disc, track ) )
-                    if cmd.startswith( 'dta' ):
+                    if cmd.startswith( 'ta' ):
                         flac.artist = field
-                    elif cmd.startswith( 'dtt' ):
+                    elif cmd.startswith( 'tt' ):
                         flac.title = field
             else:
                 # ta <track> <title>
@@ -992,7 +992,7 @@ class CleanupCmd( BaseCmd ):
                 if field == 'track':
                     regex = regex.replace( '%{' + field + '}', '(\d+)' )
                 else:
-                    regex = regex.replace( '%{' + field + '}', "([\w ?'&]+)" )
+                    regex = regex.replace( '%{' + field + '}', "([\w\. ?'&]+)" )
                 count += 1
                 obj = re.search( r'%{(.*?)}', regex )
 
@@ -1018,10 +1018,57 @@ class CleanupCmd( BaseCmd ):
 
         def cmd_title_regex( album, cmd ):
             regex = cmd[ len( 'ted ' ): ]
-            obj = re.search( r'^"(.*)" *"(.*)"', regex )
+            obj = re.search( r'^([\d\/\*-]*) "(.*)" *"(.*)"', regex )
             if not obj:
                 return False
-            src, dst = obj.group( 1 ), obj.group( 2 )
+            tracks, src, dst = obj.group( 1 ), obj.group( 2 ), obj.group( 3 )
+
+            patterns = {
+                "matching 1-5/3" : {
+                    "regex" : r'(\d*)-(\d*)\/(\d*)',
+                    "start" : 1,
+                    "stop" : 2,
+                    "disc" : 3,
+                },
+                "matching 1/3" : {
+                    "regex" : r'(\d*)\/(\d*)',
+                    "start" : 1,
+                    "stop" : 1,
+                    "disc" : 3,
+                },
+                "matching 1-5" : {
+                    "regex" : r'(\d*)-(\d*)',
+                    "start" : 1,
+                    "stop" : 2,
+                    "disc" : None,
+                },
+                "matching 1" : {
+                    "regex" : r'(\d*)',
+                    "start" : 1,
+                    "stop" : 1,
+                    "disc" : None,
+                }
+            }
+            file_list = []
+            if tracks == '*':
+                file_list = album.contents
+            else:
+                for _, pinfo in patterns.items():
+                    pattern = pinfo[ 'regex' ]
+                    obj = re.match( pattern, tracks )
+                    if not obj:
+                        continue
+                    start = int( obj.group( pinfo[ 'start' ] ) )
+                    stop = int( obj.group( pinfo[ 'stop' ] ) )
+                    disc = int( obj.group( pinfo[ 'disc' ] ) ) if pinfo[ 'disc' ] else 1
+                    if start > stop:
+                        # It doesn't make sense that start is greater than stop
+                        continue
+                    for tr_no in range( start, stop + 1 ):
+                        file_list.append( album.get_track( ( disc, tr_no ) ) )
+                    break
+            if not file_list:
+                return
 
             field_index = {}
             count = 1
@@ -1029,11 +1076,11 @@ class CleanupCmd( BaseCmd ):
             while obj:
                 field = obj.group( 1 )
                 field_index[ field ] = count
-                src = src.replace( '%{' + field + '}', "([\w ?'&]+)" )
+                src = src.replace( '%{' + field + '}', "([\w\. ?'&]+)" )
                 count += 1
                 obj = re.search( r'%{(.*?)}', src )
 
-            for audio_file in album.contents:
+            for audio_file in file_list:
                 if self.verbose:
                     print( src, str( audio_file.path.stem ) )
                 obj = re.match( src, str( audio_file.title ) )
@@ -1181,15 +1228,15 @@ class CleanupCmd( BaseCmd ):
                     'func' : cmd_set_track,
                 },
                 ( 'rea', 'ret' ) : {
-                    'desc' : 'Set the artist or title of all files using regular expression',
+                    'desc' : 'Retain a part of the artist or title of all files using regex : ret \d* - (.*) \(.*',
                     'func' : cmd_set_track_regex,
                 },
                 ( 'ref', ) : {
-                    'desc' : 'Use the regular expression and filename to populate tags',
+                    'desc' : 'Use the regex and filename to populate tags of all files : ref %{title} %{artist}',
                     'func' : cmd_filename_regex,
                 },
                 ( 'ted', ) : {
-                    'desc' : 'Edit the title using regex',
+                    'desc' : 'Edit the title using regex : ted 1-3/2 "%{first} - %{second}" "%{second} - %{first}"',
                     'func' : cmd_title_regex,
                 }
             }
