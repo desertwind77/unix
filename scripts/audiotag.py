@@ -1016,13 +1016,7 @@ class CleanupCmd( BaseCmd ):
             album.show_content()
             return False
 
-        def cmd_title_regex( album, cmd ):
-            regex = cmd[ len( 'ted ' ): ]
-            obj = re.search( r'^([\d\/\*-]*) "(.*)" *"(.*)"', regex )
-            if not obj:
-                return False
-            tracks, src, dst = obj.group( 1 ), obj.group( 2 ), obj.group( 3 )
-
+        def parse_track_disc( tracks ):
             patterns = {
                 "matching 1-5/3" : {
                     "regex" : r'(\d*)-(\d*)\/(\d*)',
@@ -1049,26 +1043,37 @@ class CleanupCmd( BaseCmd ):
                     "disc" : None,
                 }
             }
+            for _, pinfo in patterns.items():
+                pattern = pinfo[ 'regex' ]
+                obj = re.match( pattern, tracks )
+                if not obj:
+                    continue
+                start = int( obj.group( pinfo[ 'start' ] ) )
+                stop = int( obj.group( pinfo[ 'stop' ] ) )
+                disc = int( obj.group( pinfo[ 'disc' ] ) ) if pinfo[ 'disc' ] else 1
+                if start > stop:
+                    # It doesn't make sense that start is greater than stop
+                    continue
+                return ( start, stop, disc )
+            return None
+
+        def cmd_title_regex( album, cmd ):
+            regex = cmd[ len( 'ted ' ): ]
+            obj = re.search( r'^([\d\/\*-]*) "(.*)" *"(.*)"', regex )
+            if not obj:
+                return False
+            tracks, src, dst = obj.group( 1 ), obj.group( 2 ), obj.group( 3 )
+
             file_list = []
             if tracks == '*':
                 file_list = album.contents
             else:
-                for _, pinfo in patterns.items():
-                    pattern = pinfo[ 'regex' ]
-                    obj = re.match( pattern, tracks )
-                    if not obj:
-                        continue
-                    start = int( obj.group( pinfo[ 'start' ] ) )
-                    stop = int( obj.group( pinfo[ 'stop' ] ) )
-                    disc = int( obj.group( pinfo[ 'disc' ] ) ) if pinfo[ 'disc' ] else 1
-                    if start > stop:
-                        # It doesn't make sense that start is greater than stop
-                        continue
-                    for tr_no in range( start, stop + 1 ):
-                        file_list.append( album.get_track( ( disc, tr_no ) ) )
-                    break
-            if not file_list:
-                return
+                result = parse_track_disc( tracks )
+                if not result:
+                    return False
+                start, stop, disc = result
+                for tr_no in range( start, stop + 1 ):
+                    file_list.append( album.get_track( ( disc, tr_no ) ) )
 
             field_index = {}
             count = 1
