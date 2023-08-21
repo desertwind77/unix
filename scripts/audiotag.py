@@ -980,6 +980,44 @@ class CleanupCmd( BaseCmd ):
                 print( exception )
             return False
 
+        def cmd_filename_regex( album, cmd ):
+            # ref %{track} %{artist} %{title}
+            regex = cmd[ len( 'ref ') : ]
+            field_dict = {}
+
+            obj = re.search( r'%{(.*?)}', regex )
+            # count must start from 1 because after a successfull re.match,
+            # for example obj = re.match(...). The group starts from 1.
+            count = 1
+            print( regex )
+            while obj:
+                field = obj.group( 1 )
+                field_dict[ field ] = count
+                if field == 'track':
+                    regex = regex.replace( '%{' + field + '}', '(\d+)' )
+                else:
+                    regex = regex.replace( '%{' + field + '}', "([\w ?'&]+)" )
+                count += 1
+                obj = re.search( r'%{(.*?)}', regex )
+
+            for audio_file in album.contents:
+                print( regex, str( audio_file.path.stem ) )
+                obj = re.match( regex, str( audio_file.path.stem ) )
+                if not obj:
+                    continue
+                for field, index in field_dict.items():
+                    print( field, index, obj.group( index ) )
+                    if field == 'track':
+                        audio_file.track = int( obj.group( index ) )
+                    elif field == 'artist':
+                        audio_file.artist = obj.group( index )
+                    elif field == 'title':
+                        audio_file.title = obj.group( index )
+                    else:
+                        assert False
+            album.show_content()
+            return False
+
         def cmd_populate_track_no( album ):
             if len( album.disc ) > 1:
                 for _, flacs in album.disc.items():
@@ -1116,7 +1154,11 @@ class CleanupCmd( BaseCmd ):
                 ( 'rea', 'ret' ) : {
                     'desc' : 'Set the artist or title of all files using regular expression',
                     'func' : cmd_set_track_regex,
-                }
+                },
+                ( 'ref', ) : {
+                    'desc' : 'Use the regular expression and filename to populate tags',
+                    'func' : cmd_filename_regex,
+                },
             }
         }
 
