@@ -1409,7 +1409,7 @@ class AudioTag:
             cmds += [ ExtractCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' )
                       if archive_dst not in str( f.absolute() ) ]
         if cmds and not params.dry_run():
-            os.makedirs( params.archive_dst(), exist_ok=True )
+            os.makedirs( archive_dst, exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
     def convert_audio( self, params ):
