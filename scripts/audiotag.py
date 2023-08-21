@@ -922,33 +922,25 @@ class CleanupCmd( BaseCmd ):
             album.show_content()
             return False
 
-        def cmd_set_track( album, cmd ):
+        def cmd_set_track_static( album, cmd ):
             # Change the track artist or title
-            if len( album.disc ) > 1:
-                # ta <disc> <trac> <title>
-                # tt <disc> <trac> <title>
-                obj = re.match( r'^t[a|t] (\d+) (\d+) (.*)$', cmd )
-                if obj:
-                    disc = int( obj.group( 1 ) )
-                    track = int( obj.group( 2 ) )
-                    field = obj.group( 3 )
-                    flac = album.get_track( ( disc, track ) )
-                    if cmd.startswith( 'ta' ):
-                        flac.artist = field
-                    elif cmd.startswith( 'tt' ):
-                        flac.title = field
-            else:
-                # ta <track> <title>
-                # tt <track> <title>
-                obj = re.match( r'^t[a|t] (\d+) (.*)$', cmd )
-                if obj:
-                    track = int( obj.group( 1 ) )
-                    field = obj.group( 2 )
-                    flac = album.get_track( ( 1, track ) )
-                    if cmd.startswith( 'tt' ):
-                        flac.title = field
-                    elif cmd.startswith( 'ta ' ):
-                        flac.artist = field
+            obj = re.search( r'^t[a|t] ([\d\/\*-]*) (.*)$', cmd )
+            if not obj:
+                return False
+            track_disc = obj.group( 1 )
+            field = obj.group( 2 )
+
+            result = parse_track_disc( track_disc )
+            if not result:
+                return False
+
+            start, stop, disc = result
+            for track_no in range( start, stop + 1 ):
+                audio = album.get_track( ( disc, track_no ) )
+                if cmd.startswith( 'ta' ):
+                    audio.artist = field
+                elif cmd.startswith( 'tt' ):
+                    audio.title = field
             album.show_content()
             return False
 
@@ -1129,6 +1121,10 @@ class CleanupCmd( BaseCmd ):
                 print( exception )
             return not error
 
+        def cmd_show( album ):
+            album.show_content()
+            return False
+
         def cmd_print( album ):
             print( f'Location: {album.path.absolute()}' )
             return False
@@ -1194,6 +1190,10 @@ class CleanupCmd( BaseCmd ):
                     'desc' : "save changes",
                     'func' : cmd_save,
                 },
+                ( 'sh', 'show' ) : {
+                    'desc' : "show the album content",
+                    'func' : cmd_show,
+                },
                 ( 'd', 'delete' ) : {
                     'desc' : "delete the album from the filesystem",
                     'func' : cmd_delete,
@@ -1230,18 +1230,21 @@ class CleanupCmd( BaseCmd ):
                 },
                 ( 'ta', 'tt' ) : {
                     'desc' : "Set the track's artist or title",
-                    'func' : cmd_set_track,
+                    'func' : cmd_set_track_static,
                 },
                 ( 'rea', 'ret' ) : {
-                    'desc' : 'Retain a part of the artist or title of all files using regex : ret \d* - (.*) \(.*',
+                    'desc' : 'Retain a part of the artist or title of all files using regex '
+                             ': ret \d* - (.*) \(.*',
                     'func' : cmd_set_track_regex,
                 },
                 ( 'ref', ) : {
-                    'desc' : 'Use the regex and filename to populate tags of all files : ref %{title} %{artist}',
+                    'desc' : 'Use the regex and filename to populate tags of all files '
+                             ': ref %{title} %{artist}',
                     'func' : cmd_filename_regex,
                 },
                 ( 'ted', ) : {
-                    'desc' : 'Edit the title using regex : ted 1-3/2 "%{first} - %{second}" "%{second} - %{first}"',
+                    'desc' : 'Edit the title using regex '
+                             ': ted 1-3/2 "%{first} - %{second}" "%{second} - %{first}"',
                     'func' : cmd_title_regex,
                 }
             }
