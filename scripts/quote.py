@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+'''A script to randomly print a quote'''
 from collections import defaultdict
 import os
 import random
@@ -56,8 +56,8 @@ def main():
     '''The main function'''
     text = get_quote()
     text = textwrap.fill( get_quote(), width=85 )
-    print( Fore.GREEN + text )
-    print(Style.RESET_ALL)
+    print( Fore.YELLOW + text )
+    print( Style.RESET_ALL )
 
 if __name__ == '__main__':
     main()
