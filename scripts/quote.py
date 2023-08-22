@@ -49,6 +49,9 @@ def get_quote():
     index = random.randint( 0, size - 1 )
     return quote_db[ index ]
 
+# TODO:
+# command line argument for tags, color
+
 def main():
     '''The main function'''
     text = get_quote()
