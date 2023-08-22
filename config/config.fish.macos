@@ -101,4 +101,5 @@ if status is-interactive
 
    #neofetch
    quote
+   vocab
 end
