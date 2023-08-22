@@ -8,6 +8,7 @@
 |pdfmrg|Encrypt, decrypt, interleave or merge pdf files|
 |pfrmcpy|Copy photo to the photo frame location on NAS|
 |portmgr|Copy photo to the storage| 
+|quote|Print a quote|
 |rooncpy|Copy files to the roon library |
 |vmgr|Manage vim plugins|
 |zipall|Zip or unzip all files in a directory|
