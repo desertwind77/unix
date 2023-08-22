@@ -6,7 +6,7 @@ import random
 import textwrap
 
 # pylint: disable=import-error
-from colorama import Fore
+from colorama import Fore, Style
 
 from genutils import check_if_file_exists
 
@@ -57,6 +57,7 @@ def main():
     text = get_quote()
     text = textwrap.fill( get_quote(), width=85 )
     print( Fore.GREEN + text )
+    print(Style.RESET_ALL)
 
 if __name__ == '__main__':
     main()
