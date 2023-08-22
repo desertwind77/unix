@@ -22,20 +22,26 @@ def load_vocabuary( filename ):
         output = yaml.safe_load( yaml_file )
     return output
 
-def print_word( vocab ):
+def print_word( vocab, all_words=False ):
     '''Print a word'''
     keys = sorted( vocab.keys() )
-    index = random.randint( 0, len( keys ) - 1 )
-    word = keys[ index ]
+    if all_words:
+        words = keys
+    else:
+        index = random.randint( 0, len( keys ) - 1 )
+        words = [ keys[ index ] ]
 
-    print( Fore.RED + f'{keys[ index ]}:' )
-    for meaning, examples in vocab[ word ].items():
-        print( Fore.GREEN + f'   {meaning}:' )
-        if not examples:
-            continue
-        for example in examples:
-            print( Fore.CYAN + f'      {example}' )
+    for word in words:
+        print( Fore.RED + f'{keys[ index ]}:' )
+        for meaning, examples in vocab[ word ].items():
+            print( Fore.GREEN + f'   {meaning}:' )
+            if not examples:
+                continue
+            for example in examples:
+                print( Fore.CYAN + f'      {example}' )
     print( Style.RESET_ALL )
+
+#TODO: options to pring all words, games, python gui, mobile app, mac app
 
 def main():
     '''The main function'''
