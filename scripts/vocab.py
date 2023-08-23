@@ -22,8 +22,15 @@ def load_vocabuary( filename ):
         output = yaml.safe_load( yaml_file )
     return output
 
+def sanitize_text( txt ):
+    '''Clean up text'''
+    txt = txt.replace( '\(', '(' )
+    txt = txt.replace( '\)', ')' )
+    return txt
+
 def print_word( vocab, all_words=False ):
     '''Print a word'''
+    tab = '   '
     keys = sorted( vocab.keys() )
     if all_words:
         words = keys
@@ -32,13 +39,13 @@ def print_word( vocab, all_words=False ):
         words = [ keys[ index ] ]
 
     for word in words:
-        print( Fore.RED + f'{keys[ index ]}:' )
+        print( Fore.RED + f'{sanitize_text( word )}:' )
         for meaning, examples in vocab[ word ].items():
-            print( Fore.GREEN + f'   {meaning}:' )
+            print( Fore.GREEN + f'{tab}{sanitize_text( meaning ) }:' )
             if not examples:
                 continue
             for example in examples:
-                print( Fore.CYAN + f'      {example}' )
+                print( Fore.CYAN + f'{tab}{tab}{sanitize_text( example ) }' )
     print( Style.RESET_ALL )
 
 #TODO: options to pring all words, games, python gui, mobile app, mac app
