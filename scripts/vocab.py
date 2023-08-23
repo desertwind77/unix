@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-'''A script to randomly print a word from custom dictionary'''
+'''
+A script to randomly print a word from custom dictionary
+
+TODO:
+1) games
+2) Python GUI
+3) Mobile App
+4) Native Mac App
+'''
+import argparse
 import os
 import random
 
@@ -48,12 +57,18 @@ def print_word( vocab, all_words=False ):
                 print( Fore.CYAN + f'{tab}{tab}{sanitize_text( example ) }' )
     print( Style.RESET_ALL )
 
-#TODO: options to pring all words, games, python gui, mobile app, mac app
+def process_arguments():
+    '''Process the command line arguments'''
+    parser = argparse.ArgumentParser()
+    parser.add_argument( '-a', '--all', action='store_true',
+                         help='Print all vocabuary' )
+    return parser.parse_args()
 
 def main():
     '''The main function'''
+    args = process_arguments()
     vocab = load_vocabuary( CONFIG_FILENAME )
-    print_word( vocab )
+    print_word( vocab, all_words=args.all )
 
 if __name__ == '__main__':
     main()
