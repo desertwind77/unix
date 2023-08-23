@@ -21,7 +21,7 @@
    #  zoxide
    ack bat btop cheat cscope ctags-exuberant dos2unix duf dust exa fd ffmpeg fish fluid-synth fzf grex htop imageMagick
    lilypond lynx mas mc mosh ncdu octave procs ranger rar tmux trash-cli vim wget youtube-dl
-   zoxide
+   zoxide git-gui
 
    # Python using pip3 install --user
    #  enum34               : to enable enum support in python
