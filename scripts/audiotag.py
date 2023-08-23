@@ -94,13 +94,12 @@ class TextSanitizer:
         if not capitalize:
             return txt
 
-        lowercase_words = [ 'de', 'des', 'di', 'e', 'en', 'la', 'les' ]
+        lowercase_words = [ 'de', 'del', 'des', 'di', 'e', 'en', 'la', 'les', 'y' ]
         new_txt = []
-        for token in txt.split():
+        for i, token in enumerate( txt.split() ):
             token = token.lower()
             if token in lowercase_words:
-                # Do nothing
-                pass
+                token = token.capitalize() if i == 0 else token
             elif len( token ) == 1 or \
                     token.lower() == 'ost' or \
                     RomanNumeric().is_valid( token ):
