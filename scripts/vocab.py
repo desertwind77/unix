@@ -61,7 +61,7 @@ def process_arguments():
     '''Process the command line arguments'''
     parser = argparse.ArgumentParser()
     parser.add_argument( '-a', '--all', action='store_true',
-                         help='Print all vocabuary' )
+                         help='Print all words in the dictionary' )
     return parser.parse_args()
 
 def main():
