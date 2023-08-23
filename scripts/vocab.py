@@ -8,6 +8,7 @@ TODO:
 3) Mobile App
 4) Native Mac App
 '''
+from collections import namedtuple
 import argparse
 import os
 import random
@@ -19,6 +20,8 @@ import yaml
 from genutils import check_if_file_exists
 
 CONFIG_FILENAME = 'config/vocabuary.yaml'
+
+Pattern = namedtuple( 'Pattern', [ 'src', 'dst' ] )
 
 def load_vocabuary( filename ):
     '''Load the vocabuary from a file'''
@@ -33,8 +36,13 @@ def load_vocabuary( filename ):
 
 def sanitize_text( txt ):
     '''Clean up text'''
-    txt = txt.replace( '\(', '(' )
-    txt = txt.replace( '\)', ')' )
+    replacement = [
+        Pattern( '\(', '(' ),
+        Pattern( '\)', ')' ),
+        Pattern( '\\"', '"' ),
+    ]
+    for pattern in replacement:
+        txt = txt.replace( pattern.src, pattern.dst )
     return txt
 
 def print_word( vocab, all_words=False ):
