@@ -51,6 +51,7 @@ def print_word( vocab, all_words=False ):
     keys = sorted( vocab.keys() )
     if all_words:
         words = keys
+        print( f'Dictionary size = { len( words ) } words' )
     else:
         index = random.randint( 0, len( keys ) - 1 )
         words = [ keys[ index ] ]
