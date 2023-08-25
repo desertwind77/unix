@@ -773,7 +773,10 @@ class ConvertCmd( BaseCmd ):
 
         metadata = WAVE( self.filename ) \
                 if self.format == 'wav' else AIFF( self.filename )
+        if not metadata:
+            return None
         apic = None
+        print( self.filename )
         if 'APIC:' in metadata.tags:
             apic = metadata.tags.get( 'APIC:' )
         elif 'APIC:Picture' in metadata.tags:
