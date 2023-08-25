@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # https://pymotw.com/3/string/index.html
+# - capwords
+# - templates
+# - advanced templates
+# - formatter
+# - constants
 import string
 
 '''
