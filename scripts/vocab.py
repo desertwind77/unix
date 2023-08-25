@@ -3,7 +3,7 @@
 A script to randomly print a word from custom dictionary
 
 TODO:
-1) games
+1) games : fill in the gaps, match words and its meaning
 2) Python GUI
 3) Mobile App
 4) Native Mac App
