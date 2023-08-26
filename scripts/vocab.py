@@ -19,7 +19,7 @@ import yaml
 
 from genutils import check_if_file_exists
 
-CONFIG_FILENAME = 'config/vocabuary.yaml'
+CONFIG_FILENAME = 'config/vocabulary.yaml'
 
 Pattern = namedtuple( 'Pattern', [ 'src', 'dst' ] )
 
