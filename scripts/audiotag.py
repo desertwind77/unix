@@ -1026,7 +1026,7 @@ class CleanupCmd( BaseCmd ):
                     "regex" : r'(\d*)\/(\d*)',
                     "start" : 1,
                     "stop" : 1,
-                    "disc" : 3,
+                    "disc" : 2,
                 },
                 "matching 1-5" : {
                     "regex" : r'(\d*)-(\d*)',
