@@ -195,10 +195,6 @@ let g:UltiSnipsJumpBackwardTrigger = "<c-k>"
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit = "vertical"
 
-" Close the preview windows automatically
-"let g:ycm_autoclose_preview_window_after_insertion = 1
-let g:ycm_autoclose_preview_window_after_completion = 1
-
 if has( "autocmd" )
    " detect filetype and set indentation accordingly
    filetype plugin indent on
@@ -264,13 +260,13 @@ function NERDTreeToggleAndRefresh()
 endfunction
 
 " tab navigation
-nnoremap th :tabfirst<CR>
-nnoremap tj :tabprevious<CR>
-nnoremap tk :tabnext<CR>
+nnoremap tf :tabfirst<CR>
+nnoremap tp :tabprevious<CR>
+nnoremap tn :tabnext<CR>
 nnoremap tl :tablast<CR>
-nnoremap td :tabclose<CR>
+nnoremap tc :tabclose<CR>
 nnoremap tn :tabnew<CR>
-nnoremap tt :tabedit<Space>
+nnoremap te :tabedit<Space>
 nnoremap tm :tabm<Space>
 " Press and release Ctrl-t, then j or k to move the current tab to the left or
 " the right
@@ -296,7 +292,7 @@ nnoremap <leader>i :IndentGuidesToggle<CR>
 " jump to the file brower
 nnoremap <leader>n :NERDTreeFocus<CR>
 " turn on spell check
-nnoremap <leader>s :set spell<CR>
+nnoremap <leader>s :set spell!<CR>
 " toggle the file browser
 nnoremap <leader>t :call NERDTreeToggleAndRefresh()<CR>
 " show undo tree
