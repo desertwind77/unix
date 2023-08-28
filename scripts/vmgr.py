@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 '''
 vmgr : intsall, update, or uninstall vim plugins
-
-This script must be running outside the .vim directory.
 '''
 from datetime import datetime
+from pathlib import Path
 import argparse
 import os
 import shutil
 import subprocess
+import sys
+
 # pylint: disable=import-error
+# pylint: disable=too-few-public-methods
 from colorama import Fore, Style
 from tabulate import tabulate
 from genutils import load_config, check_if_folder_exists
@@ -57,7 +59,7 @@ def install_plugin( pinfo, force=False):
     # Install each plugin
     for name, data in pinfo.plugins.items():
         url = data[ 'URL' ]
-        enable = ( data[ 'Enable' ] == 'True' )
+        enable = data[ 'Enable' ] == 'True'
         des = os.path.join( pinfo.plugin_dir, name )
 
         if not enable or os.path.isdir( des ):
@@ -148,7 +150,7 @@ def show_plugin( pinfo ):
     tab_data = []
     for name, data in pinfo.plugins.items():
         desc = data[ 'Desc' ]
-        enable = ( data[ 'Enable' ] == 'True' )
+        enable = data[ 'Enable' ] == 'True'
         tab_data.append( [ name, enable, desc ] )
 
     print( tabulate( tab_data, headers=tab_header,tablefmt="rounded_grid",
@@ -179,7 +181,13 @@ def parse_argv():
 
     return parser.parse_args()
 
-if __name__ == '__main__':
+def main():
+    '''The main functions'''
+    cwd = Path( '.' )
+    if '.vim' in str( cwd.absolute() ):
+        print( 'This command must run outsite the .vim folder.' )
+        sys.exit( 1 )
+
     args = parse_argv()
     plugin_info = load_vmgr_config( CONFIG_FILENAME, verbose=args.verbose )
 
@@ -193,3 +201,6 @@ if __name__ == '__main__':
         show_plugin( plugin_info )
 
     print( f'{Fore.GREEN}Success{Style.RESET_ALL}' )
+
+if __name__ == '__main__':
+    main()
