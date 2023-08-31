@@ -1,0 +1,106 @@
+{
+   "Descriptions" : {
+      "ack" : "grep replacement",
+      "bat" : "more replacement",
+      "btop" : "top replacement",
+      "cheat" : "print a cheat sheet",
+      "cmus" : "a console-based music player",
+      "cscope" : "code browser",
+      "ctags-exuberant" : "Exuberant ctags for tagbar in vim to work",
+      "dos2unix" : "Translate a dos file to a unix file",
+      "duf" : "du replacement",
+      "dust" : "du replacement",
+      "elinks" : "a console-based browser",
+      "exa" : "ls replacement",
+      "fd-find" : "find replacement",
+      "ffmpeg" : "for the script to convert flac to mp3",
+      "fx" : "command line json viewer",
+      "fish" : "fish shell",
+      "fluid-synth" : "Play midi on Frescobaldi",
+      "fzf" : "fuzzy finder",
+      "glow" : "markdown viewer",
+      "grex" : "generate a regular expression",
+      "htop" : "top replacemnt",
+      "imageMagick" : "convert image from one format to another",
+      "jq" : "Print a json file with color",
+      "jsonlint" : "JSON syntax checker",
+      "lilypond" : "Latex for music score",
+      "lynx" : "a console-based browser",
+      "mas" : "query software update in Apple AppStore",
+      "mc" : "Midnight commander",
+      "mosh" : "ssh allowing intermittent connectivity",
+      "ncdu" : "curse-based du replacement",
+      "octave" : "",
+      "procs" : "ps replacement",
+      "pylint" : "Python syntax checker",
+      "ranger" : "file manager",
+      "tmux" : "screen multiplexer",
+      "trash-cli" : "rm with recycle bin",
+      "wget" : "web downloader",
+      "xrdp" : "remote desktop",
+      "youtube-dl" : "Youtube downloader",
+      "zoxide" : "a smart cd command"
+   },
+   "Platforms" : {
+      "Linux" : {
+         "command" : "sudo dnf install -y",
+         "pre-install" : [
+            "sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm",
+            "sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+         ],
+         "packages" : {
+            "general" : [
+               "bat", "cmus", "cscope", "ctags", "elinks", "exa", "fd-find", "ffmpeg",
+               "fish", "flac", "fx", "git-lfs", "htop", "hyperfine", "jq", "jsonlint",
+               "ncdu", "mc", "mosh", "neofetch", "octave", "procs", "sd", "setroubleshoot",
+               "tealdeer", "tig", "timeshift", "tokei", "tmux", "vim-enhanced", "vim-X11",
+               "vlc", "wget", "youtube-dl"
+            ],
+            "development" : [
+               "gcc-g++", "go", "httpd", "kernel-devel", "ncurses-compat-libs",
+               "mariadb-server", "php-mysqlnd", "phyMyAdmin"
+            ]
+         }
+      },
+      "MacOS" : {
+         "command" : "brew install",
+         "pre-install" : [],
+         "packages" : [
+            "ack", "bat", "btop", "cheat", "cscope", "ctags-exuberant", "dos2unix", "duf", "dust", "exa",
+            "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "git-gui", "grex", "htop", "imageMagick", "lilypond",
+            "lynx", "mas", "mc", "mosh", "ncdu", "octave", "procs", "ranger", "rar", "tmux", "trash-cli", "vim",
+            "wget", "youtube-dl", "zoxide"
+         ]
+      },
+      "RaspberryPi" : {
+         "command" : "sudo apt-get install -y",
+         "packages" : {
+            "general" : [
+               "ack", "cmus", "elinks", "exa", "exuberant-ctags", "cscope", "fish", "flac", "git-lfs",
+               "jack", "jq", "mc", "moc", "moc-ffmpeg-plugin", "mosh", "mpg321", "ncdu", "neofetch",
+               "pimixer", "powerline", "ranger", "ripgrep", "sd", "software-properties-common", "sox",
+               "telnet", "tig", "tmux", "vim-nox", "wget", "xfce4-terminal"
+            ],
+            "opencv" : [
+               "build-essential", "cmake", "libjpeg-dev", "libtiff5-dev", "libjasper-dev", "libpng-dev",
+               "libavcodec-dev", "libavformat-dev", "libswscale-dev", "libv4l-dev", "libxvidcore-dev",
+               "libx264-dev", "libfontconfig1-dev", "libcairo2-dev", "libgdk-pixbuf2.0-dev",
+               "libpango1.0-dev", "libgtk2.0-dev", "libgtk-3-dev", "libatlas-base-dev", "gfortran",
+               "libhdf5-dev", "libhdf5-serial-dev", "libhdf5-103", "pkg-config", "python3-pyqt5",
+               "python3-dev"
+            ]
+         },
+         "custom" : [
+            "python3 -m pip install opencv-python"
+         ]
+      },
+      "All" : {
+         "rust" : [
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+            "rustc --version",
+            "rustup update",
+            "cargo install gitui"
+         ]
+      }
+   }
+}
