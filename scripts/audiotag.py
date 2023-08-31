@@ -776,7 +776,6 @@ class ConvertCmd( BaseCmd ):
         if not metadata:
             return None
         apic = None
-        print( self.filename )
         if 'APIC:' in metadata.tags:
             apic = metadata.tags.get( 'APIC:' )
         elif 'APIC:Picture' in metadata.tags:
