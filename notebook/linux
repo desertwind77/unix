@@ -1,40 +1,3 @@
-> install
-   # Enable RPM Fusion repository
-   sudo dnf install
-   https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
-   sudo dnf install
-   https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-
-   # For Linux
-   #  ack         : grep
-   #  bat         : cat clone
-   #  cmus        : console music player
-   #  elinks      : lynx
-   #  fd-find     : find clone
-   #  fx          : commandline json viewer
-   #  fzf         : fuzzy finder taking a list of strings and makes it searchable
-   #  exa         : ls clone with cool features like --icons and --git
-   #  hyperfine   : time
-   #  jq          : commandline JSON processor
-   #  jsonlint
-   #  ncdu        : NCurses Disk Usage
-   #  procs       : modern ps clones
-   #  ripgrep     : rg = grep
-   #  sd          : find and replace
-   #  tldr        : man
-   #  tig         : git status
-   #  timeshift   : backup
-   #  tokei       : show statistics about the code
-   bat cmus cscope ctags elinks exa fd-find ffmpeg fish flac fx git-lfs htop hyperfine
-   jq jsonlint ncdu mc mosh neofetch octave procs sd tealdeer telnet tig timeshift tokei tmux
-   vlc wget youtube-dl
-
-   # For admin and devel:
-   gcc-g++ go httpd kernel-devel ncurses-compat-libs vim-enhanced vim-X11
-   mariadb-server php-mysqlnd phyMyAdmin setroubleshoot
-
-   # See how to install fish in the file mac_os
-
 > Inital config after installation
    - Set hostname
       hostnamectl set-hostname <new name>
@@ -78,16 +41,6 @@ port protocol="udp" port="60001-60100"/>
       QUIT;
 
    - Disable SELINUX
-
-> rust
-   1) Install
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   2) Verify
-      rustc --version
-   3) Update
-      rustup update
-   4) Install software
-      cargo install gitui
 
 > ssh without password
   1) Generate public and private keys on the client
@@ -174,24 +127,6 @@ sudo systemctl restart NetworkManager.service
          At this point, the orig/ folder contains the new/ content, but still
          has its old name.
      2.3 mv orig/ new/    # if the folder names are different
-
-> ctags
-  1) Generate the tags file
-    ctags -R *
-  2) Using vim to search for a tag called title
-    vim -t title
-  3) Inside vim
-    :tag ClassName      # Search for a tag
-    :tn (:tnext)        # Go to the next definition
-    :tp (:tprevious)    # Go to the previous definition
-    :tf (:tfirst)       # Go to the first definition
-    :tl (:tlast)        # Go to the last definition
-    :ts (:tselect)      # List all definitions
-    Placing the cursor on some text and then
-    ^]                  # Jump to definition
-    ^t                  # Jump back from definition
-    ^w}                 # Preview definition
-    g]                  # See all definitions
 
 > cscope
   1) Generate the cscope.files

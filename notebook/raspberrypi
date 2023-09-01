@@ -14,10 +14,6 @@
    ssh-copy-id pi@gopigo.local
 
 > Software
-   - sudo apt-get install -y
-     ack cmus elinks exa exuberant-ctags cscope fish flac git-lfs jack jq mc moc moc-ffmpeg-plugin
-     mosh mpg321 ncdu neofetch pimixer powerline ranger ripgrep sd software-properties-common sox
-     telnet tig tmux vim-nox wget xfce4-terminal
    - Install oh my fish
    - pip3 : evdev pyttsx3 selectors imutils
    - manual

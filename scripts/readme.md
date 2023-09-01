@@ -13,6 +13,7 @@
 |quote|Print a quote|
 |romsmgr|Rename and remove duplicated ROM files|
 |rooncpy|Copy files to the roon library |
+|software|Print commands to install software on each platform|
 |vmgr|Manage vim plugins|
 |vocab|Display a word and its meaning|
 |zipall|Zip or unzip all files in a directory|

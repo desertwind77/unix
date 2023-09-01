@@ -19,7 +19,6 @@
 :tabm {i}               move current tab to position i+1
 
 In normal mode:
-{count}gt               go to {count} tab
 gt                      go to next tab
 gT                      go to previous tab
 {i}gt                   go to tab in position i
@@ -91,12 +90,30 @@ g^                      go to the beginning of the wrapped line
 g$                      go to the end of the wrapped line
 
 [cscope]
-csa                        cs add
-csf                        cs find
-csk                        cs kill
-csr                        cs reset
-css                        cs show
-csh                        cs help
+csa                     cs add
+csf                     cs find
+csk                     cs kill
+csr                     cs reset
+css                     cs show
+csh                     cs help
+
+[ctags]
+# Generate the tags file
+# ctags -R *
+# Using vim to search for a tag called title
+# vim -t title
+:tag ClassName          search for a tag
+:tn (:tnext)            go to the next definition
+:tp (:tprevious)        go to the previous definition
+:tf (:tfirst)           go to the first definition
+:tl (:tlast)            go to the last definition
+:ts (:tselect)          list all definitions
+
+# Placing the cursor on some text and then
+^]                      jump to definition
+^t                      jump back from definition
+^w}                     preview definition
+g]                      see all definitions
 
 [CtrlP]
 :CtrlP [starting dir]      invoke CtrlP in find file mode
