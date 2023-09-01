@@ -1,22 +1,3 @@
-> Install omf (Oh My Fish!) : https://ostechnix.com/oh-fish-make-shell-beautiful/
-   ln -s /opt/homebrew/bin/python3 /opt/homebrew/bin/python
-   ln -s /opt/homebrew/bin/pip3 /opt/homebrew/bin/pip
-   curl -L https://get.oh-my.fish | fish
-   pip3 install powerline-status
-
-   Add the following line to .local/share/omf/pkg/powerline/init.fish
-   This is needed because the PATH environment variables set in .config/fish/config.fish
-   takes effects after this file is run.
-
-   set -gx PATH "/opt/homebrew/bin/" "$PATH
-
-> Install Hack Nerd Font for exa --icons to work
-   brew tap homebrew/cask-fonts
-   brew install --cask font-hack-nerd-font
-   brew install --cask font-consolas-for-powerline
-
-   After this, change the font in iterm2 to Hack
-
 > Change the default shell to fish
   1) Append /opt/homebrew/bin/fish to /etc/shell
   2) chsh -s /opt/homebrew/bin/fish
