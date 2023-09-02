@@ -54,9 +54,9 @@ def sanitize_text( txt ):
         txt = txt.replace( pattern.src, pattern.dst )
     return txt
 
-def print_word( vocab, all_words=False ):
+def select_words( vocab, all_words=False ):
     '''Print a word'''
-    tab = '   '
+    words = []
     keys = sorted( vocab.keys() )
     if all_words:
         words = keys
@@ -64,8 +64,14 @@ def print_word( vocab, all_words=False ):
     else:
         index = random.randint( 0, len( keys ) - 1 )
         words = [ keys[ index ] ]
+    return words
 
+def print_word( vocab, words=None ):
+    '''Print all words'''
+    tab = '   '
     for word in words:
+        if word not in vocab:
+            continue
         print( Fore.RED + f'{sanitize_text( word )}:' )
         for meaning, examples in vocab[ word ].items():
             print( Fore.GREEN + f'{tab}{sanitize_text( meaning ) }:' )
@@ -133,6 +139,8 @@ def process_arguments():
             help='Print all words in the dictionary' )
     parser.add_argument( '-g', '--game', action='store_true',
             help='Play the game to fill in the blank' )
+    parser.add_argument( '-s', '--search', action='store',
+            help='Search the word' )
     return parser.parse_args()
 
 def main():
@@ -142,8 +150,11 @@ def main():
 
     if args.game:
         game_fill_in_word( vocab )
+    elif args.search:
+        print_word( vocab, [ args.search ] )
     else:
-        print_word( vocab, all_words=args.all )
+        words = select_words( vocab, all_words=args.all )
+        print_word( vocab, words )
 
 if __name__ == '__main__':
     main()
