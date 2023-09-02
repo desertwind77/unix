@@ -24,6 +24,12 @@ CONFIG_FILENAME = 'config/vocabulary.yaml'
 
 Pattern = namedtuple( 'Pattern', [ 'src', 'dst' ] )
 
+class RegexMatchFailure( Exception ):
+    '''Unable to match the word in an example using the regular expression'''
+
+class NoExampleFound( Exception ):
+    '''No example presents for this word's meaning'''
+
 def load_vocabuary( filename ):
     '''Load the vocabuary from a file'''
     script_path = os.path.realpath( os.path.dirname( __file__ ) )
@@ -88,11 +94,11 @@ def game_fill_in_word( vocab ):
     '''Game to fill a word in the blank'''
     def get_word( vocab ):
         word, word_info  = random.choice( list( vocab.items() ) )
-        # FIXME: development
-        word = 'aquit'
+        # For debugging:
         word_info = vocab[ word ]
         meaning = random.choice( list( word_info.keys() ) )
-        example = random.choice( word_info[ meaning ] )
+        examples = word_info[ meaning ]
+        example = random.choice( examples ) if examples else None
         return word, meaning, example
 
     def get_multiple_choices( vocab, word ):
@@ -105,18 +111,21 @@ def game_fill_in_word( vocab ):
         return choices
 
     word, meaning, example = get_word( vocab )
+    if not example:
+        raise NoExampleFound( word )
     choices = get_multiple_choices( vocab, word )
 
     obj = re.search( r'.*({.*}).*', example )
     if not obj:
-        assert False, example
+        raise RegexMatchFailure( example )
     pattern = obj.group( 1 )
     blank = '_' * len( pattern )
-    print( f'Question : {example.replace( pattern, blank )}\n' )
-    print( f'Meaning  : {meaning}\n' )
+    example = example.replace( pattern, blank )
+    print( f'Question : {sanitize_text( example )}\n' )
+    print( f'Meaning  : {sanitize_text( meaning )}\n' )
     print(  'Answer   :' )
     for choice in choices:
-        print( f'* {choice}' )
+        print( f'* {sanitize_text( choice )}' )
 
 def process_arguments():
     '''Process the command line arguments'''
