@@ -73,7 +73,7 @@ firewall-cmd --reload
     EOF
     sudo systemctl restart NetworkManager.service
 
-### 76 Configure fish shell
+### 6 Configure fish shell
 The `fish` shell itself will be installed via brew
 
 #### 6.1 Install Oh My Fish!
@@ -89,7 +89,7 @@ Using omf
     omf theme agnoster
 
 ## Miscelleneous
-### 1. Secure shell without password
+### Secure shell without password
 1) Generate public and private keys on the client
 
 ```
@@ -101,7 +101,7 @@ ssh-keygen -t rsa
 ssh-copy-id athichart@victorybattleship.local
 ```
 
-### 2. Configure Network Services to Auto Start on Boot
+### Configure Network Services to Auto Start on Boot
 1) See if it is systemd or sysvinit
 ```
 ps --pid 1
@@ -121,8 +121,8 @@ chkconfig --level AB [service] on/off
 chkconfig --list
 ```
 
-### 3. Determine what services are running on what ports
-#### Option 3.1 : netstat
+### Determine what services are running on what ports
+#### Option 1 : netstat
 ```
 netstat -ltnp | grep ':8081'
 (Not all processes could be identified, non-owned process info will not be shown, you would have to be root to see it all.)
@@ -134,21 +134,21 @@ where
 `-n` instructs it show numerical addresses.
 `-p` enables showing of the process ID and the process name.
 
-#### Option 3.2 : lsof
+#### Option 2 : lsof
 ```
 sudo lsof -i :8081
 
 COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
 motion  10669 root    5u  IPv4  94740      0t0  TCP *:tproxy (LISTEN)
 ```
-#### Option 3.3 : fuser
+#### Option 3 : fuser
 ```
 sudo fuser 8081/tcp
 8081/tcp:            10669
 ps -p 10669 -o comm=motion
 ```
 
-### 4. diff and patch two directories
+### diff and patch two directories
     diff -ruN orig/ new/ > file.patch
 where     
 `-r` means recursive, so do subdirectories
@@ -165,7 +165,7 @@ where
          
 At this point, the orig/ folder contains the new/ content, but still has its old name.
 
-### 5. ctags
+### ctags
 1) Generate the tags file
 ```
 ctags -R *
@@ -194,8 +194,8 @@ Placing the cursor on some text and then
 |^w}|Preview definition|
 |g]|See all definitions|
 
-### 6. Shell Scripts
-#### 6.1 Loop
+### Shell Scripts
+#### Loop
 bash
 ```
 for i in 1, 2, 3, 4, 5
@@ -214,8 +214,8 @@ fish
 for i in foo bar baz; echo $i; end
 ```
 
-### 7. cscope
-#### 7.1 Generate the cscope.files
+### cscope
+#### Generate the cscope.files
 ```
 # Linux kernel
 LNX=/home/jru/linux-2.4.18
@@ -233,15 +233,15 @@ find  $LNX                                                            \
 # Java
 find /my/project/dir -name '*.java' > /path/to/cscope.files
 ```
-#### 7.2 Generate the cscope database
+#### Generate the cscope database
     cd /path/to
     cscope -b -q -k
     
-#### 7.3 Use cscope
+#### Use cscope
     cd /path/to
     cscope -d
 
-### 8. Benchmark HDD or SSD performance
+### Benchmark HDD or SSD performance
 To show sequential latency
 
     ioping - R /dev/sda
@@ -250,25 +250,25 @@ To determine the latency of the entire drive
 
     ioping -c 10 /
 
-### 9. Convert a nero image to an iso image
+### Convert a nero image to an iso image
 
     # Skip the first 300 bytes which are is nero header
     dd bs=1k if=image.nrg of=image.iso skip=300
 
-### 10. Convert img to VirtualBox hard drive
+### Convert img to VirtualBox hard drive
     VBoxManage convertfromraw --format VDI PlexMediaPlayer-1.3.5.723-a36fa532.Generic-x86_64.img plex.vdi
 
-### 11. Extract a .rpm file without installing it
+### Extract a .rpm file without installing it
     rpm2cpio file.rpm | cpio -idmv
 
-### 12. ls
+### ls
 `-lt` means sort by time
 `-ltr` means sort by time in reverse order
 `-S` means sort by size
 `-h` means human-readable
 `-R` means recursive
 
-### 13. Removing Windows linebreak (^M)
+### Removing Windows linebreak (^M)
     tr -d '\15\32' <input> <output>
 Or using the following command in Vim. Note that press Ctrl-v + Enter or Ctrl-v + Ctrl-M to type ^M.
 
@@ -277,23 +277,23 @@ or
 
     :set ff=unix or ff=dos
 
-### 14. Modify grub parameters to rotate screen
+### Modify grub parameters to rotate screen
     grubby --args="fbcon:rotate=3" --update-kernel=ALL
 
 Reference [1](https://docs.fedoraproject.org/en-US/fedora/rawhide/system-administrators-guide/kernel-module-driver-configuration/Working_with_the_GRUB_2_Boot_Loader/), [2](https://wiki.gentoo.org/wiki/Tallscreen_Monitor)
 
-### 15. Midnight Commander
+### Midnight Commander
 |Command|Function|
 |-------|--------|
 |Ctrl-T|select a file|
 |Shift-8,=,-|for *, +, -, respectively|
 |Shift-<up/down>||
 
-### 16. Set time limit for a command
+### Set time limit for a command
     timelimit <limit> <cmd>
 where m, h, and d means mins, hours, and days, respectively.
 
-### 17. Rapidly invoke an editor to write a long, complex, or tricky command
+### Rapidly invoke an editor to write a long, complex, or tricky command
 In bash,
 
     fc
@@ -305,13 +305,13 @@ If prefer to use ESC-v instead of Ctrl-x e, set -o vi.
 
 In fish, hold `ESC` and press `e` or `v`. To change the key binding to `ALT e` or `ALT v`, go to Preferences > Profiles > Keys in iterm2 and change left and right alt key behavior to Esc+.
 
-### 18. Copy file across machines
-#### 18.1 Using `scp`
+### Copy file across machines
+#### 1 Using `scp`
     scp -r <host@machine_name:from_remote_directory_path> <to_local_directory_path>
 
-#### 18.2 Use `sftp -r <dir>` to copy the whole directory
+#### 2 Use `sftp -r <dir>` to copy the whole directory
 
-#### 18.3 Using ssh and tar
+#### 3 Using ssh and tar
 
     tar cf - -S -C <dir1> --exclude=<dir> <file list> | pigz | ssh <remotehost> "pigz -d | tar xvf - -S -C <dir2>"
 or
@@ -329,9 +329,9 @@ where
 `--one-file-system` : stay in local file system when creating archive
 `pigz` : compress/uncompress with gzip
 
-#### 18.4 Using [rsync](https://www.cyberciti.biz/tips/linux-use-rsync-transfer-mirror-files-directories.html)
+#### 4 Using [rsync](https://www.cyberciti.biz/tips/linux-use-rsync-transfer-mirror-files-directories.html)
 
-#### 18.5 Using sshfs
+#### 5 Using sshfs
 After installing sshfs, mount a remote directory with the following command
 
     sshfs user@server.com:/remote/dir /home/user/testdir
@@ -342,17 +342,10 @@ Unmount after finishing copy
     umount mountpoint
     diskutil unmount mountpoint      # Mac only
 
-#### 18.6 [Cheat sheet](https://github.com/chubin/cheat.sh)
+### [Cheat sheet](https://github.com/chubin/cheat.sh)
     curl cheat.sh
 
-### 19 Install Hack Nerd Font for `exa --icons` to work
-    brew tap homebrew/cask-fonts
-    brew install --cask font-hack-nerd-font
-    brew install --cask font-consolas-for-powerline
-
-Then change the font in iterm2 to `Hack`
-
-### 20 Modern command line tools
+### Modern command line tools
 | Command | Unix tools | Comment |
 |---------|------------|---------|
 |bandwhich||Display the current network utilization by process|
@@ -371,7 +364,7 @@ Then change the font in iterm2 to `Hack`
 |ytop|top||
 |zoxide|cd|A very fast autojumper (need to spend time on this)|
 
-### 21 Executing a command on all files in a directory
+### Executing a command on all files in a directory
 ```
 find /some/directory -maxdepth 1 -type f -exec cmd option {} \;
 ```
@@ -394,15 +387,9 @@ filename="${fullfile##*/}"
 for f in *.gba ; do zip "${f%.*}".zip "$f"; done
 ``` 
 
-### 22 Display a markdown file in the terminal
+### Display a markdown file in the terminal
 ```
 glow -w 100 readme.md
-```
-
-### 23 Cheat sheet
-```
-curl chea.sh
-https://github.com/chubin/cheat.sh
 ```
 
 ## Docker
