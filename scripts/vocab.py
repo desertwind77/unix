@@ -3,7 +3,6 @@
 A script to randomly print a word from custom dictionary
 
 TODO:
-1) games : fill in the gaps, match words and its meaning
 2) Python GUI
 3) Mobile App
 4) Native Mac App
@@ -130,18 +129,10 @@ def game_fill_in_word( vocab ):
 def process_arguments():
     '''Process the command line arguments'''
     parser = argparse.ArgumentParser()
-
-    subparser = parser.add_subparsers( dest='command' )
-    subparser.required = True
-
-    show_parser = subparser.add_parser( 'show',
-            help='Print a word from the dictionary' )
-    show_parser.add_argument( '-a', '--all', action='store_true',
+    parser.add_argument( '-a', '--all', action='store_true',
             help='Print all words in the dictionary' )
-
-    fill_parser = subparser.add_parser( 'fill',
+    parser.add_argument( '-g', '--game', action='store_true',
             help='Play the game to fill in the blank' )
-
     return parser.parse_args()
 
 def main():
@@ -149,10 +140,10 @@ def main():
     args = process_arguments()
     vocab = load_vocabuary( CONFIG_FILENAME )
 
-    if args.command == 'show':
-        print_word( vocab, all_words=args.all )
-    elif args.command == 'fill':
+    if args.game:
         game_fill_in_word( vocab )
+    else:
+        print_word( vocab, all_words=args.all )
 
 if __name__ == '__main__':
     main()

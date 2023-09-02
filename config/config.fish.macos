@@ -101,5 +101,5 @@ if status is-interactive
 
    neofetch
    quote
-   vocab show
+   vocab
 end
