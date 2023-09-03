@@ -96,6 +96,7 @@ if status is-interactive
    alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
    alias ctagsgen='ctags -R *'
    alias vimkeys='glow -p ~/Workspace/github/unix/notebook/Vim.md'
+   alias tmuxkeys='glow -p ~/Workspace/github/unix/notebook/Tmux.md'
 
    #---------------------- Variables ---------------------
    set -gx PATH "$HOME/Workspace/scripts" $PATH;
