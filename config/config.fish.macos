@@ -95,6 +95,7 @@ if status is-interactive
    alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
    alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
    alias ctagsgen='ctags -R *'
+   alias vimkeys='glow -p ~/Workspace/github/unix/notebook/Vim.md'
 
    #---------------------- Variables ---------------------
    set -gx PATH "$HOME/Workspace/scripts" $PATH;
