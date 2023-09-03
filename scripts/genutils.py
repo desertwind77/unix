@@ -124,7 +124,7 @@ class RomanNumeric:
         total += cur_word_value
         return total
 
-    def to_roman( self, num ):
+    def to_roman( self, num : int ) -> str:
         '''TODO: Convert from an integer to a Roman numeric'''
 
 def check_if_file_exists( filename ):
