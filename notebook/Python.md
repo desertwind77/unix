@@ -10,6 +10,36 @@ myData = [ 2, 6, 4, 5, 8 ]
 isAllEven = all( i % 2 == 0 for i in myData )
 # isEven = True
 isEven = any( i % 2 == 0 for i in myData )
+
+x, y, z = 0, 1, 0
+passed = any( ( x, y, z ) )
+```
+**Combining two dictionaries**
+```python
+x = { 'a' : 1, 'b' : 2 }
+y = { 'b' : 3, 'c' : 4 }
+# Python 2.x
+z = dict( x, **y )
+# Python 3.5+
+z = { **x, **y }
+```
+**Unpacking function arguments**
+```python
+def myfunc( x, y, z ):
+    print( x, y, z )
+
+tuple_vec = ( 1, 0, 1 )
+dict_vec = { 'x': 1, 'y': 0, 'z': 1 }
+myfunc( *tuple_vec )
+myfunc( **dict_vec )
+```
+**Sorting a dictionary by value**
+```python
+x = { 'a' : 4, 'b' : 3, 'c' : 2, 'd' : 1 }
+sorted( x.items(), key=lambda x: x[1] )
+
+import operator
+sorted( x.items(), key=operator.itemgetter( 1 ) )
 ```
 **Converting binary to/from decimal**
 ```python
@@ -18,7 +48,19 @@ binary = '1110'
 decimal = int( binary, 2 )
 
 # Converting decimal to binary
-binary = '{0:b}'.format( decimal )
+binary = '{0:b}'.format( decimal )      # without leading 0
+binary = '{0:06b}'.format( decimal )    # with leading 0
+    
+def decToBin( number, fill=0 ):
+    output = None
+    if fill != 0:
+        output = "{0:{filler}{fill}b}".format( 10, filler='0', fill=fill )
+    else:
+        output = "{0:b}".format( 10 )
+    return output
+
+print( decToBin( 10 ) )             # 1010
+print( decToBin( 10, fill=8 ) )     # 00001010
 ```
 **Print leading zero**
 ```python
@@ -36,6 +78,271 @@ def enumerate_example():
     values = [ 'a', 'b', 'c', 'd', 'e' ]
     for count, value in enumerate( values ):
         print( count, value )
+````
+**deque**
+Deque is preferred over list in the cases where we need quicker append and pop operations from both the ends of container, as deque provides an O(1) time complexity for append and pop operations as compared to list which provides O(n) timecomplexity.
+```python
+from collections import deque
+
+print( deque() )                        # deque([])
+print( deque( [ 'a', 'b', 'c' ] ) )     # deque(['a', 'b', 'c'])
+print( deque( 'abc' ) )                 # deque(['a', 'b', 'c'])
+print( deque( [ { 'data' : 'a' }, { 'data' : 'b' } ] ) )    
+# deque([{'data': 'a'}, {'data': 'b'}])
+
+llist = deque( 'abcde' )
+print( llist )              # deque(['a', 'b', 'c', 'd', 'e'])
+llist.append( 'f' )
+print( llist )              # deque(['a', 'b', 'c', 'd', 'e', 'f'])
+llist.pop()
+print( llist )              # deque(['a', 'b', 'c', 'd', 'e'])
+llist.appendleft( 'z' )
+print( llist )              # deque(['z', 'a', 'b', 'c', 'd', 'e'])
+llist.popleft()
+print( llist )              # deque(['a', 'b', 'c', 'd', 'e'])
+
+queue = deque()
+queue.append( "Mary" )
+queue.append( "John" )
+queue.append( "Susan" )
+print( queue )              # deque(['Mary', 'John', 'Susan'])
+print( queue.popleft() )    # Mary
+print( queue.popleft() )    # John
+print( queue.popleft() )    # Susan
+```
+**namedtuple**
+Like tuples, namedtuples are immutable
+```python
+from collections import namedtuple
+
+Car = namedtuple( 'Car', 'color mileage' )
+my_car = Car( 'red', 3812.4 )
+print( my_car )
+print( my_car.color )
+print( my_car.mileage )
+```
+**heapq**
+```python
+import heapq
+
+li = [ 5, 7, 9, 1, 3 ]
+heapq.heapify( li )
+print( "The created heap is : ", li )
+heapq.heappush( li, 4 )
+print( "The modified heap after push is : ", li )
+print( "The smallest element is : ", heapq.heappop( li ) )
+
+li1 = [5, 7, 9, 4, 3]
+li2 = li1[:]
+heapq.heapify( li1 )
+heapq.heapify( li2 )
+print()
+print( "original      : ", li1 )
+# push 2 and then pop the smallest
+heapq.heappushpop( li1, 2 )
+print( "heappushpop 2 : ", li1 )
+# replace the smallest with 2
+heapq.heapreplace( li2, 2 )
+print( "heapreplace 2 : ", li2 )
+
+li3 = [6, 7, 9, 4, 3, 5, 8, 10, 1]
+heapq.heapify( li3 )
+print()
+print( "Original                   : ", li3 )
+print( "The 3 largest numbers are  : ", heapq.nlargest( 3, li3 ) )
+print( "The 3 smallest numbers are : ", heapq.nsmallest( 3, li3 ) )
+```
+Ouput:
+```
+The created heap is :  [1, 3, 9, 7, 5]
+The modified heap after push is :  [1, 3, 4, 7, 5, 9]
+The smallest element is :  1
+
+original      :  [3, 4, 9, 5, 7]
+heappushpop 2 :  [3, 4, 9, 5, 7]
+heapreplace 2 :  [2, 4, 9, 5, 7]
+
+Original                   :  [1, 3, 5, 4, 6, 9, 8, 10, 7]
+The 3 largest numbers are  :  [10, 9, 8]
+The 3 smallest numbers are :  [1, 3, 4]
+```
+**Measuring time**
+```python
+import timeit
+time = timeit.timeit( '"-".join( str( n ) for n in range( 100 ) )', number=10000 )
+print( time )
+```
+## Generate a document using Sphinx
+Install sphinx and a theme. More themes are available at https://www.writethedocs.org/guide/tools/sphinx-themes/
+```
+pip install sphinx sphinx_rtd_theme
+```
+Assuming that the root folder contains the source folder called `scripts`. We will create a document folder called `docs`.
+```
+$ mkdir docs
+$ ls -l
+drwxr-xr-x     - athichart  2 Sep 23:36 docs
+lrwxr-xr-x    20 athichart 21 Oct  2022 scripts
+```
+Run the `sphinx-quickstart` script and answer the questions. For the question `Separate the source and build directories`, select Yes for the better organization.
+```
+sphinx-quickstart docs
+```
+Edit `docs/source/conf.py`
+```python
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../scripts'))
+...
+extensions = [
+    'sphinx.ext.todo',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon'       # To recognize Google and NumPy Docstrings
+]
+...
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+...
+html_theme = 'sphinx_rtd_theme'
+```
+Add the source code using `sphinx-apidoc`.
+```
+sphinx-apidoc -o docs/source/ scripts/
+```
+Include the generated `modules.rst` file in `docs/source/index.rst`.
+```
+.. My S documentation master file, created by
+   sphinx-quickstart on Sat Sep  2 23:36:35 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to My S's documentation!
+================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   modules
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+```
+Fire the build.
+```
+cd docs
+make html
+```
+To update the generated html after the source code is modified.
+```
+make clean html
+make html
+```
+To see popular docstring formats [[1](https://betterprogramming.pub/3-different-docstring-formats-for-python-d27be81e0d68)]
+
+## dataclass
+dataclass module is introduced in Python 3.7 as a utility tool to make structured classes specially for storing data. These classes hold certain properties and functions to deal specifically with the data and its representation
+
+For exmaple, use the Comment class instead of implementing all method in the ManualCommont class.
+```python
+import dataclasses
+import inspect
+from dataclasses import dataclass, field
+from pprint import pprint
+
+class ManualCommont:
+   def __init__( self, id: int, text: str ):
+      self.__id : int = id
+      self.__text : str = text
+
+   # This is readable but not writable
+   @property
+   def id( self ):
+      return self.__id
+
+   # This is readable but not writable
+   @property
+   def text( self ):
+      return self.__text
+
+   def __repr__( self ):
+      return "{}(id={}, text={})".format( self.__class__.__name__,
+                                          self.id, self.text )
+
+   def __eq__( self, other ):
+      if other.__class__ is self.__class__:
+         return ( self.id, self.text ) == ( other.id, other.text )
+      else:
+         return NotImplemented
+
+   def __ne__( self, other ):
+      result = self.__eq__( other )
+      if result is NotImplemented:
+         return NotImplemented
+      else:
+         return not result
+
+   def __hash__( self ):
+      return hash( ( self.__class__, self.id, self.text ) )
+
+   def __lt__( self, other ):
+      if other.__class__ is self.__class__:
+         return ( self.id, self.text ) < ( other.id, other.text )
+      else:
+         return NotImplemented
+
+   def __le__( self, other ):
+      if other.__class__ is self.__class__:
+         return ( self.id, self.text ) <= ( other.id, other.text )
+      else:
+         return NotImplemented
+
+   def __gt__( self, other ):
+      if other.__class__ is self.__class__:
+         return ( self.id, self.text ) > ( other.id, other.text )
+      else:
+         return NotImplemented
+
+   def __ge__( self, other ):
+      if other.__class__ is self.__class__:
+         return ( self.id, self.text ) >= ( other.id, other.text )
+      else:
+         return NotImplemented
+
+@dataclass( frozen=True, order=True )
+class Comment:
+   """A class for holding data"""
+   # Attributes Declaration
+   # using Type Hints
+   id : int = field()
+   text : str = field( default="" )
+   # replies : list[ int ] = []
+   # We don't want all instances of Comment to share the defaul list
+   # if it is not passed it.
+   # repr = False    We don't want this field to show when printed
+   # compare = False We don't want to use this field in comparison
+   replies : list[ int ] = field( default_factory=list, repr=False, compare=False )
+
+def main():
+   # Create a Comment object
+   comment = Comment( 1, "I just subscribed!" )
+   # id is immutable
+   # comment.id = 3
+   print( comment )
+   print( dataclasses.astuple( comment ) )
+   print( dataclasses.asdict( comment ) )
+   copy = dataclasses.replace( comment, id = 3 )
+   print( copy )
+
+   pprint( inspect.getmembers( Comment, inspect.isfunction ) )
+
+if __name__ == '__main__':
+   main()
 ```
 ## Logging
 ```python
