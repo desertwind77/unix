@@ -93,6 +93,8 @@ if status is-interactive
    alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
    alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
+   alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
+   alias ctagsgen='ctags -R *'
 
    #---------------------- Variables ---------------------
    set -gx PATH "$HOME/Workspace/scripts" $PATH;
