@@ -3,61 +3,83 @@
 import json
 import os
 
-# A formatted string literal or f-string is a string literal
-# that is prefixed with 'f' or 'F'. These strings may contain
-# replacement fields, which are expressions delimited by curly
-# braces {}. While other string literals always have a constant
-# value, formatted strings are really expressions evaluated
-# at run time.
-
 class FileNotFound( Exception ):
-    """Raised when a file is not found"""
-    def __init__( self, filename ):
+    '''Raised when a file is not found'''
+    def __init__( self, filename : str ):
         self.filename = filename
         message = f'File {self.filename} not found'
         super().__init__( message )
 
 class DirectoryNotFound( Exception ):
-    """Raised when a folder is not found"""
-    def __init__( self, folder ):
+    '''Raised when a folder is not found'''
+    def __init__( self, folder : str ):
         self.folder = folder
         message = f'Folder {self.folder} not found'
         super().__init__( message )
 
 class RomanNumeric:
-    """
-    A utility class for Roman Numeric
-    1 The value of the symbol is added to itself, as many times as it is repeated.
-      For example, II, XX and XXX equals 2, 20 and 30, respectively.
-    2 A symbol can be repeated only for three times. For example XXX (30) and
-      CC (200) are valid while XXXX and CCCC are invalid.
-    3 Symbols V, L, and D are never repeated.
-    4 When a symbol of smaller value appears after a symbol of greater value,
-      its values will be added. For Example,  VI = V + I = 5 + 1 = 6.
-    5 When a symbol of a smaller value appears before a greater value symbol,
-      it will be subtracted. For Example,  IX = X – I = 10 – 1 = 9.
-    6 The symbols V, L, and D are never subtracted, as they are not written
-      before a greater value symbol.
-    7 The symbol I can be subtracted from V and X only and symbol X can be
-      subtracted from symbols L, C and M only.
-    """
+    '''A utility class for Roman Numeric
+
+    Roman Numeric Syntax:
+
+    1. The value of the symbol is added to itself, as many times as it is repeated.
+       For example, II, XX and XXX equals 2, 20 and 30, respectively.
+
+    2. A symbol can be repeated only for three times. For example XXX (30) and
+       CC (200) are valid while XXXX and CCCC are invalid.
+
+    3. Symbols V, L, and D are never repeated.
+
+    4. When a symbol of smaller value appears after a symbol of greater value,
+       its values will be added. For Example,  VI = V + I = 5 + 1 = 6.
+
+    5. When a symbol of a smaller value appears before a greater value symbol,
+       it will be subtracted. For Example,  IX = X – I = 10 – 1 = 9.
+
+    6. The symbols V, L, and D are never subtracted, as they are not written
+       before a greater value symbol.
+
+    7. The symbol I can be subtracted from V and X only and symbol X can be
+       subtracted from symbols L, C and M only.
+    '''
     valid_chars = { 'I' : 1, 'V' : 5, 'X' : 10, 'L' : 50,
                     'C' : 100, 'D' : 500, 'M' : 1000 }
 
-    def contain_invalid_chars( self, txt ):
-        '''Check if txt is a valid Roman numeric'''
+    def _contain_invalid_chars( self, txt : str ) -> bool:
+        '''Check if txt is a valid Roman numeric
+
+        Args:
+            txt (str) : the string to check if any invalid character is present
+
+        Return:
+            True if a non-Roman numeric character is present; otherwise, False
+        '''
         # Check if txt contains any invalid characters
         if any ( t not in self.valid_chars for t in txt.upper() ):
             return True
         return False
 
-    def is_valid( self, txt ):
-        '''Check if txt is a valid Roman numeric'''
+    def is_valid( self, txt : str ) -> bool:
+        '''Check if txt is a valid Roman numeric
+
+        Args:
+            txt (str) : the string to check if it is a valid Roman numeric
+
+        Return:
+            True if the input is a valid Roman numeric; otherwise, False
+        '''
         return self.to_int( txt ) is not None
 
-    def to_int( self, txt ):
-        '''Convert from txt containing a valid Roman numeric to an integer'''
-        if self.contain_invalid_chars( txt ):
+    def to_int( self, txt : str ) -> int:
+        '''Convert from txt containing a valid Roman numeric to an integer
+
+        Args:
+            txt (str) : the Roman numeric string to be converted to an integer
+
+        Return:
+            An integer if the input is a valid Roman numeric; otherwise, None.
+        '''
+        if self._contain_invalid_chars( txt ):
             return None
         txt = txt.upper()
         total = prev_char_value = cur_word_value = cur_char_count = 0
@@ -103,20 +125,43 @@ class RomanNumeric:
         return total
 
     def to_roman( self, num ):
-        '''Convert from an integer to a Roman numeric'''
+        '''TODO: Convert from an integer to a Roman numeric'''
 
 def check_if_file_exists( filename ):
-    '''Check if the file exists'''
+    '''Check if the file exists
+
+    args:
+        filename (str) : the file to check
+
+    raises:
+        FileNotFound - when filename doesn't exist
+    '''
     if not os.path.exists( filename ) or not os.path.isfile( filename ):
         raise FileNotFound( filename )
 
-def check_if_folder_exists( folder ):
-    '''Check if the folder exists'''
+def check_if_folder_exists( folder : str ):
+    '''Check if the folder exists
+
+    args:
+        folder (str) : the folder to check
+
+    raises:
+        DiectoryNotFound - when folder doesn't exist
+    '''
     if not os.path.exists( folder ) or not os.path.isdir( folder ):
         raise DirectoryNotFound( folder )
 
-def load_config( config_filename, verbose=False ):
-    '''Load the configuration file'''
+def load_config( config_filename : str, verbose : bool = False ) -> dict:
+    '''Load the configuration stored in a JSON file. The configuration must
+    be stored with the key 'config'.
+
+    args:
+        config_filename (str) : the JSON file storing the configuration
+        verbose (bool) : print the debug information or not
+
+    returns:
+        a dictionary containing the configuration
+    '''
     # __file__ stores the absolute path of the python script
     # realpath() return the canonical path of the specified
     # filename by eliminating any symbolic links encountered
@@ -154,7 +199,7 @@ def test_roman_numeric():
         assert value == RomanNumeric().to_int( txt )
 
 def test():
-    '''The main test function'''
+    '''The main test function where we call all the other test functions'''
     test_roman_numeric()
 
 if __name__ == '__main__':
