@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-A script to randomly print a word from custom dictionary
+A script to randomly print a word from the custom dictionary
 
 TODO:
 2) Python GUI
@@ -55,7 +55,7 @@ def sanitize_text( txt ):
     return txt
 
 def select_words( vocab, all_words=False ):
-    '''Print a word'''
+    '''Select words from the dictionary'''
     words = []
     keys = sorted( vocab.keys() )
     if all_words:
@@ -67,7 +67,7 @@ def select_words( vocab, all_words=False ):
     return words
 
 def print_word( vocab, words=None ):
-    '''Print all words'''
+    '''Print all words in the list'''
     tab = '   '
     for word in words:
         if word not in vocab:
