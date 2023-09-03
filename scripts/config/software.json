@@ -22,6 +22,7 @@
          "glow" : "markdown viewer",
          "grex" : "generate a regular expression",
          "htop" : "top replacemnt",
+         "hyperfine" : "benchmarking tool",
          "imageMagick" : "convert image from one format to another",
          "jq" : "Print a json file with color",
          "jsonlint" : "JSON syntax checker",
@@ -35,8 +36,10 @@
          "procs" : "ps replacement",
          "pylint" : "Python syntax checker",
          "ranger" : "file manager",
+         "ripgrep" : "a grep replacement (rg)",
+         "tealdeer" : "man replacement (tldr)",
          "tmux" : "screen multiplexer",
-         "trash-cli" : "rm with recycle bin",
+         "tokei" : "display statistics about the code",
          "wget" : "web downloader",
          "xrdp" : "remote desktop",
          "youtube-dl" : "Youtube downloader",
@@ -72,9 +75,10 @@
                "groups" : {
                   "general" : [
                      "ack", "bat", "btop", "cheat", "cscope", "ctags-exuberant", "dos2unix", "duf", "dust", "exa",
-                     "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "git-gui", "grex", "htop", "imageMagick",
-                     "lilypond", "lynx", "mas", "mc", "mosh", "ncdu", "neofetch", "octave", "procs", "ranger",
-                     "rar", "tmux", "trash-cli", "vim", "wget", "youtube-dl", "zoxide"
+                     "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "git-gui", "grex", "htop",
+                     "hyperfine", "imageMagick", "lilypond", "lynx", "mas", "mc", "mosh", "ncdu", "neofetch",
+                     "octave", "procs", "ranger", "rar", "ripgrep", "tealdeer", "tmux", "tokei", "vim", "wget",
+                     "youtube-dl", "zoxide"
                   ]
                }
             },
