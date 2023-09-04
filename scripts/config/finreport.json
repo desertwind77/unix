@@ -93,35 +93,32 @@
          },
          "Wellsfargo Autograph" : {
             "Enabled" : "True",
-            "Filename" : "(\\d{4})_(\\d{2})_autograph.pdf",
+            "Filename" : "(\\d{4})_(\\d{2})_autograph.csv",
             "Type" : "Credit Card",
-            "Has Transaction Year" : "False",
-            "Has Postive Expenses" : "True",
-            "Check Regex" : "^\\d{2}\/\\d{2} \\d{2}\/\\d{2} \\w{17}",
-            "Regex" : [
-               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17} (.*) ([0-9.,]+)$",
-               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17}.*\\n.*\\n.{17}(.*)\\n.*\\n.*X    0\\.\\d{8}([0-9.,]+)$",
-               "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\w{17}.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\n.{15}(.*)\\n.*\\n.*\\n.*\\n.*\\n.*\\n.*\\nUNKNOWN LOCATION     UNKNOWN LOCATION([0-9.,]+)$"
-            ],
+            "Has Transaction Year" : "True",
+            "Has Postive Expenses" : "False",
             "Fields" : {
-               "Transaction Date" : 1,
-               "Description" : 2,
-               "Amount" : 3,
-               "SEARCH" : 2
+               "Transaction Date" : 0,
+               "Amount" : 1,
+               "Unused2" : 2,
+               "Unused2" : 3,
+               "Description" : 4,
+               "SEARCH" : 4
             }
          },
          "Wellsfargo Bilt" : {
             "Enabled" : "True",
-            "Filename" : "(\\d{4})_(\\d{2})_bilt.pdf",
+            "Filename" : "(\\d{4})_(\\d{2})_bilt.csv",
             "Type" : "Credit Card",
-            "Has Transaction Year" : "False",
-            "Has Postive Expenses" : "True",
-            "Regex" : [ "^(\\d{2}\/\\d{2}) \\d{2}\/\\d{2} \\d{9} \\w{17} (.*) \\$([0-9.,]+)$" ],
+            "Has Transaction Year" : "True",
+            "Has Postive Expenses" : "False",
             "Fields" : {
-               "Transaction Date" : 1,
-               "Description" : 2,
-               "Amount" : 3,
-               "SEARCH" : 2
+               "Transaction Date" : 0,
+               "Amount" : 1,
+               "Unused2" : 2,
+               "Unused2" : 3,
+               "Description" : 4,
+               "SEARCH" : 4
             }
          }
       },
@@ -138,6 +135,7 @@
          "Credit Card" : {
             "Payment" : [
                { "Auto Payment" : "Target Redcard payment" },
+               { "Automatic Payment" : "Bilt payment" },
                { "Autopay Payment" : "Amex payment" },
                { "Bilt Rent Ach Credit" : "Rent paid via Bilt" },
                { "Online Payment" : "Freedom payment" },
@@ -202,6 +200,7 @@
                "BB.*Yugen",
                "BBQ CHICKEN APPLE PARK",
                "Blue Line Pizza",
+               "Bowl of Pho",
                { "Bull" : "Bull Ohagane" },
                "Bushido Restaurant",
                "Cam Hung",
@@ -213,6 +212,7 @@
                "Cocohodo",
                "Crepevine",
                "City Fish",
+               "Curry Hyuga",
                "Dan Izakaya",
                "DAVES HOT CHICKEN",
                "Dish N Dash",
@@ -248,7 +248,7 @@
                "King Eggroll Express",
                "Kizuna" ,
                "KS Crepes",
-               "Ippudo - Changi",
+               "Ippudo",
                "Joe Chinese",
                "Koi Palace",
                "La Fontaine",
@@ -266,9 +266,11 @@
                "Mr. Sun Tea",
                "Mustards Grill",
                "Myung Rang",
+               "Myungrang Hotdog",
                "Noodleosop",
                "Noodle Talk",
                "Nothing Bundt",
+               "Nuoc Mia Ninh Kieu",
                "Nutrition Restaurant",
                "One Pot Shabu",
                "Orenchi",
@@ -296,15 +298,18 @@
                "Sogongdong Tofu Town",
                "Somisomi",
                "Southland Flavor Cafe",
+               "Xiaoman Ricebur",
                "Starbird",
-               "Sugar Butter Flour",
-               "Super Hot Hotpot",
                "Sul & Beans",
+               "Sugar Butter Flour",
+               "Sunnyvale Saigon",
+               "Super Hot Hotpot",
                "Sushi Boat Westgate",
                "Sweet Maple",
                "Sweet Sicily",
                "T4 Cupertino",
                "Taiwan Shihlin",
+               "Taste Nutrition Services",
                "Tastea",
                "Tastes on the Fly",
                "Tay Ho",
@@ -320,6 +325,7 @@
                "Tofu Plus",
                "Tomokazu Japanese Cuisine",
                "Torsap Thai Kitchen",
+               "TP Tea",
                "Truong Thanh",
                "Uber Eats",
                "Udon Mugizo",
@@ -329,7 +335,8 @@
                "Vons Chicken",
                "Vua Kho Bo",
                "XLB Kitchen",
-               "Yu Noodle"
+               "Yu Noodle",
+               "Yogurtland"
             ],
             "Game" : [
                "Nintendo",
@@ -376,6 +383,7 @@
             ],
             "Misc" : [
                { "2C2P" : "Online payment for ned comic in Thailand" },
+               { "439309242 888-434-4532 MD" : "Ikea Online" },
                { "AMC Online" : "AMC Movie Theatre" },
                "Amzn Digital",
                "Ameridroidrespectec",
@@ -412,6 +420,7 @@
                "HumbleBundle.com",
                "GoFundMe",
                "Google",
+               "Great America",
                { "IMG Insurance" : "Travel Insurance" },
                "Indiegogo",
                { "Inmotion" : "Tech shop at SFO" },
@@ -423,6 +432,8 @@
                "Leighs Favorite Books",
                "Lego",
                "Liberty Liquidators",
+               "Lifetime Tennis",
+               "Lifetime Activities",
                "Lnwpay",
                "Magnolia Hi Fi",
                "MI Shop The Mall",
@@ -432,6 +443,7 @@
                "Ngan Dee Promotion",
                "GHD NorthAmericalLc",
                "Oakland Zoo",
+               { "Online Recreation City" : "Palo Alto Kid Museum" },
                "Opus One Winery",
                "Paypal  SCS",
                "PEAKDESIGN",
@@ -457,9 +469,11 @@
                "Udemy",
                "U-Haul",
                "UPS",
+               { "Usborne Books" : "Sunnyvale Christian School bookfair" },
                "USPS",
                "US Embassy",
                "USA for UNHCR",
+               { "VPNCOM" : "NordVPN" },
                "Wayfair",
                "Western Digital",
                "Zendure"
@@ -499,8 +513,7 @@
                "SingaporeAir"
             ],
             "Subscription" : [
-               "Adobe Photogphy Plan",
-               "Adobe   Photogphy Plan",
+               "Adobe",
                { "Annual Membership Fee" : "Chase Sapphire Annual fee" },
                "Apple.com/Bill",
                "AT&T",
@@ -543,6 +556,7 @@
                { "BILTPYMTS Rent PMT" : "Rent via Bilt" },
                { "Chase Credit Crd Epay" : "Chase Freedom and Sapphire" },
                "Wells Fargo Autograph Visa Card",
+               { "WF Credit Card Auto Pay" : "Bilt credit card payment" },
                "Target Card Srvc Auto PYMT"
             ],
             "Deposits" : [
@@ -580,7 +594,8 @@
             ],
             "Transportation" : [
                "Toyota Financial Retail",
-               "Toyota Sunnyvale"
+               "Toyota Sunnyvale",
+               "ST OF CA DMV"
             ],
             "Tuition" : [
                "Sunnyvale Christ FACTS"
