@@ -11,6 +11,8 @@ import re
 
 # tabulate doc : https://pypi.org/project/tabulate/
 # pylint: disable=import-error
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
 from tabulate import tabulate, SEPARATING_LINE
 import PyPDF2
 
@@ -20,6 +22,10 @@ CONFIG_FILENAME="config/finreport.json"
 
 class MissingRegexException( Exception ):
     '''No regular expression to parse a pdf file'''
+    # Currently, it is not in use because we stop parsing the .pdf
+    # bank statement. The transaction format in the .pdf statemnt
+    # keeps changing. It is burdensome to keep maintaining the
+    # regular expression to parse these transactions.
 
 class UnknownAccountException( Exception ):
     '''A statement doesn't match with accounts defined in the config'''
@@ -36,7 +42,7 @@ class  MissingTransactionException( Exception ):
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
 class Account:
-    '''Represent an account'''
+    '''The class to represent an account'''
     # pylint: disable=too-many-arguments
     def __init__( self, name, enabled, filename, account_type,
                   check_regex, regex, has_year_in_date,
@@ -57,7 +63,7 @@ class Account:
 
 # pylint: disable=too-few-public-methods
 class Transaction:
-    '''Represents a transaction'''
+    '''The class to represents a transaction'''
     # pylint: disable=too-many-arguments
     def __init__( self, statement, date, description, category, amount ):
         self.statement = statement
@@ -70,15 +76,19 @@ class Transaction:
         return f'{self.date.strftime( "%m/%d/%Y")}   {self.amount}   {self.description}'
 
 class Statement:
-    '''Represent a credit card or a bank statement containing transactions'''
-    def __init__( self, filename, account, category_info ):
+    '''The class to represent a credit card or a bank statement containing transactions'''
+    def __init__( self, filename : str, account : str, category_info : dict):
         self.filename = filename
         self.account = account
         self.category_info = category_info
         self.transactions = []
 
-    def get_category( self, description ):
-        '''Get the category of a transaction'''
+    def get_category( self, description : str ) -> str:
+        '''Get the category of a transaction
+
+        args:
+            description (str) : the description of a transaction
+        '''
         account_type = self.account.account_type
         known_category = None
         for merchant, category in self.category_info[ account_type ].items():
@@ -87,26 +97,30 @@ class Statement:
                 break
         return known_category
 
-    def cleanup_description( self, description ):
-        '''Replace unwanted characters that may confuse the regular expression'''
+    def cleanup_description( self, description : str ) -> str:
+        '''Replace unwanted characters that may confuse the regular expression
+
+        args:
+            description (str) : the description of a transaction
+        '''
         result = description
         for src, dst in self.category_info[ 'Replace' ].items():
             result = result.replace( src, dst )
         return result
 
-    def load_transactions( self, verbose=False ):
+    def load_transactions( self ):
         '''Read and categorize all transactions from a statement'''
         if not self.account.enabled:
             return
         if self.filename.endswith( 'pdf' ):
-            self.load_pdf_file( verbose=verbose )
+            self.load_pdf_file()
         elif self.filename.endswith( 'csv' ):
-            self.load_csv_file( verbose=verbose )
+            self.load_csv_file()
         else:
             pass
 
     # pylint: disable=too-many-locals
-    def load_csv_file( self, verbose=False ):
+    def load_csv_file( self ):
         '''Read and categorize all transactions from a .csv file'''
         field_date = self.account.fields[ 'Transaction Date' ]
         field_desc = self.account.fields[ 'SEARCH' ]
@@ -141,7 +155,7 @@ class Statement:
                 self.transactions.append( transaction )
 
     # pylint: disable=too-many-locals
-    def load_pdf_file( self, verbose=False ):
+    def load_pdf_file( self ):
         '''Read and categorize all transactions from a .pdf file'''
         field_date = self.account.fields[ 'Transaction Date' ]
         field_desc = self.account.fields[ 'Description' ]
@@ -195,8 +209,9 @@ class Statement:
                 raise MissingTransactionException( str( file_path.name ), count, check_count )
 
 class CreditReport:
-    def __init__( self, config_filename, statement_location ):
-        self.config = load_config( config_filename )
+    '''The main class to process credit card and bank statements'''
+    def __init__( self, config, statement_location ):
+        self.config = config
         self.statement_location = statement_location
         self.account_info = {}
         self.category_info = {}
@@ -259,8 +274,12 @@ class CreditReport:
                 raise UnknownAccountException( str( statement_file ) )
             self.statements.append( statement )
 
-    def calculate_expenses_by_category( self, known_categories ):
-        '''Calculate expenses by ( account type, category )'''
+    def calculate_expenses_by_category( self, known_categories : dict ):
+        '''Calculate expenses by ( account type, category )
+
+        args:
+            known_categories (str) : a dictionary of ( account_type, categories )
+        '''
         for account_type, categories in known_categories.items():
             self.expense_by_category[ account_type ] = {}
             for category in categories:
@@ -276,10 +295,14 @@ class CreditReport:
                 self.expense_by_category[ account_type ][ transaction.category ] \
                         [ transaction.date.month ] = amount
 
-    def load_all_transactions( self, verbose=False ):
-        '''Load all transactions in all statements and add them to the right categories'''
+    def load_all_transactions( self, verbose : bool = False ):
+        '''Load all transactions in all statements and add them to the right categories
+
+        args:
+            verbose (bool) : print the debug info
+        '''
         for statement in sorted( self.statements, key=lambda x: x.filename, reverse=False ):
-            statement.load_transactions( verbose=verbose )
+            statement.load_transactions()
 
         # See if there are any transactions without category
         unknown_transactions = []
@@ -302,8 +325,12 @@ class CreditReport:
 
         self.calculate_expenses_by_category( known_categories )
 
-    def print_expense_summary_by_account_type( self, account_type ):
-        '''Print the financial report'''
+    def print_expense_summary_by_account_type( self, account_type : str ):
+        '''Print the financial report where it is grouped by the account type
+
+        args:
+            account_type (str) : account type
+        '''
         table = []
         header = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
                    'Oct', 'Nov', 'Dec', 'Total' ]
@@ -334,7 +361,19 @@ class CreditReport:
             self.print_expense_summary_by_account_type( account_type )
             print()
 
-    def query( self, account=None, month=None, category=None, group_by_account=False, verbose=False ):
+    def query( self, account : str = None, month : int = None,
+               category : str = None, group_by_account : bool = False,
+               verbose : bool = False ):
+        '''Query transactions based on account, month, and category if any of these
+        critria are specified.
+
+        Args:
+            account (str) : the account name to query
+            month (int) : the month to query
+            category (str) : the category to query
+            group_by_account (bool) : group the transactions by account or not
+            verbose (bool) : print the debug info or not
+        '''
         if verbose:
             query_str = 'Query: '
             if account:
@@ -378,9 +417,23 @@ class CreditReport:
                 print( f'Total = {total}' )
                 print()
 
-    def run( self, account=None, month=None, category=None,
-             group_by_account=False, verbose=False ):
-        '''Generate the financial report'''
+    def run( self, account : str = None, month : int = None,
+             category : str = None, group_by_account : bool = False,
+             verbose : bool = False ):
+        '''This function has two use cases.
+
+        1. Print the financial summary for all the statements in a year.
+
+        2. Query transactions based on account, month, and category if
+           any of these critria are specified.
+
+        Args:
+            account (str) : the account name to query
+            month (int) : the month to query
+            category (str) : the category to query
+            group_by_account (bool) : group the transactions by account or not
+            verbose (bool) : print the debug info or not
+        '''
         self.load_account_config()
         self.load_category_config()
         self.generate_statements_from_files()
@@ -392,12 +445,26 @@ class CreditReport:
                         group_by_account=group_by_account,
                         verbose=verbose )
 
-def process_command_line_arguments():
-    '''Process command line arguments'''
+def process_command_line_arguments( config : dict ) -> argparse.Namespace:
+    '''Process command line arguments
+
+    args:
+        config : the configuration dictionary. This is loaded from a JSON file
+
+    return:
+        a parsed argparse namespace
+    '''
+    accounts = config[ 'Accounts' ].keys()
+    category = []
+    for key, value in config[ 'Category' ].items():
+        if key in [ 'Ignored', 'Replace' ]:
+            continue
+        category += value.keys()
+
     parser = argparse.ArgumentParser()
-    parser.add_argument( "-a", "--account", action='store',
+    parser.add_argument( "-a", "--account", action='store', choices=accounts,
                          help="Account of interest" )
-    parser.add_argument( "-c", "--category", action='store',
+    parser.add_argument( "-c", "--category", action='store', choices=category,
                          help="Category of interest" )
     parser.add_argument( "-g", "--group", action='store_true',
                          help="Group transactions by account" )
@@ -412,8 +479,9 @@ def process_command_line_arguments():
     return parser.parse_args()
 
 def main():
-    '''Main program'''
-    args = process_command_line_arguments()
+    '''The main program'''
+    config = load_config( CONFIG_FILENAME )
+    args = process_command_line_arguments( config )
     account = args.account
     category = args.category
     group = args.group
@@ -425,7 +493,7 @@ def main():
         print( f'{location} does not exist' )
         return
 
-    reporter = CreditReport( CONFIG_FILENAME, location )
+    reporter = CreditReport( config, location )
     reporter.run( account=account, month=month, category=category,
                   group_by_account=group, verbose=verbose )
 
