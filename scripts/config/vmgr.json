@@ -7,7 +7,7 @@
       },
       "Plugins" : {
          "ack.vim" : {
-            "Desc" : "Grep and show result in a separate window",
+            "Desc" : "Grep wand show result in a separate window",
             "URL" : "https://github.com/mileszs/ack.vim.git",
             "Enable" : "True"
          },
@@ -154,7 +154,7 @@
          "vim-expand-region" : {
             "Desc" : "Visually select increasingly larger regions of text using the same key combination",
             "URL" : "https://github.com/terryma/vim-expand-region",
-            "Enable" : "False"
+            "Enable" : "True"
          },
          "vim-fugitive" : {
             "Desc" : "Git wrapper",
@@ -204,7 +204,7 @@
          "vim-python-pep8-indent" : {
             "Desc" : "Change the python indentation behavior to comply with PEP8",
             "URL" : "https://github.com/xolox/vim-pyref",
-            "Enable" : "False"
+            "Enable" : "True"
          },
          "vim-repeat" : {
             "Desc" : "Enable repeating supported plugin maps with '.'",
