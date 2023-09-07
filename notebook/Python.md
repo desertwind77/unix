@@ -3,6 +3,18 @@
 ## Miscellaneous
 To run python script iteratively, `python -i script.py`
 
+**Print function name**
+```python
+import inspect
+
+def get_function_name():
+    # get the frame object of the function
+    frame = inspect.currentframe()
+    return frame.f_code.co_name
+
+print( "The name of function is : " + get_function_name() )
+```
+
 **all and any**
 ```python
 myData = [ 2, 6, 4, 5, 8 ]
@@ -172,6 +184,44 @@ import timeit
 time = timeit.timeit( '"-".join( str( n ) for n in range( 100 ) )', number=10000 )
 print( time )
 ```
+## Regular Expression
+
+This is how to match a string with multiple lines.
+```python
+import re
+
+texts = [
+'''
+06/07 06/07 743953650SRS94F2T
+-           06/07
+-           06/07
+07/08/23
+         1 BR T
+         2 BR T
+         3 XX X
+         4 XX XEVA AIR     6952453854489 BANGKOK  TH
+TH BAHT
+       2300.00  X    0.02880869
+EVAAIRPNAME
+SAN FRANCISCO        TAIPEI
+TAIPEI               BANGKOK
+BANGKOK              UNKNOWN LOCATION
+UNKNOWN LOCATION     UNKNOWN LOCATION66.26
+'''
+]
+
+rx1 = re.compile( r'^(\d{2}\/\d{2}) \d{2}\/\d{2} \w{17}.*\n.*\n.*\n.*\n.*\n.*\n.*\n.{15}(.*)\n.*\n.*\n.*\n.*\n.*\n.*\n.{37}([0-9.,]+)$',
+                  re.MULTILINE )
+
+for txt in texts:
+    for match in rx1.finditer( txt ):
+        print( match.group( 1 ), match.group( 2 ), match.group( 3 ) )
+```
+Output is as follows.
+```
+06/07 EVA AIR     6952453854489 BANGKOK  TH 66.26
+```
+
 ## Generate a document using Sphinx
 Install sphinx and a theme. More themes are available at https://www.writethedocs.org/guide/tools/sphinx-themes/
 ```
@@ -710,7 +760,63 @@ Filename    : ./parsing.py
 Numbers     : ['1', '2']
 Line count  : 62
 ```
+The argparse module assumes that flags like `-f` and `--bar` indicate optional arguments, which can always be omitted at the command line. A far more elegant solution would be to create another group for “required named arguments”.
+```python
+parser = argparse.ArgumentParser( description='Foo' )
+parser.add_argument( '-o', '--output', default='stdout',
+                     help='Output file name' )
+requiredNamed = parser.add_argument_group( 'required named arguments' )
+requiredNamed.add_argument( '-i', '--input', required=True,
+                            help='Input file name' )
+parser.parse_args( ['-h'] )
+```
+Here is the output.
+```
+usage: [-h] [-o OUTPUT] -i INPUT
 
+Foo
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Output file name
+
+required named arguments:
+  -i INPUT, --input INPUT
+                        Input file name
+```
+Here is how to use `const`, `default` and `nargs`.
+```python
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument( '--head', dest='size', type=int,
+                     const=80, default=10, nargs='?',
+                     action="store",
+                     help='Only print the head of the output')
+# No --head argument is supplied. size should be the const value (80).
+args = parser.parse_args( ''.split() )
+print( args )
+# --head is supplied without any value. size should be the default value (10).
+args = parser.parse_args('--head'.split())
+print( args )
+# --head is supplied along with a value 15. size should be 15.
+args = parser.parse_args('--head 15'.split())
+print( args )
+```
+Here is the output.
+```
+Namespace(size=10)
+Namespace(size=80)
+Namespace(size=15)
+```
+Required argument 'y' if 'x' is present
+```python
+non_int.add_argument('--prox', action='store_true', help='Flag to turn on proxy')
+non_int.add_argument('--lport', type=int, help='Listen Port.')
+non_int.add_argument('--rport', type=int, help='Proxy port.')
+if args.prox and (args.lport is None or args.rport is None):
+    parser.error("--prox requires --lport and --rport.")
+```
 
 ## Executing an external command
 
@@ -978,6 +1084,7 @@ if __name__ == "__main__":
     app = SimpleAppTk()
     app.run()
 ```
+Reference : [1](https://realpython.com/python-gui-tkinter/)
 
 ## Data Model
 \_\_method\_\_ is called data model method in Python. A top-level function or syntax has a corresponding data model method. For example:
@@ -1323,6 +1430,64 @@ class Derived(metaclass=BaseMeta):
         return "bar"
 
 child = Derived()
+```
+
+## asyncio
+
+## FastAPI
+
+Adding a background task to a FastAPI server
+```python
+import asyncio
+
+from fastapi import FastAPI
+
+app = FastAPI()
+x = [ 1 ]           # a global variable x
+
+@app.get( "/" )
+async def root():
+    '''URL handler for /'''
+    return {"message": "Hello World"}
+
+async def periodic():
+    '''This function will be called every 3 second'''
+    while True:
+        x[ 0 ] += 1
+        print( f'x is now {x}' )
+        # sleep for 3 seconds after running above code
+        await asyncio.sleep( 3 )
+
+@app.on_event( "startup" )
+async def schedule_periodic():
+    '''This function will be called on the startup'''
+    loop = asyncio.get_event_loop()
+    loop.create_task( periodic() )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run( app )
+```
+
+## sqlite3
+
+```sql
+create table project (
+    name        text primary key,
+    description text,
+    deadline    date
+);
+
+-- Tasks are steps that can be taken to complete a project
+create table task (
+    id           integer primary key autoincrement not null,
+    priority     integer default 1,
+    details      text,
+    status       text,
+    deadline     date,
+    completed_on date,
+    project      text not null references project(name)
+);
 ```
 
 ## Disassembler

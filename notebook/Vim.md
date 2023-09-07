@@ -71,6 +71,14 @@ To navigate between tabs in normal mode
 |tn|tabnew|
 |tp|tabprevious|
 
+## Changing the case
+| Command | Function |
+|---------|----------|
+|[num]~|Invert the case of the character under the cursor|
+|g~ followed by motion|Invert the case of those characters e.g. g~e, g~$, g~iw, etc|
+|gu followed by motion|Change those characters to lowercase e.g. gue, gu$, guiw, etc|
+|gU followed by motion|Changes those characters to UPPERCASE e.g. gUe, gU$, gUiw, etc|
+
 ## Spelling
 | Command | Function |
 |---------|----------|
@@ -218,6 +226,12 @@ Once CtrlP is open:
 - Use `Ctrl-n`, `Ctrl-p` to select the next/previous string in the prompt's history.
 - Use `Ctrl-y` to create a new file and its parent directories.
 - Use `Ctrl-z` to mark/unmark multiple files and `Ctrl-o` to open them.
+
+### vim-expand-region
+| Command | Function |
+|---------|----------|
+|+|Expand the selected region|
+|-|Shrink the selected region|
 
 ### vim-surround
 Change parentheses, brackets, quotes, HTML/XML tags. Note that we have to type the command when the cursor is inside the quotes, etc.
