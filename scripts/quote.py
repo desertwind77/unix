@@ -34,7 +34,6 @@ class QuoteDB:
         self.filename = filename
         self.data = []
         self.tags_dict = defaultdict( list )
-        self.span_regex = re.compile( r'<span style="(.*)">(.*)</span>', re.MULTILINE )
 
     def add_tag( self, quote, tags ):
         '''Add quote to the tag dictionary for future lookup by tag
@@ -70,12 +69,10 @@ class QuoteDB:
             quote = '\n'.join( lines[ 1: ] )
 
         new_quotes = []
-        if '<span style' in quote:
-            for match in self.span_regex.finditer( quote ):
-                # attributes = match.group( 1 )
-                # color = attributes[ len( 'color: ' ): -1 ] if \
-                #         'color: ' in attributes else None
-                new_quotes.append( match.group( 2 ) )
+        if 'span style' in quote:
+            lines = quote.split( '\n' )
+            quote = '\n'.join( lines[ 1:-1 ] )
+            new_quotes.append( quote )
         else:
             new_quotes.append( quote )
 
@@ -94,10 +91,11 @@ class QuoteDB:
                     # This is the requirement of MWeb Pro that I use to
                     # write the Markdown notes
                     pass
-                elif line == '\n' and msg != '':
-                    # A blank new line means the end of the current quote.
-                    self.add_quote( msg.rstrip() )
-                    msg = ''
+                elif line == '\n':
+                    if msg != '':
+                        # A blank new line means the end of the current quote.
+                        self.add_quote( msg.rstrip() )
+                        msg = ''
                 elif line == "```\n":
                     # Ignore ``` which is a tag for the beginning or ending
                     # of a quoted text in markdown.

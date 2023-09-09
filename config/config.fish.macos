@@ -77,6 +77,7 @@ if status is-interactive
    # git
    alias gts='git status'
    alias gtl='git log'
+   alias gd='git diff | bat'
    alias gtpush='git push origin master'
    alias gtpull='git pull origin master'
 
