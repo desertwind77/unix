@@ -105,6 +105,7 @@ class QuoteDB:
             if msg != '':
                 # Handle the last quote in the file
                 self.add_quote( msg.rstrip() )
+            print( f'size = {len( self.data) }' )
 
     def print_quotes( self, all_quotes=False, tag=None ):
         '''Print quotes
