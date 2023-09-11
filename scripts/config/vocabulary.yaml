@@ -1,3 +1,15 @@
+agnostic:
+  a person who believes that nothing is known or can be known of the existence or nature of God or of anything beyond material phenomena; a person who claims neither faith nor disbelief in God:
+  \(in a nonreligious context\) having a doubtful or noncommittal attitude towards something:
+  - Until now I've been fairly {agnostic} about electoral reform.
+  denoting or relating to hardware or software that is compatible with many types of platforms or operating systems:
+  - Many common file formats (JPEG, MP3, etc.) are {platform-agnostic}.
+  - Asynchronous IO is a {language-agnostic} paradigm that has implementations across a host of programming languages
+
+albeit:
+  although:
+  - He was making progress, {albeit} rather slowly.
+
 aquit:
   to discharge completely (as from an accusation or obligation):
   - The Senate on Wednesday voted to {acquit} President Trump on impeachment charges of abuse of power and obstruction of Congress over his dealings with Ukraine, marking the beginning of the end of the months-long saga.
@@ -35,6 +47,10 @@ at the drop of a hat:
   Without any hesitation; instantly:
   - We're expected to just do it {at the drop of a hat}.
 
+banal:
+  mundane:
+  - While using time.sleep() and asyncio.sleep() may seem {banal}, they are used as stand-ins for any time-intensive processes that involve wait time.
+
 beat the (living) daylights out of SB:
   to physically attack one, as with punches and other blows, such that they suffer significant injury:
   - Our neighbor is in the hospital because a burglar {beat the daylights out of} him.
@@ -49,13 +65,19 @@ bereft:
   \(of a person\) lonely and abandoned, especially through someone's death or departure:
   - His death in 1990 left her {bereft}.
 
-bite the bullet:
-  to endure something necessary but unpleasant:
-  - When no painkiller was available (in makeshift battlefield tents, for example), soldiers literally had to {bite down on a bullet} during surgical operations.
-
 be black balled:
   to be voted against and denied membership:
   - He was initially {black balled} because of a dispute he once had with a couple of the committee members.
+
+bellwether:
+  the leading sheep of a flock, with a bell on its neck:
+  an indicator or predictor of something:
+  - College campuses are often the {bellwether} of change.
+  - The market's {bellwether} stock.
+
+bite the bullet:
+  to endure something necessary but unpleasant:
+  - When no painkiller was available (in makeshift battlefield tents, for example), soldiers literally had to {bite down on a bullet} during surgical operations.
 
 bromide:
   a commonplace or tiresome person, bore:
@@ -206,6 +228,11 @@ from the get-go:
   from the very beginning:
   - The design of this guitar has never changed from its arrival in 1960. That is because the company that made it got it right {from the get-go}.
 
+garner:
+  gather or collect (something, especially information or approval):
+  - The police struggled to {garner} sufficient evidence.
+  - TvOS updates don't typically {garner} as much attention as updates to iOS and macOS, and are never as feature rich, but tvOS 17 brings FaceTime to the TV for the first time.
+
 get off your high horse:
   to stop talking as if you were better or smarter than other people:
   - It's time you came down {off your high horse} and admitted you were wrong.
@@ -289,6 +316,9 @@ ignoble:
 ignominy:
   public shame or disgrace:
   - the {ignominy} of being imprisoned.
+  - She had to endure the {ignominy} of being forced to resign.
+  - No British Prime Minister’s political career has ended in such official {ignominy}.
+  - The Heat escaped {ignominy}, beating the Celtics 103-84 in Game 7 on Monday night in Boston.
 
 inane:
   silly; stupid:
@@ -396,6 +426,12 @@ to make light of something:
 malady:
   a disease or ailment:
   - Thailand’s {maladies} will outlast the pandemic
+
+malleable:
+  \(of a metal or other material\) able to be hammered or pressed permanently out of shape without breaking or cracking:
+  - A {malleable} metal can be beaten into a sheet.
+  easily influenced; pliable:
+  - Anna was shaken enough to be {malleable}.
 
 mammography:
   a technique using X-rays to diagnose and locate tumors of the breasts.:
