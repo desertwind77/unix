@@ -3,6 +3,19 @@
 ## Miscellaneous
 To run python script iteratively, `python -i script.py`
 
+**Function Type in type hinting**
+```python
+def func():
+    pass
+    
+type(func)
+<class 'function'>
+
+import types
+isinstance(func, types.FunctionType)
+True
+```
+
 **Print function name**
 ```python
 import inspect
@@ -184,6 +197,35 @@ import timeit
 time = timeit.timeit( '"-".join( str( n ) for n in range( 100 ) )', number=10000 )
 print( time )
 ```
+
+## Pydantic
+Pydantic is a Python library for data parsing and validation. It uses the type hinting mechanism of the newer versions of Python (version 3.6 onwards) and validates the types during the runtime. Pydantic defines BaseModel class. It acts as the base class for creating user defined models.
+
+```python
+from typing import List
+from pydantic import BaseModel, Field
+
+
+class Student( BaseModel ):
+    id: int
+    name: str = Field( None, title="The description of the item",
+                       max_length=10 )
+    subjects: List[str] = []
+
+data = {
+    'id' : 123,                     # OK
+    # 'id' : '123',                   # OK
+    # 'id' : [ 1, 2 ],                # Not OK
+    'name' : 'Athichart',           # OK
+    # 'name' : 'Athichart Tangpong',  # Not ok
+    'subjects' : [ 'Eng', 'Maths', 'Sci' ],
+}
+
+s1 = Student( **data )
+print( s1 )
+print( s1.model_dump() )
+```
+
 ## Regular Expression
 
 This is how to match a string with multiple lines.
@@ -1470,7 +1512,7 @@ if __name__ == "__main__":
 ```
 
 ## sqlite3
-
+Example schema
 ```sql
 create table project (
     name        text primary key,
@@ -1488,6 +1530,205 @@ create table task (
     completed_on date,
     project      text not null references project(name)
 );
+```
+Example code
+```python
+import csv
+import os
+import sqlite3
+
+DB_FILENAME = 'example.db'
+CSV_FILENAME = 'tasks.csv'
+SCHEMA_FILENAME = 'todo_schema.sql'
+
+def create_db():
+    db_exist = os.path.exists( DB_FILENAME )
+    with sqlite3.connect( DB_FILENAME ) as conn:
+        if not db_exist:
+            with open( SCHEMA_FILENAME, 'rt' ) as schema_file:
+                schema = schema_file.read()
+            conn.executescript( schema )
+
+            insert_query = '''
+            insert into project (name, description, deadline)
+            values ('pymotw', 'Python Module of the Week', '2016-11-01');
+
+            insert into task (details, status, deadline, project)
+            values ('write about select', 'done', '2016-04-25', 'pymotw');
+
+            insert into task (details, status, deadline, project)
+            values ('write about random', 'waiting', '2016-08-22', 'pymotw');
+
+            insert into task (details, status, deadline, project)
+            values ('write about sqlite3', 'active', '2017-07-31', 'pymotw');
+            '''
+            conn.executescript( insert_query )
+
+    # From the command line, we can do the following:
+    # $ sqlite3 todo.db 'select * from task'
+
+def query_metadata():
+    # The DB-API 2.0 specification says that after execute() has been called,
+    # the Cursor should set its description attribute to hold information about
+    # the data that will be returned by the fetch methods. The API
+    # specification say that the description value is a sequence of tuples
+    # containing the column name, type, display size, internal size, precision,
+    # scale, and a flag that says whether null values are accepted. Because
+    # sqlite3 does not enforce type or size constraints on data inserted into a
+    # database, only the column name value is filled in.
+    with sqlite3.connect( DB_FILENAME ) as conn:
+        cursor = conn.cursor()
+        select_query = "select * from task where project = 'pymotw'"
+        cursor.execute( select_query )
+        print('Task table has these columns:')
+        for colinfo in cursor.description:
+            print( colinfo )
+
+def retrieve_data( project_name ):
+    with sqlite3.connect( DB_FILENAME ) as conn:
+        # Change the row factory to use Row so that the fetch methods return
+        # the Row objects instead of tuples. The benefit is that we don't have
+        # to remember the order of the fields in the tuples.
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # using positional parameters in the query
+        # select_query = '''
+        # select id, priority, details, status, deadline from task
+        # where project = ?
+        # '''
+        # cursor.execute( select_query, ( project_name, ) )
+        # using named parameters in the query
+        query = '''
+        select id, priority, details, status, deadline from task
+        where project = :project_name
+        order by deadline, priority
+        '''
+        cursor.execute(query, {'project_name': project_name } )
+
+        print( '\nContent:' )
+        # fetchall() retrieves all row while fetchmany( num ) retrieves as many
+        # as num rows.
+        for row in cursor.fetchall():
+            task_id, priority, details, status, deadline = row
+            # When using the default row factory where the fetch methods return tuples.
+            # print( '{:2d} [{:d}] {:<25} [{:<8}] ({})'.format(
+            #        task_id, priority, details, status, deadline))
+            print('{:2d} [{:d}] {:<25} [{:<8}] ({})'.format(
+                  row['id'], row['priority'], row['details'],
+                  row['status'], row['deadline'] ) )
+
+def update_data( id, status ):
+    with sqlite3.connect( DB_FILENAME ) as conn:
+        cursor = conn.cursor()
+        query = "update task set status = :status where id = :id"
+        cursor.execute(query, {'status': status, 'id': id})
+
+def bulk_loading():
+    query = """
+    insert into task (details, priority, status, deadline, project)
+    values (:details, :priority, 'active', :deadline, :project)
+    """
+
+    with open( CSV_FILENAME, 'rt' ) as csv_file:
+        csv_reader = csv.DictReader( csv_file )
+        with sqlite3.connect( DB_FILENAME ) as conn:
+            cursor = conn.cursor()
+            # To apply the same SQL instruction to a large set of data, use
+            # executemany(). This is useful for loading data, since it avoids
+            # looping over the inputs in Python and lets the underlying library
+            # apply loop optimizations.
+            cursor.executemany( query, csv_reader )
+            
+def type_detection():
+    def show_deadline( conn ):
+        query = 'select id, details, deadline from task'
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute( query )
+        row = cursor.fetchone()
+        for col in [ 'id', 'details', 'deadline' ]:
+            print( '   {:<8}   {!r:<26}  {}'.format(
+                   col, row[ col ], type( row[ col ] ) ) )
+
+    print( 'Without type detection:' )
+    with sqlite3.connect( DB_FILENAME ) as conn:
+        show_deadline( conn )
+
+    # Although SQLite only supports a few data types internally, sqlite3
+    # includes facilities for defining custom types to allow a Python
+    # application to store any type of data in a column. Conversion for types
+    # beyond those supported by default is enabled in the database connection
+    # using the detect_types flag. Use PARSE_DECLTYPES if the column was
+    # declared using the desired type when the table was defined
+    print('\nWith type detection:')
+    with sqlite3.connect( DB_FILENAME,
+                          detect_types=sqlite3.PARSE_DECLTYPES ) as conn:
+        show_deadline( conn )
+
+def main():
+    create_db()
+    query_metadata()
+    retrieve_data( project_name='pymotw' )
+
+    update_data( 2, 'done' )
+    retrieve_data( project_name='pymotw' )
+
+    bulk_loading()
+    retrieve_data( project_name='pymotw' )
+
+    type_detection()
+
+if __name__ == '__main__':
+    main()
+```
+Output
+```
+Task table has these columns:
+('id', None, None, None, None, None, None)
+('priority', None, None, None, None, None, None)
+('details', None, None, None, None, None, None)
+('status', None, None, None, None, None, None)
+('deadline', None, None, None, None, None, None)
+('completed_on', None, None, None, None, None, None)
+('project', None, None, None, None, None, None)
+
+Content:
+ 1 [1] write about select        [done    ] (2016-04-25)
+ 5 [2] revise chapter intros     [active  ] (2016-08-20)
+ 2 [1] write about random        [done    ] (2016-08-22)
+ 6 [1] subtitle                  [active  ] (2016-11-01)
+ 4 [2] finish reviewing markup   [active  ] (2016-11-30)
+ 3 [1] write about sqlite3       [active  ] (2017-07-31)
+ 
+Content:
+ 1 [1] write about select        [done    ] (2016-04-25)
+ 5 [2] revise chapter intros     [active  ] (2016-08-20)
+ 2 [1] write about random        [done    ] (2016-08-22)
+ 6 [1] subtitle                  [active  ] (2016-11-01)
+ 4 [2] finish reviewing markup   [active  ] (2016-11-30)
+ 3 [1] write about sqlite3       [active  ] (2017-07-31)
+ 
+Content:
+ 1 [1] write about select        [done    ] (2016-04-25)
+ 5 [2] revise chapter intros     [active  ] (2016-08-20)
+ 8 [2] revise chapter intros     [active  ] (2016-08-20)
+ 2 [1] write about random        [done    ] (2016-08-22)
+ 6 [1] subtitle                  [active  ] (2016-11-01)
+ 9 [1] subtitle                  [active  ] (2016-11-01)
+ 4 [2] finish reviewing markup   [active  ] (2016-11-30)
+ 7 [2] finish reviewing markup   [active  ] (2016-11-30)
+ 3 [1] write about sqlite3       [active  ] (2017-07-31)
+ 
+Without type detection:
+   id         1                           <class 'int'>
+   details    'write about select'        <class 'str'>
+   deadline   '2016-04-25'                <class 'str'>
+
+With type detection:
+   id         1                           <class 'int'>
+   details    'write about select'        <class 'str'>
+   deadline   datetime.date(2016, 4, 25)  <class 'datetime.date'>
 ```
 
 ## Disassembler

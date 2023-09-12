@@ -169,6 +169,14 @@ Placing the cursor on some text and then
 1) To enter the normal mode which we can use with vim's normal navigation and search, press `Ctrl-\ Ctrl-n`
 2) To return to the terminal mode, press `i` or `a`.
 
+### Insert the same characters across multiple line
+1) Move the cursor to the starting point on the first line
+2) Enter the visual block mode with `Ctrl-v`
+3) Press `j` three times or `3j` to jump down by 3 times or `G` to jump to the last line.
+4) Press `I`
+5) Type whatever change you want. Note that the change will appear only on the first line until `Esc` is press.
+6) Press `Esc`. Then all lines will be updated.
+
 ## Leader Key Combination
 | Command | Function |
 |---------|----------|
