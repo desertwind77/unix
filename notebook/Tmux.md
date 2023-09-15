@@ -78,6 +78,7 @@ The command after hitting the prifix key `Ctrl-B`
 | Command | Function |
 |---------|----------|
 |d|Detach from the current session|
+|r|Reload tmux config|
 |t|Show a big clock|
 |?|List shortcuts|
 |:|Go to prompt|
