@@ -81,7 +81,7 @@ class QuoteDB:
             self.data.append( quote )
             self.add_tag( quote, tags )
 
-    def run( self ):
+    def run( self, verbose=False ):
         '''Load the quotes from the quote files'''
         with open( self.filename, "r", encoding="utf8" ) as quote_file:
             msg = ''
@@ -105,7 +105,8 @@ class QuoteDB:
             if msg != '':
                 # Handle the last quote in the file
                 self.add_quote( msg.rstrip() )
-            print( f'size = {len( self.data) }' )
+            if verbose:
+                print( f'size = {len( self.data) }' )
 
     def print_quotes( self, all_quotes=False, tag=None ):
         '''Print quotes
@@ -138,17 +139,19 @@ def parse_arguments():
         a parsed argparse namespace
     '''
     parser = argparse.ArgumentParser(description="Quote")
-    parser.add_argument( "-t", "--tag", action="store",
-                         help="Print only quotes with this tag" )
     parser.add_argument( "-a", "--all", action="store_true",
                          help="Print all quotes" )
+    parser.add_argument( "-t", "--tag", action="store",
+                         help="Print only quotes with this tag" )
+    parser.add_argument( "-v", "--verbose", action="store_true",
+                         help="Print debug information" )
     return parser.parse_args()
 
 def main():
     '''The main function'''
     args = parse_arguments()
     quote_db = QuoteDB( QUOTE_FILENAME )
-    quote_db.run()
+    quote_db.run( verbose=args.verbose )
     quote_db.print_quotes( all_quotes=args.all, tag=args.tag )
 
 if __name__ == '__main__':
