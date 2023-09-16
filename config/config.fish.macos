@@ -100,9 +100,11 @@ if status is-interactive
    alias tmuxkeys='glow -p ~/Workspace/github/unix/notebook/Tmux.md'
 
    #---------------------- Variables ---------------------
-   set -gx PATH "$HOME/Workspace/scripts" $PATH;
+   set -gx PATH "$HOME/Workspace/scripts" "$HOME/Workspace/bin" $PATH;
    set -gx EDITOR vim
    set -gx VISUAL vim
+
+   eval (tmuxifier init -)
 
    neofetch
    quote
