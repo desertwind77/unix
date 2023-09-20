@@ -20,6 +20,7 @@ import re
 # readline will change the behavior of input() even though it is not called
 import readline
 import shutil
+import types
 
 # pylint: disable=import-error
 from fastprogress import progress_bar
@@ -131,9 +132,15 @@ class TextSanitizer:
 
     def sanitize_number( self, txt ):
         '''
-        Clean up the number tag.
-        1) If the number in the format of <num> / <total_num>, retain only <num>
-        2) Convet from the string <num> to integer
+        Clean up a numeric tag:
+            1) If the number in the format of <num> / <total_num>, retain only <num>
+            2) Convet from the string <num> to integer
+
+        Params:
+            txt (string): the tag to be cleaned
+
+        Returns:
+            string: the tag after the cleanup
         '''
         txt = txt.split( '/' )[ 0 ] if '/' in txt else txt
         try:
@@ -207,14 +214,18 @@ class Album( TextSanitizer ):
         return None
 
     def album_name( self ):
-        '''
-        Return the album name.
-        1) If all flac files in this album has the same album name and
-           that album name is not empty, use that one.
-        2) If there are more than one album name, use the longest common
-           string in the album names.
-        3) Try to get the album name from the folder name
-        '''
+        '''Return the album name.
+
+Rule:
+
+1. If all flac files in this album has the same album name and that
+   album name is not empty, use that one.
+
+2. If there are more than one album name, use the longest common string
+   in the album names.
+
+3. Try to get the album name from the folder name
+'''
         result = list( set( f.album for f in self.contents if f.album is not None ) )
         if not result:
             return None
@@ -242,12 +253,15 @@ class Album( TextSanitizer ):
         return None
 
     def album_artist( self ):
-        '''
-        Return the album artist.
-        1) If all flac files in this album has the same album name and
-           that album name is not empty, use that one.
-        2) Try to get the album name from the folder name
-        '''
+        '''Return the album artist.
+
+Rules:
+
+1. If all flac files in this album has the same album name and that
+   album name is not empty, use that one.
+
+2. Try to get the album name from the folder name
+'''
         result = list( set( f.album_artist for f in self.contents ) )
         # All flac files in this album should have the same album artist
         # But sometimes mistake happens.
@@ -1373,17 +1387,30 @@ class RoonCopyCmd( CleanupCmd ):
         self.load_audio_files()
         self.roon_copy()
 
-def execute( cmd ):
-    '''Execute a command'''
+def execute( cmd : BaseCmd ):
+    '''Execute a command
+
+    args:
+        cmd (BaseCmd) : the command object to execute
+    '''
     cmd.run()
 
 class AudioTag:
     '''The main class for our Audio file tagging program'''
-    def __init__( self, config ):
+    def __init__( self, config : dict ):
         self.config = config
 
-    def execute_commands( self, func, cmds, seq_exec=False ):
-        '''Execute the command in the command list'''
+    def execute_commands( self, func : types.FunctionType, cmds : list, seq_exec : bool = False ):
+        '''Execute the commands in the command list sequentially or in parallel.
+        Each command is an object describing both what to do and what files or folders
+        should be processed.
+
+        args:
+            func (function pointer) : just pass the function execute() which will call cmd.run()
+                                      We need this because of ProcessPoolExecutor.
+            cmds (list): the command list
+            seq_exec (bool) : do sequential execution if true; otherwise, do parallel execution
+        '''
         cpu_count = os.cpu_count()
         size = len( cmds )
         using_sequential_execution = seq_exec or cpu_count < 2 or size < 2
@@ -1401,8 +1428,12 @@ class AudioTag:
                 for _ in progress_bar( concurrent.futures.as_completed( tasks ), total=size ):
                     pass
 
-    def extract_archives( self, params ):
-        '''Extract all archives'''
+    def extract_archives( self, params : Parameters ):
+        '''Extract all archives
+
+        args:
+            params (Parameters) : command line arguments
+        '''
         cwd = Path( os.getcwd() )
         cmds = []
         archive_dst = self.config[ 'Extract' ][ 'Archive' ]
@@ -1413,26 +1444,42 @@ class AudioTag:
             os.makedirs( archive_dst, exist_ok=True )
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
-    def convert_audio( self, params ):
-        '''Convert the autio files to .flac'''
+    def convert_audio( self, params : Parameters ):
+        '''Convert the autio files to .flac
+
+        args:
+            params (Parameters) : command line arguments
+        '''
         cwd = Path( os.getcwd() )
         cmds = []
         for fmt in self.config[ "Convert" ][ "Supported Formats" ]:
             cmds += [ ConvertCmd( self.config, f, params ) for f in cwd.glob( f'**/*{fmt}' ) ]
         self.execute_commands( execute, cmds, seq_exec=params.seq_exec() )
 
-    def cleanup( self, params ):
-        '''Do various data cleanup on all folders in the current folder'''
+    def cleanup( self, params : Parameters ):
+        '''Do various data cleanup on all folders in the current folder
+
+        args:
+            params (Parameters) : command line arguments
+        '''
         cmds = [ CleanupCmd( self.config, os.getcwd(), params ) ]
         self.execute_commands( execute, cmds )
 
-    def roon_copy( self, params ):
-        '''Do various data cleanup on all folders in the current folder'''
+    def roon_copy( self, params : Parameters ):
+        '''Do various data cleanup on all folders in the current folder
+
+        args:
+            params (Parameters) : command line arguments
+        '''
         cmds = [ RoonCopyCmd( self.config, os.getcwd(), params ) ]
         self.execute_commands( execute, cmds )
 
-    def run( self, params ):
-        '''Run the autio tag process'''
+    def run( self, params : Parameters ):
+        '''Run the autio tag process
+
+        args:
+            params (Parameters) : command line arguments
+        '''
         if params.command() == 'extract':
             self.extract_archives( params )
         elif params.command() == 'convert':
@@ -1445,7 +1492,11 @@ class AudioTag:
             raise UnsupportedCommand( params.command() )
 
 def process_arguments():
-    '''Process commandline arguments'''
+    '''Process commandline arguments
+
+    return:
+        a Parameters object which contains all command line arguments
+    '''
     parser = argparse.ArgumentParser()
     parser.add_argument( '-d', '--dry-run', action='store_true', dest='dry_run',
                          help='Dry run' )
