@@ -27,7 +27,7 @@ The command after hitting the prifix key `Ctrl-B`
 | Command | Function |
 |---------|----------|
 |:new<CR>|Start a new session|
-|s|List sessions|
+|s|Show and navigate through all the sessions, panes, and windows|
 |$|Rename a session|
 |(|Go to previous session|
 |)|Go to next session|
@@ -35,6 +35,7 @@ The command after hitting the prifix key `Ctrl-B`
 ### Window
 | Command | Function |
 |---------|----------|
+|b|Go to the last window|:w
 |c|Create a new window|
 |,|Rename a window|
 |w|List windows|
@@ -61,6 +62,7 @@ The command after hitting the prifix key `Ctrl-B`
 |space|Toggle between layouts|
 |{|Move the current pane left|
 |}|Move the current pane right|
+|CTRL-t|Go to the next pane|
 
 ### Tmux plugin manager
 | Command | Function |
@@ -92,6 +94,15 @@ Toggle or turn on/off pane synchronization
 :setw synchronize-panes off
 ```
 
+## Tmuxifier
+Create and edit the layout for a new session.
+```
+tmuxifier new-session <session name>
+```
+Edit the layout of the existing session
+```
+tmuxifier edit-session <session name>
+```
 Reference
 - https://tmuxcheatsheet.com/
 - https://www.sitepoint.com/10-killer-tmux-tips/
