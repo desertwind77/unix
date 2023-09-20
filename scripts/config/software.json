@@ -38,6 +38,7 @@
          "ranger" : "file manager",
          "ripgrep" : "a grep replacement (rg)",
          "tealdeer" : "man replacement (tldr)",
+         "tig" : "an ncurses-based text-mode interface for git",
          "tmux" : "screen multiplexer",
          "tokei" : "display statistics about the code",
          "wget" : "web downloader",
@@ -75,9 +76,9 @@
                "groups" : {
                   "general" : [
                      "ack", "bat", "btop", "cheat", "cscope", "ctags-exuberant", "dos2unix", "duf", "dust", "exa",
-                     "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "git-gui", "grex", "htop",
+                     "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "grex", "htop",
                      "hyperfine", "imageMagick", "lilypond", "lynx", "mas", "mc", "mosh", "ncdu", "neofetch",
-                     "octave", "procs", "ranger", "rar", "ripgrep", "tealdeer", "tmux", "tokei", "vim", "wget",
+                     "octave", "procs", "ranger", "rar", "ripgrep", "tealdeer", "tig", "tmux", "tokei", "vim", "wget",
                      "youtube-dl", "zoxide"
                   ]
                }
