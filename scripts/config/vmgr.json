@@ -146,6 +146,11 @@
             "URL" : "https://github.com/tpope/vim-dispatch",
             "Enable" : "False"
          },
+         "vim-easy-align" : {
+            "Desc" : "Align markdown table",
+            "URL" : "https://github.com/junegunn/vim-easy-align",
+            "Enable" : "True"
+         },
          "vim-easymotion" : {
             "Desc" : "A much simpler way to sue some motions",
             "URL" : "https://github.com/easymotion/vim-easymotion",

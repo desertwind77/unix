@@ -225,6 +225,10 @@ if !exists("autocommands_loaded")       " do not define autocmd twice
    autocmd FileType tex              let b:comment_leader = '% '
    autocmd FileType mail             let b:comment_leader = '> '
    autocmd FileType vim              let b:comment_leader = '" '
+
+   " Align GitHub-flavored Markdown tables using the
+   " vim-easy-align plugin
+   au FileType markdown vmap <Leader><Bslash> :EasyAlign*<Bar><Enter>
 endif
 
 if has('cscope')
