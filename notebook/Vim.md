@@ -187,25 +187,14 @@ Placing the cursor on some text and then
 |\ + h|Stop search highlight|
 |\ + i|Toggle indent line|
 |\ + l|Display location list [NOT WORKING]|
-|\ + n|Toggle nerdtree file browser and jump to it|
+|\ + n|[nerdtree] Toggle nerdtree file browser and jump to it|
 |\ + q|Display quickfix list|
 |\ + s|Toggle spelling|
-|\ + t|Toggle nerdtree file browser|
+|\ + t|[nerdtree] Toggle nerdtree file browser|
 |\ + u|Show undo tree|
 |\ + w|Strip white spaces|
-|\ + cc|[nerdcommenter] Comment out the current line or text selected in visual mode|
-|\ + cn|[nerdcommenter] Same as cc but forces nesting|
-|\ + c + space|[nerdcommenter] toggles the comment state of the selected line(s). If the topmost selected line is commented, all selected lines are uncommented and vice versa.|
-|\ + cm|[nerdcommenter] Comments the given lines using only one set of multipart delimiters.|
-|\ + ci|[nerdcommenter] Toggles the comment state of the selected line(s) individually.|
-|\ + cs|[nerdcommenter] Comments out the selected lines with a pretty block formatted layout.|
-|\ + cy|[nerdcommenter] Same as cc except that the commented line(s) are yanked first.|
-|\ + c$|[nerdcommenter] Comments the current line from the cursor to the end of line.|
-|\ + cA|[nerdcommenter] Add comment delimiters to the end of line and goes into insert mode between them.|
-|\ + ca|[nerdcommenter] Switches to the alternative set of delimiters.|
-|\ + cl or cb|[nerdcommenter] Same as |NERDCommenterComment| except that the delimiters are aligned down the left side (<leader>cl) or both sides (<leader>cb).|
-|\ + cu|[nerdcommenter] Uncomments the selected line(s).|
 |\ + nn|Toggle line number|
+|\ + \\ |[vim-easy-align] Align a markdown table after being selected in visual mode|
 
 ## Plugins
 ### CtrlP
@@ -234,6 +223,23 @@ Once CtrlP is open:
 - Use `Ctrl-n`, `Ctrl-p` to select the next/previous string in the prompt's history.
 - Use `Ctrl-y` to create a new file and its parent directories.
 - Use `Ctrl-z` to mark/unmark multiple files and `Ctrl-o` to open them.
+
+### nerdcommenter
+| Command | Function |
+|---------|----------|
+|\ + cc|Comment out the current line or text selected in visual mode|
+|\ + cn|Same as cc but forces nesting|
+|\ + c + space|Toggles the comment state of the selected line(s). If the topmost selected line is commented, all selected lines are uncommented and vice versa.|
+|\ + cm|Comments the given lines using only one set of multipart delimiters.|
+|\ + ci|Toggles the comment state of the selected line(s) individually.|
+|\ + cs|Comments out the selected lines with a pretty block formatted layout.|
+|\ + cy|Same as cc except that the commented line(s) are yanked first.|
+|\ + c$|Comments the current line from the cursor to the end of line.|
+|\ + cA|Add comment delimiters to the end of line and goes into insert mode between them.|
+|\ + ca|Switches to the alternative set of delimiters.|
+|\ + cl or cb|Same as |NERDCommenterComment| except that the delimiters are aligned down the left side (<leader>cl) or both sides (<leader>cb).|
+|\ + cu|Uncomments the selected line(s).|
+
 
 ### vim-expand-region
 | Command | Function |
