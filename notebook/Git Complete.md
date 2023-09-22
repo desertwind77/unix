@@ -1,4 +1,4 @@
-# Git 
+# Git Complete
 
 ```mermaid
     sequenceDiagram
@@ -598,65 +598,297 @@ The local branch and `origin/master` can also be conflicting e.g. other teammate
 `git fetch` is the command that tells the local repository that there are changes available in the remote repository without bringing the changes into the local repository. `git pull` on the other hand brings the copy of the remote directory changes into the local repository. This will tell us that our local branch and `origin/master` are divert.
 
 # Stashing
-https://www.atlassian.com/git/tutorials/saving-changes/git-stash#:~:text=git%20stash%20temporarily%20shelves%20(or,re%2Dapply%20them%20later%20on.
+`git stash` temporarily shelves (or stashes) changes you've made to your working copy so you can work on something else, and then come back and re-apply them later on.
 
-git stash
-git stash -u
-# make chagne
-git stash apply
+`git stash` by default will run `git stash save`. `git stash -u` will include untracked files. Here `README.md` was modified. After we ran `git stash`, no file was modified.
+```
+bash-3.2$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
 
-git stash list
-git stash drop
-git stash pop
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   README.md
 
+no changes added to commit (use "git add" and/or "git commit -a")
 
-git stash save "simple stash 1"
-git stash save "simple stash 2"
-git stash save "simple stash 3"
-git stash list
-git stash show stash@{1}
-git stash apply stash@{1}
-git stash drop stash@{1}
-git stash clear # delete all
-git stash list
+bash-3.2$ git stash
+Saved working directory and index state WIP on master: 6e63122 Modified humans.txt
 
-# Stash into a branch
-git stash -u
-git stash branch <newchanges>
-git stash list
-git add .
-git status
-git commit
-git checkout master
-git merge newchanges > FF merger
-git branch -d newchanges
+bash-3.2$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+
+bash-3.2$ git stash list
+stash@{0}: WIP on master: 6e63122 Modified humans.txt
+```
+After we finish the other tasks and are ready to wrong on the stashed change, we can run `git stash apply`. This doesn't automatically remove the stashed change. We have to run `git stash drop` to do that.
+```
+bash-3.2$ git stash apply
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   README.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+bash-3.2$ git stash list
+stash@{0}: WIP on master: 6e63122 Modified humans.txt
+
+bash-3.2$ git stash drop
+Dropped refs/stash@{0} (8f816bf840ece0649b0b636e97b3b4baf1dd71eb)
+```
+We can also use `git stash pop` which is equivalent to running `git stash apply` followed by `git stash drop`.
+
+Here is how we work with multiple stashes.
+```
+bash-3.2$ git stash save "#1 README.md"
+bash-3.2$ git stash save "#2 humans.txt"
+bash-3.2$ git stash save "#3 index.html"
+
+bash-3.2$ git stash list
+stash@{0}: On master: #3 index.html
+stash@{1}: On master: #2 humans.txt
+stash@{2}: On master: #1 README.md
+
+bash-3.2$ git stash show stash@{1}
+ humans.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ 
+bash-3.2$ git stash apply stash@{1}
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   humans.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+bash-3.2$ git stash drop stash@{1}
+Dropped stash@{1} (b876dc32985aef58812d89290a8f09b1daa90366)
+
+bash-3.2$ git stash list
+stash@{0}: On master: #3 index.html
+stash@{1}: On master: #1 README.md
+
+bash-3.2$ git stash clear
+```
+
+### Stash into a branch
+
+After we make some changes and we change our mind that we want these changes to be in a feature branch instead of merging directly into master, we can stash the changes to a new feature branch, finish the work there and then merge the branch into master.
+```
+bash-3.2$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   humans.txt
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   index.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        newfile.txt
+
+bash-3.2$ git stash -u
+Saved working directory and index state WIP on master: 6e63122 Modified humans.txt
+
+bash-3.2$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+
+bash-3.2$ git stash branch newfeaturebranch
+Switched to a new branch 'newfeaturebranch'
+On branch newfeaturebranch
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   humans.txt
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   index.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        newfile.txt
+
+Dropped refs/stash@{0} (99c15362ae2028352d593b6224b85d94f47628f3)
+
+# Now we are in newfeaturebranch and the stash list is empty. 
+bash-3.2$ git stash list
+
+# Commit all the changes
+bash-3.2$ git add .
+bash-3.2$ git status
+On branch newfeaturebranch
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   humans.txt
+        modified:   index.html
+        new file:   newfile.txt
+
+bash-3.2$ git commit -am "Added a new feature"
+[newfeaturebranch 2ad083c] Added a new feature
+ 3 files changed, 3 insertions(+)
+ create mode 100644 newfile.txt
+ 
+# Switch back to master and merge the change from newfeaturebranch
+# This will be a fast forword because there is no other change in
+# master.
+bash-3.2$ git checkout master
+Switched to branch 'master'
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+bash-3.2$ git merge newfeaturebranch
+Updating 6e63122..2ad083c
+Fast-forward
+ humans.txt  | 1 +
+ index.html  | 1 +
+ newfile.txt | 1 +
+ 3 files changed, 3 insertions(+)
+ create mode 100644 newfile.txt
+ 
+bash-3.2$ git branch -d newfeaturebranch
+Deleted branch newfeaturebranch (was 2ad083c).
+
+bash-3.2$ git log
+2ad083c  (HEAD -> master) Added a new feature
+6e63122  Modified humans.txt
+4beb7f0  (origin/master, origin/HEAD) Merge pull request #6 from jasongtaylor/feature-readme
+e73f914  Adding Purpose section to README
+34f563b  Adding README file
+5c05047  Copying files from initializr project zip file and then creating simple.html as basis for super simple pages
+```
 
 # Tagging
-Light-weight tag = a marker at a commit
-git tag myTag
-git tag --list
-git show myTag
-git tag --delete myTag
+A tag is a label that can be applied to any commit. A light-weight tag is a marker at a commit.
+```
+bash-3.2$ git tag myTag
 
-# annotated tag will bring an editor
-git tag -a v-1.0
-git show v-1.0
-git commit --amend
+bash-3.2$ git log
+2ad083c  (HEAD -> master, tag: myTag) Added a new feature
+6e63122  Modified humans.txt
+4beb7f0  (origin/master, origin/HEAD) Merge pull request #6 from jasongtaylor/feature-readme
+e73f914  Adding Purpose section to README
+34f563b  Adding README file
+5c05047  Copying files from initializr project zip file and then creating simple.html as basis for super simple pages
 
+bash-3.2$ git tag --list
+myTag
+
+bash-3.2$ git show myTag
+2ad083c  (HEAD -> master, tag: myTag) Added a new feature
+diff --git a/humans.txt b/humans.txt
+index b7a4286..b8da418 100644
+--- a/humans.txt
++++ b/humans.txt
+@@ -15,3 +15,4 @@
+     jQuery, Modernizr
+
+ master
++test
+
+bash-3.2$ git tag --delete myTag
+Deleted tag 'myTag' (was 2ad083c)
+```
+An annotated tag has more information than a light-weight tag. A editor will be brought up when adding an annotated tag. We can use an annotated tag to represent a release.
+```
+bash-3.2$ git tag -a v-1.0
+
+bash-3.2$ git tag --list
+v-1.0
+
+bash-3.2$ git log
+5316222  (HEAD -> master, tag: v-1.0) Modified simple.html
+2ad083c  Added a new feature
+6e63122  Modified humans.txt
+4beb7f0  (origin/master, origin/HEAD) Merge pull request #6 from jasongtaylor/feature-readme
+e73f914  Adding Purpose section to README
+34f563b  Adding README file
+5c05047  Copying files from initializr project zip file and then creating simple.html as basis for super simple pages
+
+bash-3.2$ git show v-1.0
+tag v-1.0
+Tagger: Athichart Tangpong <victorybattleship@gmail.com>
+
+Release 1.0
+
+5316222  (HEAD -> master, tag: v-1.0) Modified simple.html
+diff --git a/simple.html b/simple.html
+index ca5e908..302fbc2 100644
+--- a/simple.html
++++ b/simple.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++test
+ <head>
+        <title></title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+```
+We can add an annotated tag in one line by specifying the option `-m`.
+```
 git tag v-1.2 -m "Release 1.2"
+```
+To compare two tags
+```
 git diff tag1 tag2
-
-git tag -a v-0.9-beta commitID
-git tag -a v-0.8-alpha -f commitID
+```
+To modify the latest commit message
+```
+git commit --amend
+```
+To tag a specific commit
+```
+git tag -a v-0.9-beta <CommitId>
+```
+To change the tag from one CommitId to another
+```
+git tag -a v-0.8-alpha -f <new CommitId>
+```
+To push a tag to github, this will push both tag and the commit associated with the tag if the commit has not been pushed.
+```
 git push origin tag
+```
+To push all local tags to github at one time. Note that github tracks releases by using tags. It will automatically generate `.zip` and `.tag.gz` files associated with those tags.
+```
 git push origin master --tag
-git push origin :v-0.8-alpha # delete from remote
-
-## Patch the diff
-git diff > my_diff.patch
-git apply my_diff.patch
+```
+To delete a tag from github
+```
+git push origin :v-0.8-alpha
+```
 
 ## Miscellaneous
+`git ls-files` shows all files being tracked in the current git repository.
+
+To save the diff and apply the diff
+```
+git diff > my_diff.patch
+git apply my_diff.patch
+```
+
 https://phoenixnap.com/kb/git-squash#:~:text=Git%20squash%20is%20a%20feature,commits%20into%20the%20selected%20one.
 
 https://www.google.com/search?q=difference+between+git+fetch+and+git+pull&oq=difference+between+git+fetch+and+git+pull&aqs=chrome..69i57.9762j0j7&sourceid=chrome&ie=UTF-8
@@ -664,3 +896,7 @@ https://www.google.com/search?q=difference+between+git+fetch+and+git+pull&oq=dif
 https://medium.com/@DGabeau/git-pull-rebase-vs-git-pull-c2b352fe53aa#:~:text=In%20short%2C%20%60git%20pull%60,on%20a%20team%20with%20many
 
 https://www.geeksforgeeks.org/git-difference-between-git-fetch-and-git-pull/
+
+https://www.nobledesktop.com/learn/git/undo-changes
+
+https://www.atlassian.com/git/tutorials/saving-changes/git-stash#:~:text=git%20stash%20temporarily%20shelves%20(or,re%2Dapply%20them%20later%20on.
