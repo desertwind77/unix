@@ -888,7 +888,69 @@ To save the diff and apply the diff
 git diff > my_diff.patch
 git apply my_diff.patch
 ```
+### Reset
+There are three types of reset:
+* Soft : reset only HEAD
+* Mixed : reset both HEAD and the staging area
+* Hard : reset HEAD, the staging area, and the working tree
 
+```
+bash-3.2$ git log                                                                                                                                                                                                                         
+4dc61ac  (HEAD -> master) Added file3.txt                                                                                                                                                                                                 
+2d8a549  Added file2.txt                                                                                                                                                                                                                  
+1d58a7b  Added file1.txt                                                                                                                                                                                                                  
+4beb7f0  (origin/master, origin/HEAD) Merge pull request #6 from jasongtaylor/feature-readme                                                                                                                                              
+e73f914  Adding Purpose section to README                                                                                                                                                                                                 
+34f563b  Adding README file                                                                                                                                                                                                               
+5c05047  Copying files from initializr project zip file and then creating simple.html as basis for super simple pages
+
+bash-3.2$ git reset HEAD^^
+
+bash-3.2$ git log                                                                                                                                                                                                                         
+1d58a7b  (HEAD -> master) Added file1.txt                                                                                                                                                                                                 
+4beb7f0  (origin/master, origin/HEAD) Merge pull request #6 from jasongtaylor/feature-readme                                                                                                                                              
+e73f914  Adding Purpose section to README                                                                                                                                                                                                 
+34f563b  Adding README file                                                                                                                                                                                                               
+5c05047  Copying files from initializr project zip file and then creating simple.html as basis for super simple pages
+
+bash-3.2$ git reflog                                                                                                                                                                                                                      
+1d58a7b (HEAD -> master) HEAD@{0}: reset: moving to HEAD^^                                                                                                                                                                                
+4dc61ac HEAD@{1}: commit: Added file3.txt                                                                                                                                                                                                 
+2d8a549 HEAD@{2}: commit: Added file2.txt                                                                                                                                                                                                 
+1d58a7b (HEAD -> master) HEAD@{3}: commit: Added file1.txt                                                                                                                                                                                
+4beb7f0 (origin/master, origin/HEAD) HEAD@{4}: clone: from https://github.com/desertwind77/starter-web.git
+
+# We can do either "git reset HEAD@{2}" or "git reset <CommitId>
+bash-3.2$ git reset HEAD@{2}
+bash-3.2$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 2 commits.│
+  (use "git push" to publish your local commits)
+
+Untracked files:                                                                                                                                                                                                                          
+  (use "git add <file>..." to include in what will be committed)                                                                                                                                                                          
+        file3.txt                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                          
+nothing added to commit but untracked files present (use "git add" to track)
+```
+
+### Comparing the branches on github
+For example, we want to compare `origin/master` and `origin/test-branch`. 
+1) Clone the repository from github.com.
+2) Create a branch, called `test` to track `origin/test-branch` by doing `git branch test origin/test-branch`.
+3) Switch to the `test` branch by doing `git checkout test`.
+4) Pull the change for the `origin/test-branch` from github.com by doing `git pull`
+5) Run `git diff master test`.
+
+### Cherrypick
+Let's assume there are several commits in a feature branch. One of the commits is to fix a bug which is also present in `master`. Cherrypick means to bring that one small commit from the feature branch into `master` as a hotfix. To avoid merge conflicts, we should keep each commit small and independent.
+
+From `master`, run the following command.
+```
+git cherry-pick <CommitId>
+```
+
+### To learn
 https://phoenixnap.com/kb/git-squash#:~:text=Git%20squash%20is%20a%20feature,commits%20into%20the%20selected%20one.
 
 https://www.google.com/search?q=difference+between+git+fetch+and+git+pull&oq=difference+between+git+fetch+and+git+pull&aqs=chrome..69i57.9762j0j7&sourceid=chrome&ie=UTF-8
