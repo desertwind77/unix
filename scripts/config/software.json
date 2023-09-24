@@ -44,6 +44,7 @@
          "wget" : "web downloader",
          "xrdp" : "remote desktop",
          "youtube-dl" : "Youtube downloader",
+         "zellij" : "Terminal multiplexer (better than tmux)",
          "zoxide" : "a smart cd command"
       },
       "Platforms" : {
@@ -79,7 +80,7 @@
                      "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "grex", "htop",
                      "hyperfine", "imageMagick", "lilypond", "lynx", "mas", "mc", "mosh", "ncdu", "neofetch",
                      "octave", "procs", "ranger", "rar", "ripgrep", "tealdeer", "tig", "tmux", "tokei", "vim", "wget",
-                     "youtube-dl", "zoxide"
+                     "youtube-dl", "zellij", "zoxide"
                   ]
                }
             },
