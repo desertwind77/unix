@@ -22,6 +22,40 @@ if status is-interactive
       end
    end
 
+   function cgen -d "Generate cscope database"
+      # cscope can search for all functions that call a particular funciton while ctags
+      # does not support this feature.
+      echo "Finding relevant source files..."
+      find . -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" > cscope.files
+
+      echo "Building cscope database..."
+      # -q : build a faster, but larger database
+      # -R : search recursively
+      # -b : build the database without starting cscope browser
+      # -i <file> : specify the list of source files
+      cscope -q -R -b -i cscope.files
+
+      # To luanch cscope, run "cscope -d". "-d" tells cscope not to regenerate the database.
+      # To exit cscope, type Ctrl-d
+      # Ctrl-b    to search for previous terms again
+      # Ctrl-c    to toggle case-sensitive search
+   end
+
+   function ckernelgen -d "Generate the cscope database for a Linux kernel"
+      echo "Finding relevant source files..."
+      find .                                                                  \
+         -path "$LNX/arch/*" ! -path "$LNX/arch/x86*" -prune -o               \
+         -path "$LNX/include/asm-*" ! -path "$LNX/include/asm-generic*"       \
+                                    ! -path "$LNX/include/asm-x86*" -prune -o \
+         -path "$LNX/tmp*" -prune -o                                          \
+         -path "$LNX/Documentation*" -prune -o                                \
+         -path "$LNX/scripts*" -prune -o                                      \
+         -name "*.[chxsS]" -print > $LNX/cscope.files
+
+      echo "Building cscope database..."
+      time cscope -q -k -b -i cscope.files
+   end
+
    function notify -d "Beep when the last background job finish"
       set -l job ( jobs -l -g )
       # Disabling the following line; otherwise, this function will not work
@@ -77,7 +111,7 @@ if status is-interactive
    # git
    alias gts='git status'
    alias gtl='git log'
-   alias gd='git diff | bat'
+   alias gtd='git diff | bat'
    alias gtpush='git push origin master'
    alias gtpull='git pull origin master'
 
@@ -101,6 +135,7 @@ if status is-interactive
 
    #---------------------- Variables ---------------------
    set -gx PATH "$HOME/Workspace/scripts" "$HOME/Workspace/bin" $PATH;
+   set -gx CSCOPE_EDITOR vim
    set -gx EDITOR vim
    set -gx VISUAL vim
 
