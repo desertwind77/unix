@@ -109,9 +109,10 @@ if status is-interactive
    alias la='exa --icons -a'
 
    # git
-   alias gts='git status'
-   alias gtl='git log'
    alias gtd='git diff | bat'
+   alias gth='git hist'
+   alias gtl='git log'
+   alias gts='git status'
    alias gtpush='git push origin master'
    alias gtpull='git pull origin master'
 
