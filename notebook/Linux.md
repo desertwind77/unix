@@ -165,39 +165,83 @@ where
          
 At this point, the orig/ folder contains the new/ content, but still has its old name.
 
-### ctags
-1) Generate the tags file
-```
-ctags -R *
-```
-2) Using vim to search for a tag called title
-```
-vim -t title
-```
-3) Commands inside Vim
-
-| Command | Functon |
-|---------|---------|
-|:tag `ClassName`|Search for the tag `ClassName`|
-|:tn, :tnext|Go to the next definition|
-|:tp, :tprevious|Go to the previous definition|
-|:tf, :tfirst|Go to the first definition|
-|:tl, :tlast|Go to the last definition|
-|:ts, :tselect|List all definitions|
-
-Placing the cursor on some text and then
-
-| Command | Functon |
-|---------|---------|
-|^]|Jump to definition|
-|^t|Jump back from definition|
-|^w}|Preview definition|
-|g]|See all definitions|
-
 ### Shell Scripts
+
+#### Options
+```shell
+# Enable the debugging mode which causes Bash to print each command
+# that it executes to the terminal, preceded by a + sign.
+set -x
+# Exit immediately when any command in the script fails
+set -e
+```
+
+#### Checking Exit Status
+```shell
+# Check the exit code of the most recent command using the $? variable.
+# A value of 0 indicates success, while any other value indicates an error.
+if [ $? -ne 0 ]; then
+    echo "Error occurred."
+fi
+```
+
+#### Command Line Arguments
+```shell
+echo "Number of argument = $#"
+echo "All the arguments  = $@"
+echo "The first grgument = $1"
+```
+
+#### Input
+```shell
+echo "Please enter the filename to read: "
+read filename
+while read line
+do
+   echo $line
+done < $filename
+```
+
+#### Conditional Statement
+if-else statement
+```shell
+echo "Please enter a number: "
+read num
+
+if [ $num -lt -100 -o $num -gt 100 ]; then      # or
+   echo "$num is out-of-range"
+elif [ $num -ge -100 -a $num -le 100 ]; then    # and
+   if [ $num -gt 0 ]; then
+      echo "$num is positive"
+   elif [ $num -lt 0 ]; then
+      echo "$num is negative"
+   else
+      echo "$num is zero"
+   fi
+fi
+```
+switch-case statement
+```shell
+fruit="apple"
+case $fruit in
+   "apple")
+      echo "This is a red fruit."
+      ;;
+   "banana")
+      echo "This is a yellow fruit."
+      ;;
+   "orange")
+      echo "This is an orange fruit."
+      ;;
+   *)
+      echo "Unknown fruit."
+      ;;
+esac
+```
+
 #### Loop
 bash
-```
+```shell
 for i in 1, 2, 3, 4, 5
 do
     echo $i
@@ -208,38 +252,157 @@ for i in {1..5} ; do echo $i; done
 for i in {0..10..2} ; do echo $i; done
 
 for i in $(unix-command-here) ; do echo $i; done
+
+i=1
+while [[ $i -le 10 ]] ; do
+   echo "$i"
+   (( i += 1 ))
+done
 ```
 fish
-```
+```shell
 for i in foo bar baz; echo $i; end
 ```
+#### Function
+A single line function
+```shell
+function hello_world { echo "Hello, World!"; }
+```
+A multi-line function
+```shell
+#!/bin/bash
 
-### cscope
-#### Generate the cscope.files
+var1='A'
+var2='B'
+
+my_function () {
+  local var1='C'        # A local variable
+  var2='D'              # The global variable var2
+  echo "Inside function: var1: $var1, var2: $var2"
+}
+
+echo "Before executing function: var1: $var1, var2: $var2"
+my_function
+echo "After executing function: var1: $var1, var2: $var2"
 ```
-# Linux kernel
-LNX=/home/jru/linux-2.4.18
-cd /
-find  $LNX                                                            \
--path "$LNX/arch/*" ! -path "$LNX/arch/i386*" -prune -o               \
--path "$LNX/include/asm-*" ! -path "$LNX/include/asm-i386*" -prune -o \
--path "$LNX/tmp*" -prune -o                                           \
--path "$LNX/Documentation*" -prune -o                                 \
--path "$LNX/scripts*" -prune -o                                       \
--path "$LNX/drivers*" -prune -o                                       \
--name "*.[chxsS]" -print > /path/to/cscope.files
+Output
 ```
+Before executing function: var1: A, var2: B
+Inside function: var1: C, var2: D
+After executing function: var1: A, var2: D
 ```
-# Java
-find /my/project/dir -name '*.java' > /path/to/cscope.files
+Bash functions don't return a value like the way real programming languages do. Its return value is the status of the last statement executed in the function, 0 for success and non-zero decimal number in the 1 - 255 range for failure. We can check the return status of a function by using `$?`. 
+
+One way to actually return an arbitrary value from a function is to assign the result of the function to a global variable.
+```shell
+my_function () {
+  func_result="some result"
+  return 0
+}
+
+my_function
+err_status=$?
+echo $func_result
 ```
-#### Generate the cscope database
-    cd /path/to
-    cscope -b -q -k
-    
-#### Use cscope
-    cd /path/to
-    cscope -d
+Another, better option to return a value from a function is to send the value to stdout using `echo` or `printf`.
+```shell
+my_function () {
+  local func_result="some result"
+  echo "$func_result"
+}
+
+func_result="$(my_function)"
+echo $func_result
+```
+Function parameters
+* `$0` is the function name
+* `$1`, `$2`, ... `$n` are the position of the parameter after the function's name
+* `$#` is the number of positional parameters passed to the function.
+* `$*` and `$@` holds all positional parameters passed to the function.
+    * When double-quoted, `$*` expands to a single string separated by space e.g. "$1 $2 $n".
+    * When double-quoted, `$@` expands to separate strings e.g. "$1" "$2" "$n".
+    * When not double-quoted, `$*` and `$@` are the same.
+```shell
+greeting () {
+  echo "Hello $1"
+}
+
+greeting "Joe"
+```
+
+#### xargs
+Redirect the output of a command as the argument of another command
+```
+nautilus:~/Workspace/temp $ cat filelist | xargs -n 1 wc
+  5   5 37 filelist
+  6  18 99 t.c
+ 16  52 277 test1.py
+ 24  84 483 u.py
+ 
+nautilus:~/Workspace/temp $ cat filelist | xargs touch
+nautilus:~/Workspace/temp $ ls
+a  b  c  d
+nautilus:~/Workspace/temp $ cat filelist | xargs rm -v
+removed 'a'
+removed 'b'
+removed 'c'
+removed 'd'
+```
+Redirect STDOUT to commands that doesn't support pipe.
+```
+nautilus:~/Workspace/temp $ date | echo
+
+nautilus:~/Workspace/temp $ date | xargs echo
+Sun Sep 24 03:59:49 PM PDT 2023
+```
+Use `-d` to change the delimiter which is a newline or a space by default and `-n` to limit the number of arguments per command. `-n 1` means each command will take just one argument. As a result, the following command will call `echo` three times.
+```
+nautilus:~/Workspace/temp $ echo -n "123-456-7890" | xargs echo
+123-456-7890
+nautilus:~/Workspace/temp $ echo -n "123-456-7890" | xargs -d - echo
+123 456 7890
+nautilus:~/Workspace/temp $ echo -n "123-456-7890" | xargs -n 1 -d - echo
+123
+456
+7890
+```
+Prepend or append `xargs` arguments. Here, -I option defines `{}` as the symbol for the argument that xargs is currently working on. Once the symbol `{}` is defined, the symbol can be used to pass the argument to the command command2, which (the symbol `{}`) will be replaced by the value of the argument.
+```
+nautilus:~/Workspace/temp $ echo -n "123-456-789" | xargs -d - -n 1 -I{} echo {}
+xargs: warning: options --max-args and --replace/-I/-i are mutually exclusive, ignoring previous --max-args value
+123
+456
+789
+
+nautilus:~/Workspace/temp $ echo -n "123-456-789" | xargs -d - -n 1 -I{} echo {}.txt
+xargs: warning: options --max-args and --replace/-I/-i are mutually exclusive, ignoring previous --max-args value
+123.txt
+456.txt
+789.txt
+
+nautilus:~/Workspace/temp $ echo -n "123-456-789" | xargs -d - -n 1 -I{} echo "Hello {}"
+xargs: warning: options --max-args and --replace/-I/-i are mutually exclusive, ignoring previous --max-args value
+Hello 123
+Hello 456
+Hello 789
+```
+Change extensions of specific files. The following command will start a subshell to rename the file. `${FILE%%.*}` removes the extension of the filename (including . character).
+```
+nautilus:~/Workspace/temp/u $ ls | xargs -I{} bash -c 'FILE={} && mv -v $FILE ${FILE%%.*}.png'
+renamed 'test1.py' -> 'test1.png'
+renamed 'test2.py' -> 'test2.png'
+renamed 'test3.py' -> 'test3.png'
+```
+#### crontab
+To edit a cron job, `crontab -e`. To show the current cron jobs, `crontab -l`
+
+|Schedule|Description|
+|--------|-----------|
+|`0 0 * * *`|Run a script at midnight every day|
+|`*/5 * * * *`|Run a script every 5 minutes|
+|`0 6 * * 1-5`|Run a script at 6 am from Monday to Friday|
+|`0 0 1-7 * *`|Run a script on the first 7 days of every month|
+|`0 12 1 * *`|Run a script on the first day of every month at noon|
 
 ### Benchmark HDD or SSD performance
 To show sequential latency
