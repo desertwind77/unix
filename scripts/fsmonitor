@@ -8,8 +8,8 @@ name=fmonitor
 packages="pyinotify"
 
 workspace=$HOME/Workspace
-script_dir=$workspace/scripts
 venv_dir=$workspace/python_venv/$name
+script_dir="$(dirname "$(readlink -f "$0")")"
 
 if [ ! -d "$venv_dir" ]
 then

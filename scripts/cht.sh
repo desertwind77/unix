@@ -7,7 +7,10 @@
 #
 # From https://www.youtube.com/watch?v=hJzqEAf2U4I
 
-config=$HOME/Workspace/scripts/config
+# The readlink command with the -f option can be used to resolve symbolic
+# links and return the absolute path of a file or directory
+script_dir="$(dirname "$(readlink -f "$0")")"
+config=$script_dir/config
 languages=$config/tmux_cht_languages
 commands=$config/tmux_cht_commands
 # Use fuzzy finder so that we don't have to type the whole word
