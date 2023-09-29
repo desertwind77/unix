@@ -18,7 +18,7 @@ QUOTE_FILENAME = 'config/Quotes.md'
 
 @dataclass( frozen=True )
 class Quote:
-    '''A class to represet a quote'''
+    '''A class to represent a quote'''
     text : str
     tags : dict
 
