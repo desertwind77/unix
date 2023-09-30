@@ -90,11 +90,14 @@ def convert_all_files( language : str, filenames : str,
 
     # TODO : parallel conversion, sequential play
     for obj in convert_list:
-        if verbose:
-            print( f'Converting {obj.output}' )
-        convert_text_to_speech( obj )
+        if not os.path.exists( obj.output ):
+            if verbose:
+                print( f'Converting {obj.output}' )
+            convert_text_to_speech( obj )
 
         if play and os.path.exists( obj.output ):
+            if verbose:
+                print( f'Playing {obj.output}' )
             play_audio( obj.output )
             os.remove( obj.output )
 
