@@ -73,6 +73,12 @@ def convert_all_files( language : str, filenames : str,
         if fileinput.isfirstline():
             # old file
             if text != '':
+                # Attempt to guess the language from the filename and override
+                # the language determined by argparse.
+                if output.startswith( 'th_' ):
+                    language = 'th'
+                elif output.startswith( 'en_' ):
+                    language = 'en'
                 convert_list.append( TextToConvert( text, language, output ) )
                 output = text = ''
             # new file
@@ -92,7 +98,7 @@ def convert_all_files( language : str, filenames : str,
     for obj in convert_list:
         if not os.path.exists( obj.output ):
             if verbose:
-                print( f'Converting {obj.output}' )
+                print( f'Converting {obj.output} ({obj.language})' )
             convert_text_to_speech( obj )
 
         if play and os.path.exists( obj.output ):
