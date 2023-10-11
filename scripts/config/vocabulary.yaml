@@ -5,10 +5,15 @@ agnostic:
   denoting or relating to hardware or software that is compatible with many types of platforms or operating systems:
   - Many common file formats (JPEG, MP3, etc.) are {platform-agnostic}.
   - Asynchronous IO is a {language-agnostic} paradigm that has implementations across a host of programming languages
+  - In this article, I use the term async IO to denote the language-{agnostic} design of asynchronous IO, while asyncio refers to the Python package.
 
 albeit:
   although:
   - He was making progress, {albeit} rather slowly.
+
+amenity:
+  an item that increases comfort:
+  - Bill Gate's house is stocked with so many {amenities}. He never has to do anything for himself.
 
 aquit:
   to discharge completely (as from an accusation or obligation):
@@ -140,6 +145,12 @@ definitive:
   - a {definitive} diagnosis
   \(of a book or other text\) the most authoritative of its kind:
   - the {definitive} biography of Harry Truman.
+
+denote:
+  be a sign of; indicate:
+  - This mark {denotes} purity and quality.
+  stand as a name or symbol for:
+  - The level of output per firm, {denoted} by X.
 
 denounce:
   publicly declare to be wrong or evil:
@@ -715,6 +726,10 @@ sound:
   showing good judgment or sense:
   - The doctor's statement affirmed that the wealthy man was of {sound} mind when he decided to bequeath all of his money to the charitable foundation.
   - Social distancing, where people are advised to stay at least 6 feet apart, was {sound} advice when the idea was put forth during the pandemic's early days. It remains {sound} advice now, and will continue to be {sound} advice in the days ahead.
+
+stash:
+  \(with object and adverbial of place\) to store (something) safely and secretly in a specified place:
+  - Their wealth had been stashed away in Swiss banks.
 
 steep:
   to soak (food or tea) in water or other liquid so as to extract its flavor or to soften it:
