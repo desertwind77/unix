@@ -6,7 +6,8 @@ import argparse
 import os
 import re
 import shutil
-from genutils import load_config, check_if_folder_exists
+import sys
+from genutils import load_config, check_if_folder_exists, DirectoryNotFound
 
 CONFIG_FILE = 'config/pfrmcpy.json'
 
@@ -149,7 +150,12 @@ def process_command_line_argument():
 def main():
     '''Main program'''
     args = process_command_line_argument()
-    config = load_config( CONFIG_FILE )
+    try:
+        config = load_config( CONFIG_FILE )
+    except DirectoryNotFound as exception:
+        print( exception )
+        sys.exit( 1 )
+
     dir_copy_list = get_src_dst_folder_pairs( config )
     check_all_folder_exists( dir_copy_list )
     file_copy_list = get_file_copy_list( config, dir_copy_list )
