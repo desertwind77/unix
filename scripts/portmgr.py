@@ -120,7 +120,13 @@ class FileList:
         return f'{self.folder} : [ {all_files} ]'
 
 def check_portfolio_sanity( config ):
-    '''Check if all folders in each portfolio have the same content'''
+    '''Do sanity check before we do the actual works
+    1) Check if all destination folders exist
+    2) Check if all folders in each portfolio have the same content
+    '''
+    for destination in config[ "Destinations" ].values():
+        check_if_folder_exists( destination )
+
     portfolio = config[ "Portfolio" ]
     portfolio_location = config[ "Destinations" ][ "Portfolio" ]
 
@@ -153,11 +159,15 @@ def get_next_index( config ):
 
         folder = info[ 'Destinations' ][ 'Portfolio' ][ 0 ]
         abs_path = os.path.join( portfolio_location, name, folder )
-        last_file = FileList( abs_path ).files[ -1 ]
-        search_obj = re.search( r'[a-zA-Z\s]+(\d+)', last_file )
-        if not search_obj:
-            raise InvalidFilenameException( last_file )
-        next_index[ name ] = int( search_obj.group( 1 ) ) + 1
+        file_list = FileList( abs_path ).files
+        if file_list:
+            last_file = file_list[ -1 ]
+            search_obj = re.search( r'[a-zA-Z\s]+(\d+)', last_file )
+            if not search_obj:
+                raise InvalidFilenameException( last_file )
+            next_index[ name ] = int( search_obj.group( 1 ) ) + 1
+        else:
+            next_index[ name ] = 1
     return next_index
 
 class Portfolio:

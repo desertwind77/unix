@@ -48,6 +48,13 @@
                "GoogleDrive" : "Web"
             }
          },
+         "Family (Mobile)" : {
+            "baseName" : "Family (Mobile)",
+            "Destinations" : {
+               "Portfolio" : [ "Full", "PSD", "Web" ],
+               "GoogleDrive" : "Web"
+            }
+         },
          "Infrared" : {
             "baseName" : "Infrared",
             "Destinations" : {
