@@ -128,7 +128,8 @@ if status is-interactive
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
    alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
-   alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
+   # Deprecated : replaced by a python script using rich module to print Markdown text for better result
+   #alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
    alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
    alias ctagsgen='ctags -R *'
    alias vimkeys='glow -p ~/Workspace/github/unix/notebook/Vim.md'
