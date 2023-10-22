@@ -79,8 +79,8 @@
                      "ack", "bat", "btop", "cheat", "cscope", "ctags-exuberant", "dos2unix", "duf", "dust", "exa",
                      "fd", "ffmpeg", "fish", "fluid-synth", "fzf", "grex", "htop",
                      "hyperfine", "imageMagick", "lilypond", "lynx", "mas", "mc", "mosh", "ncdu", "neofetch",
-                     "octave", "procs", "ranger", "rar", "ripgrep", "tealdeer", "tig", "tmux", "tokei", "vim", "wget",
-                     "youtube-dl", "zellij", "zoxide"
+                     "octave", "procs", "python-tk", "ranger", "rar", "ripgrep", "tealdeer", "tig", "tmux", "tokei",
+                     "vim", "wget", "youtube-dl", "zellij", "zoxide"
                   ]
                }
             },
