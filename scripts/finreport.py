@@ -13,6 +13,9 @@ import re
 # pylint: disable=import-error
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-branches
+from rich.console import Console
+from rich.table import Table
+from rich.traceback import install
 from tabulate import tabulate, SEPARATING_LINE
 import PyPDF2
 
@@ -325,22 +328,23 @@ class CreditReport:
 
         self.calculate_expenses_by_category( known_categories )
 
-    def print_expense_summary_by_account_type( self, account_type : str ):
+    def print_expense_summary_by_account_type( self, account_type : str,
+                                               plain : bool = True ):
         '''Print the financial report where it is grouped by the account type
 
         args:
             account_type (str) : account type
+            plain (bool) : print the output using plain text
         '''
         table = []
-        header = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-                   'Oct', 'Nov', 'Dec', 'Total' ]
         for category in sorted( self.expense_by_category[ account_type ].keys() ):
             expenses = self.expense_by_category[ account_type ][ category ]
             row = [ round( expenses.get( i, 0 ) ) for i in range( 1, 13 ) ]
             total = sum( row )
             row = [ category ] + row + [ total ]
             table.append( row )
-        table.append( SEPARATING_LINE )
+        if plain:
+            table.append( SEPARATING_LINE )
 
         total_row = []
         for month in range( 1, 13 ):
@@ -352,14 +356,38 @@ class CreditReport:
         total_row = [ 'Subtotal' ] + total_row + [ total ]
         table.append( total_row )
 
-        print( tabulate( table, header, tablefmt="simple", intfmt="," ) )
-
-    def print_expense_summary( self ):
-        '''Print expense summary'''
-        for account_type in sorted( self.expense_by_category.keys() ):
+        headers = [ 'Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Total' ]
+        if plain:
             print( f'[{account_type}]' )
-            self.print_expense_summary_by_account_type( account_type )
+            print( tabulate( table, headers, tablefmt="simple", intfmt="," ) )
             print()
+        else:
+            console = Console()
+            rich_table = Table( title=f'{account_type}' )
+            for header in headers:
+                if header in [ 'Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov' ]:
+                    rich_table.add_column( header, justify='right', style='bright_black' )
+                elif header in [ 'Feb', 'Apr', 'Jun', 'Aug', 'Oct', 'Dec' ]:
+                    rich_table.add_column( header, justify='right', style='white' )
+                elif header == 'Total':
+                    rich_table.add_column( header, justify='right', style='red' )
+                else:
+                    rich_table.add_column( header, style='magenta' )
+            for row in table:
+                row = [ r if isinstance( r, str ) else str( r ) for r in row ]
+                rich_table.add_row( *row )
+            console.print( rich_table )
+            print()
+
+    def print_expense_summary( self, plain : bool = False ):
+        '''Print expense summary
+
+        args:
+            plain (bool) : print the output using plain text
+        '''
+        for account_type in sorted( self.expense_by_category.keys() ):
+            self.print_expense_summary_by_account_type( account_type, plain=plain )
 
     def query( self, account : str = None, month : int = None,
                category : str = None, group_by_account : bool = False,
@@ -419,7 +447,7 @@ class CreditReport:
 
     def run( self, account : str = None, month : int = None,
              category : str = None, group_by_account : bool = False,
-             verbose : bool = False ):
+             plain : bool = False, verbose : bool = False ):
         '''This function has two use cases.
 
         1. Print the financial summary for all the statements in a year.
@@ -432,6 +460,7 @@ class CreditReport:
             month (int) : the month to query
             category (str) : the category to query
             group_by_account (bool) : group the transactions by account or not
+            plain (bool) : print the output using plain text
             verbose (bool) : print the debug info or not
         '''
         self.load_account_config()
@@ -439,7 +468,7 @@ class CreditReport:
         self.generate_statements_from_files()
         self.load_all_transactions( verbose=verbose )
         if not any( [ account, month, category ] ):
-            self.print_expense_summary()
+            self.print_expense_summary( plain=plain )
         else:
             self.query( account=account, month=month, category=category,
                         group_by_account=group_by_account,
@@ -474,12 +503,17 @@ def process_command_line_arguments( config : dict ) -> argparse.Namespace:
                          help="Month of interest" )
     parser.add_argument( "-y", "--year", action='store',
                          help="Year of interest" )
+    parser.add_argument( "-p", "--plain", action="store_true",
+                         help="Print the output using plain text" )
     parser.add_argument( "-v", "--verbose", action="store_true",
                          help="Print more information" )
     return parser.parse_args()
 
 def main():
     '''The main program'''
+    # Install rich traceback to override the default python traceback
+    install()
+
     config = load_config( CONFIG_FILENAME )
     args = process_command_line_arguments( config )
     account = args.account
@@ -487,6 +521,7 @@ def main():
     group = args.group
     month = int( args.month ) if args.month else None
     year = args.year if args.year else datetime.now().year
+    plain = args.plain
     verbose = args.verbose
     location = str( Path( args.location )/str( year ) )
     if not os.path.exists( location ):
@@ -495,7 +530,7 @@ def main():
 
     reporter = CreditReport( config, location )
     reporter.run( account=account, month=month, category=category,
-                  group_by_account=group, verbose=verbose )
+                  group_by_account=group, plain=plain, verbose=verbose )
 
 if __name__ == '__main__':
     main()

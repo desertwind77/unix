@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 name=finreport
-packages="PyPDF2 tabulate"
+packages="PyPDF2 rich tabulate"
 statements="/Users/athichart/Google Drive/My Drive/Document/Statements"
 
 workspace=$HOME/Workspace
@@ -18,6 +18,5 @@ then
 fi
 
 source $venv_dir/bin/activate
-# Ignore the output from PyPDF. I believe this is a bug in the package
-$script_dir/$name.py -l "$statements" "$@" 2>&1 | grep -v "Multiple definitions in dictionary"
+$script_dir/$name.py -l "$statements" "$@"
 deactivate
