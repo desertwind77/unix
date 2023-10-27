@@ -41,6 +41,24 @@ if status is-interactive
       # Ctrl-c    to toggle case-sensitive search
    end
 
+   function rcd -d "Use ranger to change the directory"
+      set tempfile '/tmp/chosendir'
+      ranger --choosedir=$tempfile (pwd)
+
+      if test -f $tempfile
+         if [ (cat $tempfile) != (pwd) ]
+            cd (cat $tempfile)
+         end
+      end
+
+      rm -f $tempfile
+   end
+
+   # I don't know what this is. Need to revisit
+   function fish_user_key_bindings
+      bind -M insert \co 'rcd; commandline -f repaint'
+   end
+
    function ckernelgen -d "Generate the cscope database for a Linux kernel"
       echo "Finding relevant source files..."
       find .                                                                  \
