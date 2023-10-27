@@ -65,7 +65,23 @@ class TicTacToe:
         return None
 
     def minimax( self, depth, is_maximizing ):
-        '''The minimax algorithm to calculate the score of the current move'''
+        '''The minimax algorithm to calculate the score of the current move
+
+        Minimax is a kind of backtracking algorithm that is used in decision
+        making and game theory to find the optimal move for a player, assuming
+        that your opponent also plays optimally. It is widely used in two
+        player turn-based games such as Tic-Tac-Toe, Backgammon, Mancala,
+        Chess, etc.
+
+        Since this is a backtracking based algorithm, it tries all possible
+        moves, then backtracks and makes a decision.
+
+        Time complexity : O(b^d) b is the branching factor and d is count of
+        depth or ply of graph or tree.
+
+        Space Complexity : O(bd) where b is branching factor into d is maximum
+        depth of tree similar to DFS.
+        '''
         result = self.check_winner()
         if result:
             if result == self.tie:
