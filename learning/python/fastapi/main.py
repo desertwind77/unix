@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import ( FastAPI, Path, Query, Body,
                       Request, Form, File, UploadFile,
-                      Cookie, Header )
+                      Cookie, Header, WebSocket )
 from pydantic import BaseModel, Field
 from typing import List, Optional, Tuple
 import datetime
@@ -33,14 +33,14 @@ async def index():
     return {"message": "Hello World"}
 
 # Path parameter
-# curl http://127.0.0.1:8000/hello/ink
+# curl http://127.0.0.1:8000/hello1/ink/13
 @app.get( "/hello1/{name}/{age}")
 async def hello1( name, age ):
     return {"name": name, "age": age}
 
 # Query paremeter : string after ? is the query
 # which is a list of key-value pairs concatenated by &
-# curl "http://127.0.0.1:8000/hello?name=ink&age=20"
+# curl "http://127.0.0.1:8000/hello2?name=ink&age=20"
 @app.get( "/hello2")
 async def hello2( name : str, age : int ):
     return {"name": name, "age": age}
@@ -321,6 +321,122 @@ def index_flask():
 from fastapi.middleware.wsgi import WSGIMiddleware
 # The Flask sub application is mounted at the URL http://localhost:8000/flask.
 app.mount("/flask", WSGIMiddleware(flask_app))
+
+# Dependency injection refers to the mechanism where an object receives other
+# objects that it depends on. The other objects are called dependencies.
+# Dependency injection has the following advantages:
+# - reuse the same shared logic
+# - share database connections
+# - enforce authentication and security features
+from fastapi import Depends
+from fastapi import HTTPException
+
+async def dependency1( id: str, name: str, age: int ):
+    return { 'id': id, 'name': name, 'age': age }
+
+# curl -X 'GET' 'http://127.0.0.1:8000/user1?id=ink&name=ink&age=20'
+@app.get("/user1")
+async def user1( dep: dict = Depends( dependency1 ) ):
+    return dep
+
+# curl -X 'GET' 'http://127.0.0.1:8000/admin1?id=ink&name=ink&age=20'
+@app.get("/admin1")
+async def admin1( dep: dict = Depends( dependency1 ) ):
+    return dep
+
+class dependency2:
+    def __init__(self, id: str, name: str, age: int):
+        self.id = id
+        self.name = name
+        self.age = age
+
+# curl -X 'GET' 'http://127.0.0.1:8000/user2?id=ink&name=ink&age=20'
+@app.get("/user2")
+async def user2( dep: dependency2 = Depends( dependency2 ) ):
+    return dep
+
+# curl -X 'GET' 'http://127.0.0.1:8000/admin2?id=ink&name=ink&age=20'
+@app.get("/admin2")
+async def admin2( dep: dependency2 = Depends( dependency2 ) ):
+    return dep
+
+# Use dependency injection as operation decoration instead of operation
+# funciton
+async def validate( dep: dependency2 = Depends( dependency2 ) ):
+   if dep.age > 18:
+      raise HTTPException( status_code=400, detail="You are not eligible" )
+
+# curl -X 'GET' 'http://127.0.0.1:8000/user3?id=ink&name=ink&age=20'
+@app.get( "/user3", dependencies=[ Depends( validate ) ] )
+async def user3():
+   return { "message": "You are eligible" }
+
+# CRUD operations : create, read, update, delete
+# This is equivalent to POST, GET, PUT, DELETE methods
+class Book( BaseModel ):
+    id: int
+    title: str
+    author: str
+    publisher: str
+
+data = []
+
+@app.post( '/book' )
+def add_book( book: Book ):
+    data.append( book.dict() )
+    return data
+
+@app.get( '/list' )
+def get_books():
+    return data
+
+@app.get( '/book/{id}' )
+def get_book( id: int ):
+    return data[ id - 1 ]
+
+@app.put( '/book/{id}' )
+def add_book( id: int, book: Book ):
+    data[ id - 1 ] = book
+    return data
+
+@app.delete( '/book/{id}' )
+def delete_book( id: int ):
+    data.pop( id - 1 )
+    return data
+
+# Skip the following
+# https://www.tutorialspoint.com/fastapi/fastapi_sql_databases.htm
+# https://www.tutorialspoint.com/fastapi/fastapi_using_mongodb.htm
+# https://www.tutorialspoint.com/fastapi/fastapi_using_graphql.htm
+
+# WebSocket
+# A WebSocket is a persistent connection between a client and server to provide
+# bidirectional, full-duplex communication between the two. The communication
+# takes place over HTTP through a single TCP/IP socket connection. One of the
+# limitations of HTTP is that it is a strictly half-duplex or unidirectional
+# protocol. WebSocket uses HTTP as the initial transport mechanism, but keeps
+# the TCP connection alive the connection after the HTTP response is received.
+# Same connection object it can be used two-way communication between client
+# and server. Thus, real-time applications can be built using WebSocket APIs.
+
+# This is the index page
+@app.get( "/socket", response_class=HTMLResponse )
+async def socket( request: Request ):
+    return templates.TemplateResponse( "socket.html", {"request": request} )
+
+# As the JavaScript code is loaded, it creates a websocket listening at
+# "ws://localhost:8000/ws". The sendMessage() function directs the input
+# message to the WebSocket URL.
+#
+# This route invokes the websocket_endpoint() function in the application code.
+# The incoming connection request is accepted and the incoming message is
+# echoed on the client browser.
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
 
 if __name__ == "__main__":
     # We need to install Uvicorn because FastAPI doesn't contain any
