@@ -31,6 +31,16 @@
             "URL" : "https://github.com/Raimondi/delimitMate",
             "Enable" : "True"
          },
+         "fzf" : {
+            "Desc" : "Using fzf fuzzy finder with vim (need both fzf and fzf.vim plugins)",
+            "URL" : "https://github.com/junegunn/fzf",
+            "Enable" : "True"
+         },
+         "fzf.vim" : {
+            "Desc" : "Using fzf fuzzy finder with vim (need both fzf and fzf.vim plugins)",
+            "URL" : "https://github.com/junegunn/fzf.vim",
+            "Enable" : "True"
+         },
          "gundo.vim" : {
             "Desc" : "Visualize your Vim undo tree",
             "URL" : "https://github.com/sjl/gundo.vim",
