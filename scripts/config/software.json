@@ -102,6 +102,13 @@
                      "echo set -gx PATH /opt/homebrew/bin/ $PATH >> ~/.local/share/omf/pkg/powerline/init.fish"
                   ],
                   "note" : "We need to set PATH in init.fish because the PATH environment variables set in config.fish happens after this file is run"
+               },
+               "fisher" : {
+                  "commands" : [
+                     "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher",
+                     "fisher install PatrickF1/fzf.fish"
+                  ],
+                  "note" : "Install fisher, the lugin manager for fish, and then use it to install fzf.fish"
                }
             }
          },
