@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 '''
 A script to automatically populate the metadata of audio files in the flac format
-
-https://www.last.fm/api/webauth
-https://www.geeksforgeeks.org/extract-and-add-flac-audio-metadata-using-the-mutagen-module-in-python/
-https://mutagen.readthedocs.io/en/latest/
 '''
 
 from collections import defaultdict
@@ -51,31 +47,59 @@ class UnimplementedMethod( Exception ):
 
 class Parameters:
     '''Commandline parameters'''
-    def __init__( self, params ):
+    def __init__( self, params : dict ):
+        '''
+        args:
+            params (dict) : a dictionary containing the commandline arugments
+        '''
         self.params = params
 
-    def command( self ):
-        '''Return the command argument'''
+    def command( self ) -> str:
+        '''Return the command argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'command' )
 
-    def dry_run( self ):
-        '''Return the dry_run argument'''
+    def dry_run( self ) -> str:
+        '''Return the dry_run argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'dry_run' )
 
-    def seq_exec( self ):
-        '''Return the seq_exec argument'''
+    def seq_exec( self ) -> str:
+        '''Return the seq_exec argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'seq_exec' )
 
-    def verbose( self ):
-        '''Return the verbose argument'''
+    def verbose( self ) -> str:
+        '''Return the verbose argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'verbose' )
 
-    def skip_complete( self ):
-        '''Return the skip_complete argument'''
+    def skip_complete( self ) -> str:
+        '''Return the skip_complete argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'skip_complete' )
 
-    def copy_target ( self ):
-        '''Return the copy_target argument'''
+    def copy_target ( self ) -> str:
+        '''Return the copy_target argument
+
+        return:
+            the command parameter
+        '''
         return self.params.get( 'copy_target' )
 
 class TextSanitizer:
@@ -83,8 +107,17 @@ class TextSanitizer:
     def __init__( self, config ):
         self.config = config
 
-    def sanitize_text( self, txt, charset, capitalize=False ):
-        '''Change the text to conform with what is expected'''
+    def sanitize_text( self, txt : str, charset : str, capitalize : bool = False ) -> str:
+        '''Change the text e.g. replacing unwanted characters, capitalization, etc
+
+        args:
+            txt (str) : text to be sanitized
+            charset (str) : the name of character sets containing the characters to be replace
+            capitalize (bool) : a flag to enable word capitalization
+
+        return:
+            a sanitized text
+        '''
         for replacement in self.config[ 'Cleanup' ][ charset ]:
             dst = replacement[ "dst"]
             for src in replacement[ "src" ]:
@@ -122,24 +155,39 @@ class TextSanitizer:
             new_txt.append( token )
         return ' '.join( new_txt )
 
-    def sanitize_text_display( self, txt, capitalize=False ):
-        '''Change the text to display on screen'''
+    def sanitize_text_display( self, txt : str , capitalize : bool = False ) -> str:
+        '''Change the text to display on screen
+        args:
+            txt (str) : text to be sanitized
+            capitalize (bool) : a flag to enable word capitalization
+
+        return:
+            a sanitized text
+        '''
         return self.sanitize_text( txt, 'Display Chars', capitalize=capitalize )
 
-    def sanitize_text_filesystem( self, txt, capitalize=False ):
-        '''Change the text for a filename'''
+    def sanitize_text_filesystem( self, txt : str, capitalize : bool =False ) -> str:
+        '''Change the text for a valid filename to be stored on a filesystem
+
+        args:
+            txt (str) : text to be sanitized
+            capitalize (bool) : a flag to enable word capitalization
+
+        return:
+            a sanitized text
+        '''
         return self.sanitize_text( txt, 'Filesystem Chars', capitalize=capitalize )
 
-    def sanitize_number( self, txt ):
+    def sanitize_number( self, txt : str ) -> str:
         '''
         Clean up a numeric tag:
             1) If the number in the format of <num> / <total_num>, retain only <num>
             2) Convet from the string <num> to integer
 
-        Params:
+        args:
             txt (string): the tag to be cleaned
 
-        Returns:
+        return:
             string: the tag after the cleanup
         '''
         txt = txt.split( '/' )[ 0 ] if '/' in txt else txt
@@ -153,6 +201,11 @@ class TextSanitizer:
 class Album( TextSanitizer ):
     '''The class representing a folder containing an album'''
     def __init__( self, config, path, copy_target ):
+        '''
+        args:
+            config (dict) : the script configuration loaded from a JSON file
+            path (str) : the path of this ablum
+        '''
         super().__init__( config )
         self.path = path
         self.copy_target = copy_target
