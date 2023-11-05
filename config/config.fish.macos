@@ -109,18 +109,26 @@ if status is-interactive
       git diff $argv --name-only | fzf -m -m --ansi --preview "git diff $argv --color=always -- {-1}"
    end
 
-   #---------------------- home brew ---------------------
-   set -gx HOMEBREW_PREFIX "/opt/homebrew";
-   set -gx HOMEBREW_CELLAR "/opt/homebrew/Cellar";
-   set -gx HOMEBREW_REPOSITORY "/opt/homebrew";
-   set -q PATH; or set PATH ''; set -gx PATH "/opt/homebrew/bin" "/opt/homebrew/sbin" $PATH;
-   set -q MANPATH; or set MANPATH ''; set -gx MANPATH "/opt/homebrew/share/man" $MANPATH;
-   set -q INFOPATH; or set INFOPATH ''; set -gx INFOPATH "/opt/homebrew/share/info" $INFOPATH;
+   # Setup homebrew environments
+   eval "$(/opt/homebrew/bin/brew shellenv)"
+
+   #---------------------- fzf ---------------------
+   # Set key bindings for fish and fzf
+   fzf_configure_bindings --directory=\ct \
+                          --git_log=\cg \
+                          --git_status=\cs \
+                          --history=\cr \
+                          --processes=\cp \
+                          --variables=\cv
+   # Use the CLI fd to respect ignore files (like '.gitignore'),
+   # display hidden files, and exclude the '.git' directory.
+   set -gx FZF_DEFAULT_COMMAND='fd . --hidden --exclude ".git"'
+   # Use Shift + Up/Down to move cursor in the preview window up/down
+   # To page up/dow instead of move up/dow, use preview-page-up and preview-page-down
+   set -gx FZF_DEFAULT_OPTS '--bind shift-up:preview-up,shift-down:preview-down'
+   alias preview='fzf --preview "bat {-1} --color=always"'
 
    #---------------------- Aliases ---------------------
-   # fzf
-   alias fzf='fzf --preview "bat {-1} --color=always"'
-
    # exa
    alias ls='exa --icons'
    alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
