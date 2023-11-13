@@ -122,7 +122,7 @@ if status is-interactive
                           --variables=\cv
    # Use the CLI fd to respect ignore files (like '.gitignore'),
    # display hidden files, and exclude the '.git' directory.
-   set -gx FZF_DEFAULT_COMMAND='fd . --hidden --exclude ".git"'
+   set -gx FZF_DEFAULT_COMMAND 'fd . --hidden --exclude ".git"'
    # Use Shift + Up/Down to move cursor in the preview window up/down
    # To page up/dow instead of move up/dow, use preview-page-up and preview-page-down
    set -gx FZF_DEFAULT_OPTS '--bind shift-up:preview-up,shift-down:preview-down'
