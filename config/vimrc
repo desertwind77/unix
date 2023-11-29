@@ -399,6 +399,8 @@ nnoremap <leader>b :TagbarOpen fjc<CR>
 nnoremap <leader>c :buffers<CR>:buffer<Space>
 " list all the buffer
 nnoremap <leader>d :ls!<CR>
+" call $FZF_DEFAULT_COMMAND which will list all the files
+nnoremap <leader>f :Files<CR>
 " stop search highlight
 nnoremap <leader>h :nohlsearch<CR>
 " toggle indent line
