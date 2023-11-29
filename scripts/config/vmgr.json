@@ -233,8 +233,8 @@
          },
          "vim-signature" : {
             "Desc" : "Place, toggle, and display marks and navigate between them",
-            "URL" : "https://github.com/xolox/vim-session",
-            "Enable" : "False"
+            "URL" : "https://github.com/kshenoy/vim-signature",
+            "Enable" : "True"
          },
          "vim-snippets" : {
             "Desc" : "This repository contains snippets files for various programming languages.",
