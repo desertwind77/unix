@@ -22,58 +22,6 @@ if status is-interactive
       end
    end
 
-   function cgen -d "Generate cscope database"
-      # cscope can search for all functions that call a particular funciton while ctags
-      # does not support this feature.
-      echo "Finding relevant source files..."
-      find . -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" > cscope.files
-
-      echo "Building cscope database..."
-      # -q : build a faster, but larger database
-      # -R : search recursively
-      # -b : build the database without starting cscope browser
-      # -i <file> : specify the list of source files
-      cscope -q -R -b -i cscope.files
-
-      # To luanch cscope, run "cscope -d". "-d" tells cscope not to regenerate the database.
-      # To exit cscope, type Ctrl-d
-      # Ctrl-b    to search for previous terms again
-      # Ctrl-c    to toggle case-sensitive search
-   end
-
-   function rcd -d "Use ranger to change the directory"
-      set tempfile '/tmp/chosendir'
-      ranger --choosedir=$tempfile (pwd)
-
-      if test -f $tempfile
-         if [ (cat $tempfile) != (pwd) ]
-            cd (cat $tempfile)
-         end
-      end
-
-      rm -f $tempfile
-   end
-
-   # I don't know what this is. Need to revisit
-   function fish_user_key_bindings
-      bind -M insert \co 'rcd; commandline -f repaint'
-   end
-
-   function ckernelgen -d "Generate the cscope database for a Linux kernel"
-      echo "Finding relevant source files..."
-      find .                                                                  \
-         -path "$LNX/arch/*" ! -path "$LNX/arch/x86*" -prune -o               \
-         -path "$LNX/include/asm-*" ! -path "$LNX/include/asm-generic*"       \
-                                    ! -path "$LNX/include/asm-x86*" -prune -o \
-         -path "$LNX/tmp*" -prune -o                                          \
-         -path "$LNX/Documentation*" -prune -o                                \
-         -path "$LNX/scripts*" -prune -o                                      \
-         -name "*.[chxsS]" -print > $LNX/cscope.files
-
-      echo "Building cscope database..."
-      time cscope -q -k -b -i cscope.files
-   end
-
    function notify -d "Beep when the last background job finish"
       set -l job ( jobs -l -g )
       # Disabling the following line; otherwise, this function will not work
@@ -109,6 +57,58 @@ if status is-interactive
       git diff $argv --name-only | fzf -m -m --ansi --preview "git diff $argv --color=always -- {-1}"
    end
 
+   function rcd -d "Use ranger to change the directory"
+      set tempfile '/tmp/chosendir'
+      ranger --choosedir=$tempfile (pwd)
+
+      if test -f $tempfile
+         if [ (cat $tempfile) != (pwd) ]
+            cd (cat $tempfile)
+         end
+      end
+
+      rm -f $tempfile
+   end
+
+   # I don't know what this is. Need to revisit
+   function fish_user_key_bindings
+      bind -M insert \co 'rcd; commandline -f repaint'
+   end
+
+   function cgen -d "Generate cscope database"
+      # cscope can search for all functions that call a particular funciton while ctags
+      # does not support this feature.
+      echo "Finding relevant source files..."
+      find . -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" > cscope.files
+
+      echo "Building cscope database..."
+      # -q : build a faster, but larger database
+      # -R : search recursively
+      # -b : build the database without starting cscope browser
+      # -i <file> : specify the list of source files
+      cscope -q -R -b -i cscope.files
+
+      # To luanch cscope, run "cscope -d". "-d" tells cscope not to regenerate the database.
+      # To exit cscope, type Ctrl-d
+      # Ctrl-b    to search for previous terms again
+      # Ctrl-c    to toggle case-sensitive search
+   end
+
+   function ckernelgen -d "Generate the cscope database for a Linux kernel"
+      echo "Finding relevant source files..."
+      find .                                                                  \
+         -path "$LNX/arch/*" ! -path "$LNX/arch/x86*" -prune -o               \
+         -path "$LNX/include/asm-*" ! -path "$LNX/include/asm-generic*"       \
+                                    ! -path "$LNX/include/asm-x86*" -prune -o \
+         -path "$LNX/tmp*" -prune -o                                          \
+         -path "$LNX/Documentation*" -prune -o                                \
+         -path "$LNX/scripts*" -prune -o                                      \
+         -name "*.[chxsS]" -print > $LNX/cscope.files
+
+      echo "Building cscope database..."
+      time cscope -q -k -b -i cscope.files
+   end
+
    # Setup homebrew environments
    eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -128,7 +128,6 @@ if status is-interactive
    set -gx FZF_DEFAULT_OPTS '--bind shift-up:preview-up,shift-down:preview-down'
    alias preview='fzf --preview "bat {-1} --color=always"'
 
-   #---------------------- Aliases ---------------------
    # exa
    alias ls='exa --icons'
    alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
@@ -146,7 +145,19 @@ if status is-interactive
    alias tl='tmux ls'
    alias ta='tmux attach -dt'
 
-   # misc
+   # tmuxifier
+   set -g TMUXIFIER_HOME "$HOME/Workspace/software/tmuxifier/bin"
+   if test -e $TMUXIFIER_HOME
+      set -gx PATH $TMUXIFIER_HOME $PATH
+      eval (tmuxifier init - fish)
+   end
+   set -e TMUXIFIER_HOME
+
+   # zoxide
+   zoxide init fish | source
+   alias cd='zoxide'
+
+   #---------------------- Aliases ---------------------
    alias aex='audiotag extract'
    alias acv='audiotag convert'
    alias acl='audiotag cleanup'
@@ -154,8 +165,6 @@ if status is-interactive
    alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
    alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
-   # Deprecated : replaced by a python script using rich module to print Markdown text for better result
-   #alias list='glow -w 100 $HOME/Workspace/scripts/readme.md'
    alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
    alias ctagsgen='ctags -R *'
    alias vimkeys='glow -p ~/Workspace/github/unix/notebook/Vim.md'
@@ -167,9 +176,7 @@ if status is-interactive
    set -gx EDITOR vim
    set -gx VISUAL vim
 
-   zoxide init fish | source
-   eval (tmuxifier init -)
-
+   #---------------------- Startup ---------------------
    neofetch
    quote
    echo ""
