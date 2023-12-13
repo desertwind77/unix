@@ -162,7 +162,7 @@ Placing the cursor on some text and then
 ### Comment on a multi-line code snipplet without using nerdcommenter
 1) go to the first line you want to comment, press `Ctrl+v`. This will put the editor in the VISUAL BLOCK mode.
 2) Use the arrow key to select until the last line.
-3) Press `Shift+i`, which will put the editor in INSERT mode and then press `#`. This will add a hash to the first line.
+3) Press `Shift+i`, whic will put the editor in INSERT mode and then press `#`. This will add a hash to the first line.
 4) Press Esc (give it a second), and it will insert a `#` character on all other selected lines.
 
 ### Scroll the vim terminal window
@@ -246,6 +246,33 @@ Once CtrlP is open:
 |---------|----------|
 |+|Expand the selected region|
 |-|Shrink the selected region|
+
+### vim-signature
+| Command | Function |
+|---------|----------|
+|mx|Toggle mark 'x' and display it in the leftmost column|
+|dmx|Remove mark 'x' where x is a-zA-Z|
+|m,|Place the next available mark|
+|m.|If no mark on line, place the next available mark. Otherwise, remove (first) existing mark.|
+|m-|Delete all marks from the current line|
+|m\<Space\>|Delete all marks from the current buffer|
+|]`|Jump to next mark|
+|[`|Jump to prev mark|
+|]'|Jump to start of next line containing a mark|
+|['|Jump to start of prev line containing a mark|
+|`]|Jump by alphabetical order to next mark|
+|`[|Jump by alphabetical order to prev mark|
+|']|Jump by alphabetical order to start of next line having a mark|
+|'[|Jump by alphabetical order to start of prev line having a mark|
+|m/|Open location list and display marks from current buffer|
+|m[0-9]|Toggle the corresponding marker !@#$%^&*()|
+|m<S-[0-9]>|Remove all markers of the same type|
+|]-|Jump to next line having a marker of the same type|
+|[-|Jump to prev line having a marker of the same type|
+|]=|Jump to next line having a marker of any type|
+|[=|Jump to prev line having a marker of any type|
+|m?|Open location list and display markers from current buffer|
+|m<BS>|Remove all markers|
 
 ### vim-surround
 Change parentheses, brackets, quotes, HTML/XML tags. Note that we have to type the command when the cursor is inside the quotes, etc.
