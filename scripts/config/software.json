@@ -108,7 +108,7 @@
                      "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher",
                      "fisher install PatrickF1/fzf.fish"
                   ],
-                  "note" : "Install fisher, the lugin manager for fish, and then use it to install fzf.fish"
+                  "note" : "Install fisher, the plugin manager for fish, and then use it to install fzf.fish"
                }
             }
          },
@@ -117,30 +117,35 @@
                "command" : "sudo apt-get install -y",
                "groups" : {
                   "general" : [
-                     "ack", "cmus", "elinks", "exa", "exuberant-ctags", "cscope", "fish", "flac", "git-lfs",
-                     "jack", "jq", "mc", "moc", "moc-ffmpeg-plugin", "mosh", "mpg321", "ncdu", "neofetch",
-                     "pimixer", "powerline", "ranger", "ripgrep", "sd", "software-properties-common", "sox",
-                     "telnet", "tig", "tmux", "vim-nox", "wget", "xfce4-terminal"
-                  ],
-                  "opencv" : [
-                     "build-essential", "cmake", "libjpeg-dev", "libtiff5-dev", "libjasper-dev", "libpng-dev",
-                     "libavcodec-dev", "libavformat-dev", "libswscale-dev", "libv4l-dev", "libxvidcore-dev",
-                     "libx264-dev", "libfontconfig1-dev", "libcairo2-dev", "libgdk-pixbuf2.0-dev",
-                     "libpango1.0-dev", "libgtk2.0-dev", "libgtk-3-dev", "libatlas-base-dev", "gfortran",
-                     "libhdf5-dev", "libhdf5-serial-dev", "libhdf5-103", "pkg-config", "python3-pyqt5",
-                     "python3-dev"
+                     "ack", "bat", "cscope", "cmus", "elinks", "exa", "exuberant-ctags", "fd-find", "fish", "flac", "fzf",
+                     "git-lfs", "htop", "jq", "lynx", "mc", "moc", "moc-ffmpeg-plugin", "mosh", "mpg321", "ncdu", "neofetch",
+                     "powerline", "ranger", "ripgrep", "sd", "sox", "tig", "tmux", "vim-nox", "wget", "zoxide"
                   ]
                }
             },
             "custom" : {
-               "opencv-python" : {
+               "Oh My Fish!" : {
                   "commands" : [
-                     "python3 -m pip install opencv-python"
+                     "curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install | fish",
+                     "omf theme agnoster"
+                  ]
+               },
+               "fisher" : {
+                  "commands" : [
+                     "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher",
+                     "fisher install PatrickF1/fzf.fish@v2.0"
+                  ],
+                  "note" : "Install fisher, the plugin manager for fish, and then use it to install fzf.fish"
+               },
+               "tmuxifier" : {
+                  "commands" : [
+                     "mkdir -p ~/Workspace/software",
+                     "git clone https://github.com/jimeh/tmuxifier.git"
                   ]
                }
             }
          },
-         "All" : {
+         "all" : {
             "rust" : [
                "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
                "rustc --version",

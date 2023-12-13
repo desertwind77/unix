@@ -1,7 +1,7 @@
 # We need this guard; otherwise, scp will fail.
 if status is-interactive
-   #---------------------- Function ---------------------
-   function mkcd -d "Create a directory and set CWD"
+    #---------------------- Function ---------------------
+	function mkcd -d "Create a directory and set CWD"
       command mkdir $argv
       if test $status = 0
          switch $argv[ ( count $argv ) ]
@@ -12,6 +12,15 @@ if status is-interactive
          end
       end
    end  # funciton
+
+   function cprint -d "Print a source code file in pdf"
+      for src in $argv
+         echo $src
+         a2ps --columns=1 --portrait --media=Letter --no-header --borders=0 -o $src.ps $src
+         ps2pdf $src.ps $src.pdf
+         rm $src.ps
+      end
+   end
 
    function notify -d "Beep when the last background job finish"
       set -l job ( jobs -l -g )
@@ -48,50 +57,137 @@ if status is-interactive
       git diff $argv --name-only | fzf -m -m --ansi --preview "git diff $argv --color=always -- {-1}"
    end
 
-   #---------------------- powerline ----------------------
-   set POWER_LINE_PATH /usr/share/powerline
-   set fish_function_path $fish_function_path $POWER_LINE_PATH/bindings/fish
-   source $POWER_LINE_PATH/bindings/fish/powerline-setup.fish
+   function rcd -d "Use ranger to change the directory"
+      set tempfile '/tmp/chosendir'
+      ranger --choosedir=$tempfile (pwd)
+
+      if test -f $tempfile
+         if [ (cat $tempfile) != (pwd) ]
+            cd (cat $tempfile)
+         end
+      end
+
+      rm -f $tempfile
+   end
+
+   # I don't know what this is. Need to revisit
+   function fish_user_key_bindings
+      bind -M insert \co 'rcd; commandline -f repaint'
+   end
+
+   function cgen -d "Generate cscope database"
+      # cscope can search for all functions that call a particular funciton while ctags
+      # does not support this feature.
+      echo "Finding relevant source files..."
+      find . -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" > cscope.files
+
+      echo "Building cscope database..."
+      # -q : build a faster, but larger database
+      # -R : search recursively
+      # -b : build the database without starting cscope browser
+      # -i <file> : specify the list of source files
+      cscope -q -R -b -i cscope.files
+
+      # To luanch cscope, run "cscope -d". "-d" tells cscope not to regenerate the database.
+      # To exit cscope, type Ctrl-d
+      # Ctrl-b    to search for previous terms again
+      # Ctrl-c    to toggle case-sensitive search
+   end
+
+   function ckernelgen -d "Generate the cscope database for a Linux kernel"
+      echo "Finding relevant source files..."
+      find .                                                                  \
+         -path "$LNX/arch/*" ! -path "$LNX/arch/x86*" -prune -o               \
+         -path "$LNX/include/asm-*" ! -path "$LNX/include/asm-generic*"       \
+                                    ! -path "$LNX/include/asm-x86*" -prune -o \
+         -path "$LNX/tmp*" -prune -o                                          \
+         -path "$LNX/Documentation*" -prune -o                                \
+         -path "$LNX/scripts*" -prune -o                                      \
+         -name "*.[chxsS]" -print > $LNX/cscope.files
+
+      echo "Building cscope database..."
+      time cscope -q -k -b -i cscope.files
+   end
+
+   #---------------------- powerline ---------------------
+   set fish_function_path $fish_function_path "/usr/share/powerline/bindings/fish"
+   source /usr/share/powerline/bindings/fish/powerline-setup.fish
    powerline-setup
 
-   #---------------------- git ---------------------
-   function gclone -d "Clone a git repository from Victory"
-      set num (count $argv)
-      if test $num = 1
-         set project $argv[1]
-         command git clone athichart@victorybattleship.local:/Users/athichart/Google\ Drive/git/$project
-      else
-         echo "usage: gclone <repository>"
-      end
-   end  # funciton
+   #---------------------- fzf ---------------------
+   # Set key bindings for fish and fzf
+   # TODO: this doesn't work with fish@3.1.2 installed on Raspberry Pi OS Legacy
+   #fzf_configure_bindings --directory=\ct \
+   #                       --git_log=\cg \
+   #                       --git_status=\cs \
+   #                       --history=\cr \
+   #                       --processes=\cp \
+   #                       --variables=\cv
+   # Use the CLI fd to respect ignore files (like '.gitignore'),
+   # display hidden files, and exclude the '.git' directory.
+   set -gx FZF_DEFAULT_COMMAND 'fd . --hidden --exclude ".git"'
+   # Use Shift + Up/Down to move cursor in the preview window up/down
+   # To page up/dow instead of move up/dow, use preview-page-up and preview-page-down
+   set -gx FZF_DEFAULT_OPTS '--bind shift-up:preview-up,shift-down:preview-down'
+   alias preview='fzf --preview "bat {-1} --color=always"'
 
-   alias gts='git status'
+   # exa
+   alias ls='exa --icons'
+   alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
+   alias la='exa --icons -a'
+
+   # git
+   alias gtd='git diff | bat'
+   alias gth='git hist'
    alias gtl='git log'
+   alias gts='git status'
    alias gtpush='git push origin master'
    alias gtpull='git pull origin master'
 
-   #---------------------- Aliases ---------------------
-   alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
-   alias fzf='fzf --preview "bat {-1} --color=always"'
-   # Replacing ls with exa
-   alias ls='exa'
-   # exa options : --extended --only-dirs
-   alias ll='exa -aa -l -g -h --git --modified --time-style=long-iso -H --classify --icons'
-   alias la='exa -a'
-   alias reload='source ~/.config/fish/config.fish'
+   # tmux
    alias tl='tmux ls'
    alias ta='tmux attach -dt'
+
+   # tmuxifier
+   set -g TMUXIFIER_HOME "$HOME/Workspace/software/tmuxifier/bin"
+   if test -e $TMUXIFIER_HOME
+      set -gx PATH $TMUXIFIER_HOME $PATH
+      eval (tmuxifier init - fish)
+   end
+   set -e TMUXIFIER_HOME
+
+   # zoxide
+   zoxide init fish | source
+   alias cd='zoxide'
+
+   #---------------------- Aliases ---------------------
+   # Beging of Raspberry Pi OS Legary
+   # Note: on Raspberry Pi OS Legacy, these commands are named differently.
+   # So alias them to the  more familiar nomentclature.
+   alias bat='batcat'
+   alias fd='fdfind'
+   # End of Raspberry Pi OS Legary
+   alias aex='audiotag extract'
+   alias acv='audiotag convert'
+   alias acl='audiotag cleanup'
+   alias acp='audiotag -v copy'
+   alias clean='find . -type f \( -name ".*~" -o -name "*~" -o -name "a.out" -o -name "core" -o -name "*.pyc" -o -name "*.class" \) -delete'
+   alias reload='source ~/.config/fish/config.fish'
    alias vi='vim'
+   alias pytestenv='source ~/Workspace/python_venv/test_env/bin/activate.fish'
+   alias ctagsgen='ctags -R *'
+   alias vimkeys='glow -p ~/Workspace/github/unix/notebook/Vim.md'
+   alias tmuxkeys='glow -p ~/Workspace/github/unix/notebook/Tmux.md'
 
    #---------------------- Variables ---------------------
-   set -gx RUSTUP_HOME "$HOME/.rustup"
-   set -gx CARGO_HOME "$HOME/.cargo"
-   set -gx PKG_CONFIG_PATH /usr/local/lib/pkgconfig $PKG_CONFIG_PATH
-   set -gx PATH "$HOME/bin" "$HOME/Workspace/scripts" "$CARGO_HOME/bin" $PATH;
+   set -gx PATH "$HOME/Workspace/scripts" $PATH;
+   set -gx CSCOPE_EDITOR vim
    set -gx EDITOR vim
    set -gx VISUAL vim
 
-   set -gx myver 1.0
-   echo "Loading my fish startup script $myver"
-   #neofetch
+   #---------------------- Startup ---------------------
+   neofetch
+   quote
+   echo ""
+   vocab
 end

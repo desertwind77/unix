@@ -12,7 +12,7 @@ CONFIG_FILENAME='config/software.json'
 def process_arguments():
     '''Process commandline arguments'''
     parser = argparse.ArgumentParser()
-    parser.add_argument( dest='platform', choices=[ 'linux', 'mac', 'pi' ] )
+    parser.add_argument( dest='platform', choices=[ 'linux', 'mac', 'pi', 'all' ] )
     return parser.parse_args()
 
 def generate_commands( config ):
@@ -24,9 +24,9 @@ def generate_commands( config ):
 
     if 'packages' in config:
         packages_config = config[ 'packages' ]
-        cmd = packages_config[ 'command' ]
         for group, packages in packages_config[ 'groups' ].items():
             print( f'# Installing {group}' )
+            cmd = packages_config[ 'command' ]
             cmd = cmd + ' ' + ' '.join( packages )
             print( cmd )
             print()
