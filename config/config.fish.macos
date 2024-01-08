@@ -109,6 +109,21 @@ if status is-interactive
       time cscope -q -k -b -i cscope.files
    end
 
+   function jupyter -d "Start Jupyter Lab"
+      # Jupyter docker images
+      # - jupyter/scipy-notebook : Jupyter Notebook/JupyterLab with conda/mamba,
+      #   ipywidgets and popular packages from the scientific Python ecosystem
+      #   (Pandas, Matplotlib, Seaborn, Requests, etc.)
+      # - jupyter/r-notebook: Jupyter Notebook/JupyterLab wit R interpreter,
+      #   IRKernel and devtools.
+      # - jupyter/datascience-notebook: Everything in jupyter/scipy-notebook and
+      #   jupyter/r-notebook images with Julia support.
+      # - jupyter/tensorflow-notebook: Everything in jupyter/scipy-notebook image
+      #   with TensorFlow.
+      #docker run -p 8888:8888 --name notebook -e CHOWN_HOME=yes --user root -e NB_USER=athichart -v $(pwd):/home/athichart/work -e JUPYTER_ENABLE_LAB=yes --env-file .env --rm -it jupyter/scipy-notebook
+      docker run -p 8888:8888 --name notebook -e CHOWN_HOME=yes --user root -e NB_USER=athichart -v $(pwd):/home/athichart/work -e JUPYTER_ENABLE_LAB=yes --rm -it jupyter/scipy-notebook
+   end
+
    # Setup homebrew environments
    eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -155,7 +170,6 @@ if status is-interactive
 
    # zoxide
    zoxide init fish | source
-   alias cd='zoxide'
 
    #---------------------- Aliases ---------------------
    alias aex='audiotag extract'
