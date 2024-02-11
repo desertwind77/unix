@@ -6,7 +6,8 @@ This script demonstrates the Minimax algorithm.
 TODO:
 - 4 x 4 is to slow for the algorithm to compute the complete decision tree
 '''
-
+import argparse
+import random
 import uuid
 
 class TicTacToe:
@@ -130,17 +131,27 @@ class TicTacToe:
                     move_row, move_col = row, col
         self.board[ move_row ][ move_col ] = self.machine
 
-    def play( self, human_first=None ):
-        '''Play the game agaist the computer'''
-        def coin_toss():
-            '''Return either True or False 50% of the times'''
-            gen_id = str( uuid.uuid4() )
-            while not gen_id[ 0 ].isnumeric():
-                gen_id = str( uuid.uuid4() )
-            return int( gen_id[ 0 ] ) >= 5
+    def random_move( self ):
+        '''Choose an empty cell randomly'''
+        empty_cells = []
+        for row in range( self.size ):
+            for col in range( self.size ):
+                if self.board[ row ][ col ] == self.empty:
+                    empty_cells.append( ( row, col ) )
+        r, c = random.choice( empty_cells )
+        self.board[ r ][ c ] = self.machine
 
+    def coin_toss( self ):
+        '''Return either True or False 50% of the times'''
+        gen_id = str( uuid.uuid4() )
+        while not gen_id[ 0 ].isnumeric():
+            gen_id = str( uuid.uuid4() )
+        return int( gen_id[ 0 ] ) >= 5
+
+    def play( self, diff=None, human_first=None ):
+        '''Play the game agaist the computer'''
         count = 0
-        human = human_first if human_first else coin_toss()
+        human = human_first if human_first else self.coin_toss()
 
         if human:
             self.draw()
@@ -158,7 +169,15 @@ class TicTacToe:
                     continue
                 self.board[ row ][ col ] = self.human
             else:
-                self.best_move()
+                if diff == 3:
+                    self.best_move()
+                elif diff == 2:
+                    if self.coin_toss():
+                        self.best_move()
+                    else:
+                        self.random_move()
+                else:
+                    self.random_move()
             self.draw()
             count += 1
             human = not human
@@ -172,10 +191,26 @@ class TicTacToe:
                 print( f'{winner} won!' )
             break
 
+def process_arguments():
+    '''Process commandline arguments
+
+    return:
+        a Parameters object which contains all command line arguments
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument( '-d', '--difficulty', action='store', dest='diff',
+                         choices=[ '1', '2', '3' ], default='3',
+                         help='Choose the difficulty level' )
+    parser.add_argument( '-H', '--human-first', action='store_true', dest='human_first',
+                         help='Let the human play first' )
+    return parser.parse_args()
+
 def main():
     '''The main program'''
+    args = process_arguments()
     game = TicTacToe()
-    game.play()
+    diff = int( args.diff )
+    game.play( diff=diff, human_first=args.human_first )
 
 if __name__ == '__main__':
     main()
