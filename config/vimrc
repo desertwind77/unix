@@ -363,6 +363,13 @@ if has('cscope')
    "set ttimeoutlen=100
 endif
 
+"--------------  vim-anyfold plugin ----------------
+filetype plugin indent on
+" Activate for all filetypes
+autocmd Filetype * AnyFoldActivate
+" Open all folds. Set to 0 if you want to close all folds
+set foldlevel=99
+
 "------------- Shortcuts and Aliases ---------------
 " To map the F2 key, <silent> <F2>
 " To map Ctrl-s key, <C-s>

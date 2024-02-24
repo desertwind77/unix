@@ -131,6 +131,11 @@
             "URL" : "https://github.com/vim-airline/vim-airline-themes",
             "Enable" : "True"
          },
+         "vim-anyfold" : {
+            "Desc" : "Generic folding mechanism and motion based on indentation. Fold anything that is structured into indented blocks. Quickly navigate between blocks.",
+            "URL" : "https://github.com/pseewald/vim-anyfold",
+            "Enable" : "True"
+         },
          "vim-autotag" : {
             "Desc" : "Update ctags database when saving a file",
             "URL" : "https://github.com/craigemery/vim-autotag.git",
