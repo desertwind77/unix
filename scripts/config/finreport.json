@@ -223,6 +223,7 @@
                "El Pollo Loco",
                "Epic Dumpling",
                "Eureka",
+               "Euro Snack at Northstar Truckee",
                "Fantasia Coffee",
                "Fantuan Delivery",
                "Farmhouse Menlo Park",
@@ -247,6 +248,7 @@
                "HANOI BISTRO",
                "Hironori",
                "Hue Restaurant",
+               "In-n-Out",
                "Kakaroto Japanese",
                "Katana",
                "King Eggroll Express",
@@ -306,7 +308,9 @@
                "Sogongdong Tofu Town",
                "Somisomi",
                "Southland Flavor Cafe",
+               "Subway 23556",
                "Xiaoman Ricebur",
+               "SQ  COPPER LANE CAFE",
                "Starbird",
                "Sul & Beans",
                "Sugar Butter Flour",
@@ -377,7 +381,8 @@
                "Trader Joe",
                "Tree Farms",
                "Walmart",
-               "WHOLEFDS"
+               "WHOLEFDS",
+               "Zephyr Lodge Truckee"
             ],
             "Health" : [
                "CVS",
@@ -426,6 +431,7 @@
                { "DXO Consumer" : "Nik Software Upgrade" },
                "Dunes MultiMedia",
                "EducativeInc",
+               "Epic Mix Photo",
                "Estee Lauder",
                { "Etrailer" : "Snow Tires" },
                { "Fever USA" : "Ticket for Michelangelo exibition" },
@@ -467,10 +473,12 @@
                { "Munchkin" : "Milk Bottle for Alice" },
                { "Music Arms-Mall 6" : "Music Arms The Mall Ngamvongwarn" },
                "Ngan Dee Promotion",
+               "Northstar@Tahoe Lift Tckt",
                "GHD NorthAmericalLc",
                "Oakland Zoo",
                { "Online Recreation City" : "Palo Alto Kid Museum" },
                "Opus One Winery",
+               "Patagonia at Northstar Truckee",
                "Paypal  SCS",
                "PEAKDESIGN",
                { "PP CJAOBEAUTY" : "Beauty Salon in Santa Clara" },
@@ -485,6 +493,7 @@
                "SheetMusicPlus.com",
                "Shiseido",
                { "SMM Plus" : "Siam Intercomics" },
+               { "Soccer Shots Bay Area" : "Tisha's soccer class" },
                { "SP Atlas Headrest" : "Herman Miller Headrest" },
                "Spirit Halloween",
                "Springer",
@@ -615,7 +624,7 @@
                "PGANDE"
             ],
             "Income" : [
-               "Arista Networks Direct Dep",
+               "Arista Networks",
                "Interest Payment"
             ],
             "Insurance" : [
