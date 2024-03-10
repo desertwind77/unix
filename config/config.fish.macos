@@ -124,6 +124,17 @@ if status is-interactive
       docker run -p 8888:8888 --name notebook -e CHOWN_HOME=yes --user root -e NB_USER=athichart -v $(pwd):/home/athichart/work -e JUPYTER_ENABLE_LAB=yes --rm -it jupyter/scipy-notebook
    end
 
+   function plantuml -d "Start PlantUML service"
+      # The service can be accessed via http://localhost:8080
+      docker run -p 8080:8080 --name plantuml --rm -it plantuml/plantuml-server:jetty
+   end
+
+   # FIXME: this line should not have been needed. But after brew update,
+   # shellenv produce fish_add_path -gP instead of fish_add_path -gpP
+   # (prepend). As a result, these two paths come after /usr/bin. So
+   # /usr/bin/vim takes precedence over /opt/homebrew/bin/vim. The Mac OS
+   # default vim lacks a lot of functionality compared to homebrew vim.
+   set -gx PATH /opt/homebrew/bin /opt/homebrew/sbin $PATH
    # Setup homebrew environments
    eval "$(/opt/homebrew/bin/brew shellenv)"
 
